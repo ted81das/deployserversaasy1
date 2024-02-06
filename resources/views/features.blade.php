@@ -705,7 +705,6 @@
             </x-button-link.secondary>
         </div>
 
-
     </x-section.outro>
 
 </x-layouts.app>
