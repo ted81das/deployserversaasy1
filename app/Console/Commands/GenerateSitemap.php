@@ -68,8 +68,18 @@ class GenerateSitemap extends Command implements Isolatable
         // add the sitemap to robots.txt
         $robots = file_get_contents(public_path('robots.txt'));
 
-        if (!str_contains($robots, 'Sitemap:')) {
-            $robots .= "\n\nSitemap: " . url('sitemap.xml');
+        $sitemap1 = "Sitemap: " . url('sitemap.xml');
+
+        if (!str_contains($robots, $sitemap1)) {
+            $robots .= "\n\n" . $sitemap1;
+            file_put_contents(public_path('robots.txt'), $robots);
+        }
+
+        // add docs sitemap to robots.txt
+        $sitemap2 = "Sitemap: " . url('docs/sitemap.xml');
+
+        if (!str_contains($robots, $sitemap2)) {
+            $robots .= "\n\n" . $sitemap2;
             file_put_contents(public_path('robots.txt'), $robots);
         }
     }
