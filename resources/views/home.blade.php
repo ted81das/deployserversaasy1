@@ -18,8 +18,8 @@
                 <x-button-link.secondary href="#subscribe" class="self-center !py-3" elementType="a">
                     {{ __('Get SaaSykit') }}
                 </x-button-link.secondary>
-                <x-button-link.primary-outline href="{{route('register')}}" class=" bg-transparent self-center !py-3 text-white border-white">
-                    {{ __('See Demo') }}
+                <x-button-link.primary-outline href="/docs" class=" bg-transparent self-center !py-3 text-white border-white">
+                    {{ __('Check Documentation') }}
                 </x-button-link.primary-outline>
 
             </div>
