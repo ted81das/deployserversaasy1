@@ -1,0 +1,245 @@
+<?php
+
+namespace App\Services\PaymentProviders\Paddle;
+
+use App\Constants\SubscriptionStatus;
+use App\Constants\TransactionStatus;
+use App\Models\Currency;
+use App\Models\PaymentProvider;
+use App\Services\SubscriptionManager;
+use App\Services\TransactionManager;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class PaddleWebhookHandler
+{
+
+    public function __construct(
+        private SubscriptionManager $subscriptionManager,
+        private TransactionManager $transactionManager,
+    ) {
+
+    }
+
+    public function handleWebhook(Request $request): JsonResponse
+    {
+        if (!$this->validateSignature($request)) {
+            return response()->json([
+                'message' => 'Invalid signature'
+            ], 400);
+        }
+
+        $event = $request->all();
+
+        $paymentProvider = PaymentProvider::where('slug', 'paddle')->firstOrFail();
+
+        $eventType = $event['event_type'];
+        $eventData = $event['data'];
+        if ($eventType == 'subscription.created' ||
+            $eventType == 'subscription.updated' ||
+            $eventType == 'subscription.resumed' ||
+            $eventType == 'subscription.paused' ||
+            $eventType == 'subscription.canceled' ||
+            $eventType == 'subscription.activated' ||
+            $eventType == 'subscription.past_due' ||
+            $eventType == 'subscription.trialing'
+        ) {
+            $subscriptionUuid = $eventData['custom_data']['subscriptionUuid'] ?? null;
+
+            if (!$subscriptionUuid) {
+                return response()->json([
+                    'message' => 'Subscription uuid not found'
+                ], 400);
+            }
+
+            $subscription = $this->subscriptionManager->findByUuidOrFail($subscriptionUuid);
+            $paddleSubscriptionStatus = $eventData['status'];
+            $subscriptionStatus = $this->mapPaddleSubscriptionStatusToSubscriptionStatus($paddleSubscriptionStatus);
+            $endsAt = $eventData['current_billing_period']['ends_at'] ?? null;
+
+            if ($endsAt == null) {
+                $endsAt = Carbon::now()->toDateTimeString();
+            } else {
+                $endsAt = Carbon::parse($endsAt)->toDateTimeString();
+            }
+
+            $item = $eventData['items'][0] ?? null;
+
+            if ($item === null) {
+                return response()->json([
+                    'message' => 'Subscription item not found'
+                ], 400);
+            }
+
+            $trialDates = $item['trial_dates'] ?? null;
+            $trialEndsAt = null;
+            if ($trialDates) {
+                $trialEndsAt = Carbon::parse($trialDates['ends_at'])->toDateTimeString();
+            }
+
+            $canceledAt = $eventData['canceled_at'] ?? null;
+            if ($canceledAt) {
+                $canceledAt = Carbon::parse($canceledAt)->toDateTimeString();
+            }
+
+            $this->subscriptionManager->updateSubscription($subscription, [
+                'status' => $subscriptionStatus,
+                'ends_at' => $endsAt,
+                'payment_provider_subscription_id' => $eventData['id'],
+                'payment_provider_status' => $paddleSubscriptionStatus,
+                'payment_provider_id' => $paymentProvider->id,
+                'trial_ends_at' => $trialEndsAt,
+                'canceled_at' => $canceledAt,
+            ]);
+        } else if ($eventType == 'transaction.created') {
+            $subscriptionUuid = $eventData['custom_data']['subscriptionUuid'] ?? null;
+
+            if (!$subscriptionUuid) {
+                return response()->json([
+                    'message' => 'Subscription uuid not found'
+                ], 400);
+            }
+            $paddleTransactionId = $eventData['id'] ?? null;
+
+            $subscription = $this->subscriptionManager->findByUuidOrFail($subscriptionUuid);
+            $currency = Currency::where('code', strtoupper($eventData['currency_code']))->firstOrFail();
+            $paddleTransactionStatus = $eventData['status'];
+            $total = $eventData['details']['totals']['grand_total'];
+            $fees = $eventData['details']['totals']['fee'] ?? 0;
+            $discounts = $eventData['details']['totals']['discount'] ?? 0;
+            $taxes = $eventData['details']['totals']['tax'] ?? 0;
+            // create transaction
+
+            $this->transactionManager->createForSubscription(
+                $subscription,
+                intval($total),
+                intval($taxes),
+                intval($discounts),
+                intval($fees),
+                $currency,
+                $paymentProvider,
+                $paddleTransactionId,
+                $paddleTransactionStatus,
+                $this->mapPaddleTransactionStatusToTransactionStatus($paddleTransactionStatus),
+            );
+        } else if (
+            $eventType == 'transaction.billed' ||
+            $eventType == 'transaction.canceled' ||
+            $eventType == 'transaction.completed' ||
+            $eventType == 'transaction.ready' ||
+            $eventType == 'transaction.updated'
+        ) {
+            $paddleTransactionId = $eventData['id'] ?? null;
+            $paddleTransactionStatus = $eventData['status'];
+            // update transaction
+
+            $total = $eventData['details']['totals']['grand_total'];  // proration leads to amount update (= 0)
+            $fees = $eventData['details']['totals']['fee'] ?? 0;
+
+            $this->transactionManager->updateTransactionByPaymentProviderTxId(
+                $paddleTransactionId,
+                $paddleTransactionStatus,
+                $this->mapPaddleTransactionStatusToTransactionStatus($paddleTransactionStatus),
+                null,
+                intval($total),
+                intval($fees),
+            );
+        } else if (
+            $eventType == 'transaction.past_due' ||
+            $eventType == 'transaction.payment_failed'
+        ) {
+            $paddleTransactionId = $eventData['id'] ?? null;
+            $paddleTransactionStatus = $eventData['status'];
+            // update transaction
+
+            $errorReason = $eventData['payments'] ? ($eventData['payments'][0]['error_code'] ?? null ) : null;
+
+            $this->transactionManager->updateTransactionByPaymentProviderTxId(
+                $paddleTransactionId,
+                $paddleTransactionStatus,
+                $this->mapPaddleTransactionStatusToTransactionStatus($paddleTransactionStatus),
+                $errorReason,
+            );
+
+            $subscriptionUuid = $eventData['custom_data']['subscriptionUuid'] ?? null;
+            $subscription = $this->subscriptionManager->findByUuidOrFail($subscriptionUuid);
+            $this->subscriptionManager->handleInvoicePaymentFailed($subscription);
+
+        }
+        else {
+            return response()->json();
+        }
+
+        return response()->json();
+    }
+
+    private function mapPaddleTransactionStatusToTransactionStatus(string $paddleStatus): TransactionStatus
+    {
+        if ($paddleStatus == 'completed') {
+            return TransactionStatus::SUCCESS;
+        }
+
+        if ($paddleStatus == 'canceled') {
+            return TransactionStatus::FAILED;
+        }
+
+        if ($paddleStatus == 'ready' ||
+            $paddleStatus == 'billed' ||
+            $paddleStatus == 'past_due' ||
+            $paddleStatus == 'paid'
+        ) {
+            return TransactionStatus::PENDING;
+        }
+
+        if ($paddleStatus == 'draft') {
+            return TransactionStatus::NOT_STARTED;
+        }
+
+        return TransactionStatus::NOT_STARTED;
+    }
+
+    private function mapPaddleSubscriptionStatusToSubscriptionStatus(string $paddleSubscriptionStatus)
+    {
+        if ($paddleSubscriptionStatus == 'active' || $paddleSubscriptionStatus == 'trialing') {
+            return SubscriptionStatus::ACTIVE;
+        }
+
+        if ($paddleSubscriptionStatus == 'past_due') {
+            return SubscriptionStatus::PAST_DUE;
+        }
+
+        if ($paddleSubscriptionStatus == 'canceled') {
+            return SubscriptionStatus::CANCELED;
+
+        }
+
+        if ($paddleSubscriptionStatus == 'paused') {
+            return SubscriptionStatus::PAUSED;
+        }
+
+        return SubscriptionStatus::INACTIVE;
+
+    }
+
+    private function validateSignature(Request $request): bool
+    {
+        $secret = config('services.paddle.webhook_secret');
+        $signature = $request->header('Paddle-Signature', '');
+
+        $timestampPart = explode(';', $signature)[0] ?? '';
+        $h1Part = explode(';', $signature)[1] ?? '';
+        $timestamp = explode('=', $timestampPart)[1] ?? '';
+        $h1 = explode('=', $h1Part)[1] ?? '';
+
+        $data = $timestamp . ':' . $request->getContent();
+
+        $contentSignature = hash_hmac('sha256', $data, $secret);
+
+        if ($contentSignature !== $h1) {
+            return false;
+        }
+
+        return true;
+    }
+}

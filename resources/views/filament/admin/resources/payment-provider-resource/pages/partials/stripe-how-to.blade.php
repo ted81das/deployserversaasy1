@@ -1,0 +1,46 @@
+<div class="px-4">
+    <p class="pb-4">
+        {{__('To integrate Stripe with your application, you need to do the following steps:')}}
+    </p>
+    <ol class="list-decimal ">
+        <li class="pb-4">
+            <strong>
+                {{ __('Login to ') }} <a href="https://dashboard.stripe.com/" target="_blank" class="text-blue-500 hover:underline">{{ __('Stripe Dashboard') }}</a>
+            </strong>
+        </li>
+        <li class="pb-4">
+            <p>
+                {{ __('Depending whether you want to use the test or live environment, you might need to tick the "Test mode" switch in the top right corner.') }}
+            </p>
+        </li>
+        <li class="pb-4">
+            <strong>
+                {{ __('Publishable key') }}
+            </strong>
+            <p>
+                {{ __('On the top menu, click on "Developers" > "API keys". Copy the "Publishable key" and enter it into the field in the form.') }}
+            </p>
+        </li>
+        <li class="pb-4">
+            <strong>
+                {{ __('Secret key') }}
+            </strong>
+            <p>
+                {{ __('On the same page, click "Reveal live key token" and copy the "Secret key" and enter it into the field in the form.') }}
+            </p>
+        </li>
+        <li class="pb-4">
+            <strong>
+                {{ __('Webhook Signing Secret') }}
+            </strong>
+            <p>
+                {{ __('On the same page, click on "Webhooks" tab. Click on "Add endpoint" and enter the URL below.') }}
+                <code class="bg-gray-100 px-4 py-2 block my-4 overflow-x-scroll">
+                    {{ route('payments-providers.stripe.webhook') }}
+                </code>
+                {{ __('Click on "Select events" then select all events under "Payment Intent", "Customer" and "Invoice". So all "payment_intent.xyz", "customer.xyz" and "invoice.xyz" should be selected.') }}
+                {{ __('Click on "Add endpoint" and copy the generated webhook signing secret and enter it into the field in the form.') }}
+            </p>
+        </li>
+    </ol>
+</div>

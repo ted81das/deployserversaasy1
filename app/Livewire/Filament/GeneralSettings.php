@@ -1,0 +1,179 @@
+<?php
+
+namespace App\Livewire\Filament;
+
+use App\Models\Currency;
+use App\Models\EmailProvider;
+use App\Services\ConfigManager;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Tabs;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Forms\Form;
+use Filament\Notifications\Notification;
+use Livewire\Component;
+
+class GeneralSettings extends Component implements HasForms
+{
+    private ConfigManager $configManager;
+
+    use InteractsWithForms;
+
+    public ?array $data = [];
+
+    public function render()
+    {
+        return view('livewire.filament.general-settings');
+    }
+
+    public function boot(ConfigManager $configManager): void
+    {
+        $this->configManager = $configManager;
+    }
+
+    public function mount(): void
+    {
+        $this->form->fill([
+            'site_name' => $this->configManager->get('app.name'),
+            'support_email' => $this->configManager->get('app.support_email'),
+            'date_format' => $this->configManager->get('app.date_format'),
+            'datetime_format' => $this->configManager->get('app.datetime_format'),
+            'default_currency' => $this->configManager->get('app.default_currency'),
+            'google_tracking_id' => $this->configManager->get('app.google_tracking_id'),
+            'payment_proration_enabled' => $this->configManager->get('app.payment.proration_enabled'),
+            'default_email_provider' => $this->configManager->get('mail.default'),
+            'default_email_from_name' => $this->configManager->get('mail.from.name'),
+            'default_email_from_email' => $this->configManager->get('mail.from.address'),
+
+        ]);
+    }
+
+    public function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Tabs::make()->tabs([
+                    Tabs\Tab::make(__('Application'))
+                        ->icon('heroicon-o-globe-alt')
+                        ->schema([
+                            TextInput::make('site_name')
+                                ->label(__('Site Name'))
+                                ->required(),
+                            TextInput::make('support_email')
+                                ->label(__('Support Email'))
+                                ->required()
+                                ->email(),
+                            TextInput::make('date_format')
+                                ->label(__('Date Format'))
+                                ->rules([
+                                    function () {
+                                        return function (string $attribute, $value, \Closure $fail) {
+                                            // make sure that the date format is valid
+                                            $timestamp = strtotime('2021-01-01');
+                                            $date = date($value, $timestamp);
+
+                                            if ($date === false) {
+                                                $fail(__('The :attribute is invalid.'));
+                                            }
+                                        };
+                                    },
+                                ])
+                                ->required(),
+                            TextInput::make('datetime_format')
+                                ->label(__('Date Time Format'))
+                                ->rules([
+                                    function () {
+                                        return function (string $attribute, $value, \Closure $fail) {
+                                            // make sure that the date format is valid
+                                            $timestamp = strtotime('2021-01-01 00:00:00');
+                                            $date = date($value, $timestamp);
+
+                                            if ($date === false) {
+                                                $fail(__('The :attribute is invalid.'));
+                                            }
+                                        };
+                                    },
+                                ])
+                                ->required(),
+                            TextInput::make('google_tracking_id')
+                                ->label(__('Google Tracking ID')),
+                    ]),
+                    Tabs\Tab::make(__('Payment'))
+                        ->icon('heroicon-o-credit-card')
+                        ->schema([
+                            Select::make('default_currency')
+                                ->label(__('Default Currency'))
+                                ->options(function () {
+                                    $currencies = [];
+                                    foreach (Currency::all() as $currency) {
+                                        $currencies[$currency->code] = $currency->name . ' (' . $currency->code . ')';
+                                    }
+
+                                    return $currencies;
+                                })
+                                ->helperText(__('This is the currency that will be used for all payments.'))
+                                ->required()
+                                ->searchable(),
+                            Toggle::make('payment_proration_enabled')
+                                ->label(__('Payment Proration Enabled'))
+                                ->helperText(__('If enabled, when a customer upgrades or downgrades their subscription, the amount they have already paid will be prorated and credited towards their new plan.'))
+                            ]),
+                    Tabs\Tab::make(__('Email'))
+                        ->icon('heroicon-o-envelope')
+                        ->schema([
+                            Select::make('default_email_provider')
+                                ->label(__('Default Email Provider'))
+                                ->options(function () {
+                                    $providers = [
+                                        'smtp' => 'SMTP ' . __(' - Only recommended for testing (Not for production)'),
+                                    ];
+
+                                    foreach (EmailProvider::all() as $provider) {
+                                        $providers[$provider->slug] = $provider->name;
+                                    }
+
+                                    return $providers;
+                                })
+                                ->helperText(__('This is the email provider that will be used for all emails.'))
+                                ->required()
+                                ->searchable(),
+                            TextInput::make('default_email_from_name')
+                                ->label(__('Default "From" Email Name'))
+                                ->helperText(__('This is the name that will be used as the "From" name for all emails.'))
+                                ->required(),
+                            TextInput::make('default_email_from_email')
+                                ->label(__('Default "From" Email Address'))
+                                ->helperText(__('This is the email address that will be used as the "From" address for all emails.'))
+                                ->required()
+                                ->email(),
+                        ])
+                ])
+                ->persistTabInQueryString('settings-tab')
+            ])
+            ->statePath('data');
+    }
+
+    public function save(): void
+    {
+        $data = $this->form->getState();
+
+        $this->configManager->set('app.name', $data['site_name']);
+        $this->configManager->set('app.support_email', $data['support_email']);
+        $this->configManager->set('app.date_format', $data['date_format']);
+        $this->configManager->set('app.datetime_format', $data['datetime_format']);
+        $this->configManager->set('app.default_currency', $data['default_currency']);
+        $this->configManager->set('app.google_tracking_id', $data['google_tracking_id'] ?? '');
+        $this->configManager->set('app.payment.proration_enabled', $data['payment_proration_enabled']);
+        $this->configManager->set('mail.default', $data['default_email_provider']);
+        $this->configManager->set('mail.from.name', $data['default_email_from_name']);
+        $this->configManager->set('mail.from.address', $data['default_email_from_email']);
+
+
+        Notification::make()
+            ->title(__('Settings Saved'))
+            ->success()
+            ->send();
+    }
+}
