@@ -1,2 +1,6 @@
 User-agent: *
 Disallow:
+
+Sitemap: http://localhost:8081/sitemap.xml
+
+Sitemap: http://localhost:8081/docs/sitemap.xml
