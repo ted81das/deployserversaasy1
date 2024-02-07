@@ -27,6 +27,10 @@ Route::get('/', function () {
     return view('home');
 })->name('home')->middleware('sitemapped');
 
+Route::get('/features', function () {
+    return view('features');
+})->name('features')->middleware('sitemapped');
+
 Auth::routes();
 
 Route::get('/email/verify', function () {
