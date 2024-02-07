@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[225],{3492:t=>{t.exports=JSON.parse('{"title":"Getting Started","slug":"/category/getting-started","permalink":"/docs/category/getting-started","navigation":{"previous":{"title":"What is SaaSykit?","permalink":"/docs/"},"next":{"title":"Requirements","permalink":"/docs/getting-started/requirements"}}}')}}]);
