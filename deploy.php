@@ -11,13 +11,13 @@ $sudoPassword = '';  // the sudo password of the remote user
 
 $deployPath = '~/app';      // the path where the app will be deployed on the remote server
 
-$host = 'ec2-18-232-140-164.compute-1.amazonaws.com';    // the host of the remote server (can be an IP or domain)
-$domain = 'ec2-18-232-140-164.compute-1.amazonaws.com';   // the domain of the app
+$host = '1.2.3.4';    // the host of the remote server (can be an IP or domain)
+$domain = 'yourdomain.com';   // the domain of the app
 
 $repository = 'git@github.com:username/saasykit.git';      // has to be in the SSH format
-$subDirectory = 'saasykit';                               // the subdirectory of the repository where the app is located (this is the directory that contains the composer.json file)
+$subDirectory = '';    // the subdirectory of the repository where the app is located (this is the directory that contains the composer.json file). Leave empty if the app is in the root of the repository (by default)
 
-$phpVersion = '8.3'; // the version of PHP to be installed on the server
+$phpVersion = '8.2'; // the version of PHP to be installed on the server
 
 // End of configs
 /////////////////////////////////////
@@ -73,7 +73,7 @@ autostart=true
 autorestart=true
 user={{user}}
 redirect_stderr=true
-stdout_logfile={{deployPath}}/shared/storage/logs/horizon.log
+stdout_logfile={{deployPath}}/log/horizon.log
 stopwaitsecs=60
 EOF;
 
