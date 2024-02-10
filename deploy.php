@@ -108,11 +108,7 @@ task('provision:fix-aws-ssh', function () {
 
 
 desc('Generate sitemap');
-task('deploy:sitemap', function () {
-    if (!test('[ -f {{release_path}}/public/sitemap.xml ]')) {
-        artisan('app:generate-sitemap', ['skipIfNoEnv']);
-    }
-});
+task('deploy:sitemap', artisan('app:generate-sitemap', ['skipIfNoEnv']));
 
 // seed database
 after('artisan:migrate', 'artisan:db:seed');
