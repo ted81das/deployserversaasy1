@@ -36,7 +36,7 @@
         <div class="w-full">
             <div class="flex justify-between">
                 <a href="{{route('home')}}">
-                    <img src="{{asset('images/logo-dark.svg')}}" class="inline-block h-6 m-6" alt="Logo" />
+                    <img src="{{asset('images/logo-dark.png')}}" class="inline-block h-6 m-6" alt="Logo" />
                 </a>
 
                 <div class="self-end text-primary-300 m-4 text-xs">

@@ -21,7 +21,7 @@
     <div class="max-w-3xl mx-auto">
         <div class="flex flex-col p-4 items-center justify-center">
             <a href="{{route('home')}}">
-                <img src="{{ asset('images/logo-dark.svg') }}" class="h-6" alt="Logo" />
+                <img src="{{ asset('images/logo-dark.png') }}" class="h-6" alt="Logo" />
             </a>
             <div class="p-4 mt-4">
                 <div class="rounded border border-t-2 border-t-primary-500 shadow w-full p-4">

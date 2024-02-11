@@ -38,7 +38,7 @@
                  <div class="md:basis-3/5 flex flex-col">
                      <div class="hidden md:block">
                          <a href="{{route('home')}}">
-                            <img src="{{asset('images/logo-dark.svg')}}" class="inline-block h-6 m-6" alt="Logo" />
+                            <img src="{{asset('images/logo-dark.png')}}" class="inline-block h-6 m-6" alt="Logo" />
                          </a>
                      </div>
 
@@ -48,7 +48,7 @@
                     <div class="flex justify-between md:justify-end">
                         <div class="md:hidden">
                             <a href="{{route('home')}}">
-                                <img src="{{asset('images/logo-dark.svg')}}" class="inline-block h-6 m-6" alt="Logo" />
+                                <img src="{{asset('images/logo-dark.png')}}" class="inline-block h-6 m-6" alt="Logo" />
                             </a>
                         </div>
 
