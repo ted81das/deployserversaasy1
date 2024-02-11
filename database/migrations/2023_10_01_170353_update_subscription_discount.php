@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('subscription_discount', function (Blueprint $table) {
+        Schema::table('subscription_discounts', function (Blueprint $table) {
             $table->string('type');
             $table->unsignedFloat('amount');
             $table->dateTime('valid_until')->nullable();
@@ -24,7 +24,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('subscription_discount', function (Blueprint $table) {
+        Schema::table('subscription_discounts', function (Blueprint $table) {
             $table->dropColumn('type');
             $table->dropColumn('amount');
             $table->dropColumn('valid_until');

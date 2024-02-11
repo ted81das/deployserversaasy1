@@ -43,6 +43,8 @@ class MetricsManager
 
         $totalRevenueUpToMonth = 0;
         $totalUsersUpToMonth = 0;
+        $monthToTotalRevenueMap = [];
+        $monthToTotalUsersMap = [];
         foreach ($allMonths as $month) {
             if (isset($transactionsByDateMap[$month])) {
                 $totalRevenueUpToMonth += $transactionsByDateMap[$month]->total_revenue;
@@ -55,7 +57,58 @@ class MetricsManager
             if ($totalUsersUpToMonth > 0) {
                 $arpuData[$month] = money(intval(round($totalRevenueUpToMonth / $totalUsersUpToMonth)), config('app.default_currency'))->formatByDecimal();
             }
+
+            $monthToTotalRevenueMap[$month] = $totalRevenueUpToMonth;
+            $monthToTotalUsersMap[$month] = $totalUsersUpToMonth;
         }
+
+        if (count($arpuData) == 0) {
+            return $arpuData;
+        }
+
+        // fill in gap months
+        // fill gaps in $monthToTotalRevenueMap
+
+        $startMonth = $allMonths[0];
+        $endMonth = $allMonths[count($allMonths) - 1];
+        $currentMonth = $startMonth;
+
+        while ($currentMonth != $endMonth) {
+            if (!isset($monthToTotalRevenueMap[$currentMonth])) {
+                $previousMonth = date('Y-m', strtotime($currentMonth . ' -1 month'));
+                $monthToTotalRevenueMap[$currentMonth] = $monthToTotalRevenueMap[$previousMonth];
+            }
+
+            $currentMonth = date('Y-m', strtotime($currentMonth . ' +1 month'));
+        }
+
+        // fill gaps in $monthToTotalUsersMap
+        $currentMonth = $startMonth;
+        while ($currentMonth != $endMonth) {
+            if (!isset($monthToTotalUsersMap[$currentMonth])) {
+                $previousMonth = date('Y-m', strtotime($currentMonth . ' -1 month'));
+                $monthToTotalUsersMap[$currentMonth] = $monthToTotalUsersMap[$previousMonth];
+            }
+
+            $currentMonth = date('Y-m', strtotime($currentMonth . ' +1 month'));
+        }
+
+        // fill gaps in $arpuData
+
+        $startMonth = $allMonths[0];
+        $endMonth = $allMonths[count($allMonths) - 1];
+        $currentMonth = $startMonth;
+
+        while ($currentMonth != $endMonth) {
+            if (!isset($arpuData[$currentMonth])) {
+                $previousMonth = date('Y-m', strtotime($currentMonth . ' -1 month'));
+                $arpuData[$currentMonth] = money(intval(round($monthToTotalRevenueMap[$previousMonth] / $monthToTotalUsersMap[$previousMonth])), config('app.default_currency'))->formatByDecimal();
+            }
+
+            $currentMonth = date('Y-m', strtotime($currentMonth . ' +1 month'));
+        }
+
+        ksort($arpuData);
 
         return $arpuData;
     }
@@ -119,8 +172,31 @@ class MetricsManager
             $mrrData[$month] =  money(intval(round($currentMrr)), config('app.default_currency'))->formatByDecimal();
         }
 
-        return $mrrData;
+        if (count($mrrData) == 0) {
+            return $mrrData;
+        }
 
+        // fill in gap months
+        $startMonth = $allMonths[0];
+        $endMonth = $allMonths[count($allMonths) - 1];
+        $currentMonth = $startMonth;
+
+        // format is Y-m
+
+        while ($currentMonth != $endMonth) {
+            if (!isset($mrrData[$currentMonth])) {
+                $previousMonth = date('Y-m', strtotime($currentMonth . ' -1 month'));
+                $mrrData[$currentMonth] = $mrrData[$previousMonth];
+            }
+
+            $currentMonth = date('Y-m', strtotime($currentMonth . ' +1 month'));
+
+
+        }
+
+        ksort($mrrData);
+
+        return $mrrData;
     }
     public function calculateChurnRateChart()
     {
@@ -177,6 +253,27 @@ class MetricsManager
                 $totalSubscriptions += $startsEachMonthMap[$date]->total_started;
             }
         }
+
+        if (count($churnData) == 0) {
+            return $churnData;
+        }
+
+        // fill in gap months
+
+        $startMonth = $datesMap[0];
+        $endMonth = $datesMap[count($datesMap) - 1];
+        $currentMonth = $startMonth;
+
+        while ($currentMonth != $endMonth) {
+            if (!isset($churnData[$currentMonth])) {
+                $previousMonth = date('Y-m', strtotime($currentMonth . ' -1 month'));
+                $churnData[$currentMonth] = 0;
+            }
+
+            $currentMonth = date('Y-m', strtotime($currentMonth . ' +1 month'));
+        }
+
+        ksort($churnData);
 
         return $churnData;
     }

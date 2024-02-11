@@ -192,7 +192,7 @@ class DemoDatabaseSeeder extends Seeder
 
         for ($i = 0; $i < $numberOfUsers; $i++) {
 
-            $numberOfIntervalsBack = rand(10, 20);
+            $numberOfIntervalsBack = $plan->interval == 'month' ? rand(10, 20) : rand(1, 4);
             $createdDate = now()->sub($plan->interval->date_identifier, $numberOfIntervalsBack);
 
             $user = User::factory()->create(
@@ -241,14 +241,13 @@ class DemoDatabaseSeeder extends Seeder
             }
 
         }
-
     }
 
     private function addDiscounts()
     {
         $discountsToAdd = rand(5, 10);
 
-        for ($i = 0; $i < $discountsToAdd; $i++) {
+        for ($i = 1; $i <= $discountsToAdd; $i++) {
             $discount = Discount::create([
                 'name' => 'Discount ' . $i,
                 'amount' => rand(10, 70),
