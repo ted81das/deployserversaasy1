@@ -39,10 +39,11 @@ class StripeProvider implements PaymentProviderInterface
         /** @var User $user */
         $user = auth()->user();
 
-        $stripeCustomerId = $this->findOrCreateStripeCustomer($user);
-        $stripeProductId = $this->findOrCreateStripeProduct($plan, $paymentProvider);
-
         try {
+
+            $stripeCustomerId = $this->findOrCreateStripeCustomer($user);
+            $stripeProductId = $this->findOrCreateStripeProduct($plan, $paymentProvider);
+            $stripePriceId = $this->findOrCreateStripeProductPrice($plan, $paymentProvider, $stripeProductId);
 
             $stripe = $this->getClient();
 
@@ -59,15 +60,7 @@ class StripeProvider implements PaymentProviderInterface
                 'cancel_url' => route('checkout.subscription', ['planSlug' => $plan->slug]),
                 'mode' => 'subscription',
                 'line_items' => [[
-                    'price_data' => [
-                        'unit_amount' => $subscription->price,
-                        'currency' => $currencyCode,
-                        'product' => $stripeProductId,
-                        'recurring' => [
-                            'interval' => $subscription->interval()->firstOrFail()->date_identifier,
-                            'interval_count' => $subscription->interval_count,
-                        ],
-                    ],
+                    'price' => $stripePriceId,
                     'quantity' => 1,
                 ]],
                 'subscription_data' => [
@@ -109,8 +102,10 @@ class StripeProvider implements PaymentProviderInterface
     ): bool {
         $paymentProvider = $this->assertProviderIsActive();
 
-        $stripeProductId = $this->findOrCreateStripeProduct($newPlan, $paymentProvider);
         try {
+
+            $stripeProductId = $this->findOrCreateStripeProduct($newPlan, $paymentProvider);
+            $stripePriceId = $this->findOrCreateStripeProductPrice($newPlan, $paymentProvider, $stripeProductId);
 
             $stripe = $this->getClient();
 
@@ -132,15 +127,7 @@ class StripeProvider implements PaymentProviderInterface
             $subscriptionUpdateObject = [
                 'items' => array_merge($itemsToDelete, [
                     [
-                        'price_data' => [
-                            'unit_amount' => $planPrice->price,
-                            'currency' => $planPrice->currency()->firstOrFail()->code,
-                            'product' => $stripeProductId,
-                            'recurring' => [
-                                'interval' => $newPlan->interval()->firstOrFail()->date_identifier,
-                                'interval_count' => $newPlan->interval_count,
-                            ],
-                        ],
+                        'price' => $stripePriceId,
                         'quantity' => 1,
                     ],
                 ]),
@@ -390,6 +377,33 @@ class StripeProvider implements PaymentProviderInterface
         $this->discountManager->addPaymentProviderDiscountId($discount, $paymentProvider, $stripeDiscountId);
 
         return $stripeDiscountId;
+    }
+
+    private function findOrCreateStripeProductPrice(Plan $plan, PaymentProvider $paymentProvider, string $stripeProductId): string
+    {
+        $planPrice = $this->calculationManager->getPlanPrice($plan);
+
+        $stripeProductPriceId = $this->planManager->getPaymentProviderPriceId($planPrice, $paymentProvider);
+
+        if ($stripeProductPriceId !== null) {
+            return $stripeProductPriceId;
+        }
+
+        $stripe = $this->getClient();
+
+        $stripeProductPriceId = $stripe->prices->create([
+            'product' => $stripeProductId,
+            'unit_amount' => $planPrice->price,
+            'currency' => $planPrice->currency()->firstOrFail()->code,
+            'recurring' => [
+                'interval' => $plan->interval()->firstOrFail()->date_identifier,
+                'interval_count' => $plan->interval_count,
+            ],
+        ])->id;
+
+        $this->planManager->addPaymentProviderPriceId($planPrice, $paymentProvider, $stripeProductPriceId);
+
+        return $stripeProductPriceId;
     }
 
     public function getName(): string

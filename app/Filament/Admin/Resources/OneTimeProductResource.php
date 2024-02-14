@@ -2,31 +2,27 @@
 
 namespace App\Filament\Admin\Resources;
 
-use App\Models\Product;
+use App\Filament\Admin\Resources\OneTimeProductResource\Pages;
+use App\Filament\Admin\Resources\OneTimeProductResource\RelationManagers;
+use App\Models\OneTimeProduct;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules\Unique;
-use const _PHPStan_7c8075089\__;
 
-class ProductResource extends Resource
+class OneTimeProductResource extends Resource
 {
-    protected static ?string $model = Product::class;
-
-//    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $model = OneTimeProduct::class;
 
     protected static ?string $navigationGroup = 'Product Management';
-
-    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make([
+                    Forms\Components\Section::make([
                     Forms\Components\TextInput::make('name')
                         ->required()
                         ->maxLength(255),
@@ -35,7 +31,7 @@ class ProductResource extends Resource
                             if (empty($state)) {
                                 // add a random string if there is a product with the same slug
                                 $state = Str::slug($get('name'));
-                                if (Product::where('slug', $state)->exists()) {
+                                if (OneTimeProduct::where('slug', $state)->exists()) {
                                     $state .= '-' . Str::random(5);
                                 }
 
@@ -51,40 +47,32 @@ class ProductResource extends Resource
                         ->disabledOn('edit'),
                     Forms\Components\Textarea::make('description')
                         ->helperText(__('One line description of the product.')),
-                    Forms\Components\Toggle::make('is_popular')
-                        ->label(__('Popular product'))
-                        ->helperText(__('Mark this product as popular. This will be used to highlight this product in the pricing page.')),
-                    Forms\Components\Toggle::make('is_default')
-                            ->label(__('Is default product'))
-                            ->validationAttribute(__('default product'))
-                            ->unique(ignoreRecord: true, modifyRuleUsing: function (Unique $rule) {
-                                return $rule->where('is_default', true);
-                            })
-                            ->default(false)
-                            ->helperText(__('A default product is a kind of a hidden product that allows you to set the features (and metadata) for users that have no active plan. Add a default product if you want to offer a free tier to your users. You can only have 1 default product and it cannot have any plans.')),
+                    Forms\Components\TextInput::make('max_quantity')
+                        ->type('number')
+                        ->required()
+                        ->default(1)
+                        ->minValue(1)
+                        ->helperText(__('The maximum quantity of this product that can be purchased at once. If set to 1, customers will not be able to edit the quantity on the checkout page.')),
                     Forms\Components\KeyValue::make('metadata')
                         ->helperText(__('Add any additional data to this product. You can use this to store product features that could later be retrieved to serve your users.'))
                         ->keyLabel(__('Property name'))
                         ->valueLabel(__('Property value')),
                     Forms\Components\Repeater::make('features')
-                        ->helperText(__('Add features that this plan offers. These will be displayed on the pricing page and on the checkout page.'))
+                        ->helperText(__('Add features that this product offers. These will be displayed on the checkout page.'))
                         ->schema([
                             Forms\Components\TextInput::make('feature')->required(),
                         ])
-                ]),
-        ]);
+                ])
+            ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
-            ->heading(__('A product is bundle of features that you offer to your customers.'))
-            ->description(__('If you want to provide a Starter, Pro and Premium offerings to your customers, create a product for each of them.'))
+            ->description(__('A one time purchase product is a product that is purchased once and does not have any plans.'))
             ->columns([
                 Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('slug')->searchable()->sortable(),
-                Tables\Columns\IconColumn::make('is_popular')->label(__('Popular'))->boolean(),
-                Tables\Columns\IconColumn::make('is_default')->label(__('Default'))->boolean(),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime(config('app.datetime_format')),
             ])
@@ -98,23 +86,24 @@ class ProductResource extends Resource
             ]);
     }
 
-    public static function getRelations(): array
-    {
-        return [
-        ];
-    }
-
     public static function getPages(): array
     {
         return [
-            'index' => \App\Filament\Admin\Resources\ProductResource\Pages\ListProducts::route('/'),
-            'create' => \App\Filament\Admin\Resources\ProductResource\Pages\CreateProduct::route('/create'),
-            'edit' => \App\Filament\Admin\Resources\ProductResource\Pages\EditProduct::route('/{record}/edit'),
+            'index' => Pages\ListOneTimeProducts::route('/'),
+            'create' => Pages\CreateOneTimeProduct::route('/create'),
+            'edit' => Pages\EditOneTimeProduct::route('/{record}/edit'),
         ];
     }
 
     public static function getModelLabel(): string
     {
-        return  __('Subscription Product');
+        return __('One Time Purchase Product');
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\PricesRelationManager::class,
+        ];
     }
 }

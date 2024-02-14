@@ -21,7 +21,9 @@ class SubscriptionResource extends Resource
 {
     protected static ?string $model = Subscription::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+//    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    protected static ?string $navigationGroup = 'Revenue';
 
     protected static array $cachedSubscriptionHistoryComponents = [];
 
@@ -238,7 +240,7 @@ class SubscriptionResource extends Resource
                                     ->hidden(fn (Subscription $record): bool => $record->discounts->isEmpty() ||
                                         ($record->discounts[0]->valid_until !== null && $record->discounts[0]->valid_until < now())
                                     )
-                                    ->description(__('View details about your discount.'))
+                                    ->description(__('View details about subscription discount.'))
                                     ->schema([
                                         TextEntry::make('discounts.amount')->formatStateUsing(function (string $state, $record) {
                                             if ($record->discounts[0]->type === DiscountConstants::TYPE_PERCENTAGE) {

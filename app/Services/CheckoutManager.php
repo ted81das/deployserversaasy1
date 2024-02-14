@@ -15,7 +15,7 @@ class CheckoutManager
 
     }
 
-    public function initCheckout(string $planSlug)
+    public function initSubscriptionCheckout(string $planSlug)
     {
         $subscription = $this->subscriptionManager->findNewByPlanSlugAndUser($planSlug, auth()->id());
         if ($subscription === null) {

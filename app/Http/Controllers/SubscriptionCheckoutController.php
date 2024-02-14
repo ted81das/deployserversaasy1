@@ -15,7 +15,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-class CheckoutController extends Controller
+class SubscriptionCheckoutController extends Controller
 {
     public function __construct(
         private CheckoutManager    $checkoutManager,
@@ -35,7 +35,7 @@ class CheckoutController extends Controller
             $checkoutDto = $this->resetSubscriptionCheckoutDto();
         }
 
-        $subscription = $this->checkoutManager->initCheckout($planSlug);
+        $subscription = $this->checkoutManager->initSubscriptionCheckout($planSlug);
 
         $discount = null;
         if ($checkoutDto->discountCode !== null) {

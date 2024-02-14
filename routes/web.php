@@ -68,17 +68,17 @@ Route::get('/auth/{provider}/callback', [OAuthController::class, 'callback'])
     ->name('auth.oauth.callback');
 
 Route::get('/checkout/plan/{planSlug}', [
-    App\Http\Controllers\CheckoutController::class,
+    App\Http\Controllers\SubscriptionCheckoutController::class,
     'subscriptionCheckout',
 ])->name('checkout.subscription')->middleware(\App\Http\Middleware\RedirectedAuth::class);
 
 Route::post('/checkout/plan/{planSlug}', [
-    App\Http\Controllers\CheckoutController::class,
+    App\Http\Controllers\SubscriptionCheckoutController::class,
     'subscriptionCheckout',
 ])->name('checkout.subscription.post')->middleware(\App\Http\Middleware\RedirectedAuth::class);
 
 Route::get('/checkout/subscription/success', [
-    App\Http\Controllers\CheckoutController::class,
+    App\Http\Controllers\SubscriptionCheckoutController::class,
     'subscriptionCheckoutSuccess',
 ])->name('checkout.subscription.success')->middleware('auth');
 

@@ -17,14 +17,16 @@ class PlanPrice extends Model
 
     protected static function booted(): void
     {
-        static::updated(function (PlanPrice $planPrice) {
+        static::updating(function (PlanPrice $planPrice) {
             // delete plan_price_payment_provider_data when plan price is updated to recreate provider prices when plan price is updated
-             $planPrice->planPricePaymentProviderData()->delete();
+            if ($planPrice->getOriginal('price') !== $planPrice->price) {
+                $planPrice->planPricePaymentProviderData()->delete();
+            }
         });
 
-        static::deleted(function (PlanPrice $planPrice) {
+        static::deleting(function (PlanPrice $planPrice) {
             // delete plan_price_payment_provider_data when plan price is deleted to recreate provider prices when plan price is deleted
-             $planPrice->planPricePaymentProviderData()->delete();
+            $planPrice->planPricePaymentProviderData()->delete();
         });
     }
 
