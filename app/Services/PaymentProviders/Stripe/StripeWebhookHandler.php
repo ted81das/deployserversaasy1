@@ -2,11 +2,13 @@
 
 namespace App\Services\PaymentProviders\Stripe;
 
+use App\Constants\OrderStatus;
 use App\Constants\SubscriptionStatus;
 use App\Constants\TransactionStatus;
 use App\Models\Currency;
 use App\Models\PaymentProvider;
 use App\Models\UserStripeData;
+use App\Services\OrderManager;
 use App\Services\SubscriptionManager;
 use App\Services\TransactionManager;
 use Carbon\Carbon;
@@ -19,6 +21,7 @@ class StripeWebhookHandler
     public function __construct(
         private SubscriptionManager $subscriptionManager,
         private TransactionManager $transactionManager,
+        private OrderManager $orderManager,
     ) {
 
     }
@@ -134,7 +137,116 @@ class StripeWebhookHandler
                 'stripe_payment_method_id' => $defaultPaymentMethodId,
             ]);
 
-        } else {
+        }
+        else if ($event->type == 'payment_intent.succeeded') { // order event
+            $paymentIntentId = $event->data->object->id;
+            $orderUuid = $event->data->object->metadata?->order_uuid;
+
+            if (!empty($orderUuid)) {
+                $order = $this->orderManager->findByUuidOrFail($orderUuid);
+                $fees = $this->calculateFees($paymentIntentId);
+                $currency = Currency::where('code', strtoupper($event->data->object->currency))->firstOrFail();
+
+                $transaction = $this->transactionManager->getTransactionByPaymentProviderTxId($paymentIntentId);
+
+                if ($transaction) {
+                    $this->transactionManager->updateTransaction(
+                        $transaction,
+                        $event->data->object->status,
+                        TransactionStatus::SUCCESS,
+                        null,
+                        $event->data->object->amount,
+                        $fees,
+                    );
+                } else {
+                    $this->transactionManager->createForOrder(
+                        $order,
+                        $event->data->object->amount,
+                        0,
+                        $order->total_discount_amount,
+                        $fees,
+                        $currency,
+                        $paymentProvider,
+                        $paymentIntentId,
+                        $event->data->object->status,
+                        TransactionStatus::SUCCESS,
+                    );
+                }
+
+                $this->orderManager->updateOrder($order, [
+                    'status' => OrderStatus::SUCCESS,
+                    'total_amount_after_discount' => $event->data->object->amount,
+                ]);
+            }
+        }
+        elseif ($event->type == 'charge.refunded') { // order event
+            $paymentIntentId = $event->data->object->payment_intent;
+
+            $orderUuid = $event->data->object->metadata?->order_uuid;
+
+            if (!empty($orderUuid)) {
+
+                $transaction = $this->transactionManager->getTransactionByPaymentProviderTxId($paymentIntentId);
+
+                if ($transaction) {
+                    $this->transactionManager->updateTransaction(
+                        $transaction,
+                        'refunded',
+                        TransactionStatus::REFUNDED,
+                        null,
+                        null,
+                        null,
+                    );
+
+                    if ($transaction->order) {
+                        $this->orderManager->updateOrder($transaction->order, [
+                            'status' => OrderStatus::REFUNDED,
+                        ]);
+                    }
+                }
+            }
+        }
+        elseif ($event->type == 'charge.failed') { // order event
+            $paymentIntentId = $event->data->object->payment_intent;
+
+            $orderUuid = $event->data->object->metadata?->order_uuid;
+
+            if (!empty($orderUuid)) {
+
+                $transaction = $this->transactionManager->getTransactionByPaymentProviderTxId($paymentIntentId);
+
+                if ($transaction) {
+                    $this->transactionManager->updateTransaction(
+                        $transaction,
+                        $event->data->object->status,
+                        TransactionStatus::FAILED,
+                        null,
+                        null,
+                        null,
+                    );
+                }
+            }
+        }
+        else if (str_starts_with($event->type, 'charge.dispute.')) { // order event
+            $paymentIntentId = $event->data->object->payment_intent;
+
+            $transaction = $this->transactionManager->getTransactionByPaymentProviderTxId($paymentIntentId);
+
+            if ($transaction) {
+                $this->transactionManager->updateTransaction(
+                    $transaction,
+                    $event->data->object->status,
+                    TransactionStatus::DISPUTED,
+                );
+
+                if ($transaction->order) {
+                    $this->orderManager->updateOrder($transaction->order, [
+                        'status' => OrderStatus::DISPUTED,
+                    ]);
+                }
+            }
+        }
+        else {
             return response()->json();
         }
 

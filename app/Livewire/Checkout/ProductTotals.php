@@ -3,19 +3,20 @@
 namespace App\Livewire\Checkout;
 
 use App\Constants\SessionConstants;
-use App\Dto\SubscriptionCheckoutDto;
+use App\Dto\CartDto;
 use App\Dto\TotalsDto;
-use App\Models\Plan;
+use App\Models\OneTimeProduct;
+use App\Models\Order;
 use App\Services\CalculationManager;
 use App\Services\DiscountManager;
 use Livewire\Component;
 
-class Totals extends Component
+class ProductTotals extends Component
 {
     public $page;
-    public $planSlug;
-    public $planHasTrial = false;
+    public $order;
     public $subtotal;
+    public $product;
     public $discountAmount;
     public $amountDue;
     public $currencyCode;
@@ -30,11 +31,11 @@ class Totals extends Component
         $this->calculationManager = $calculationManager;
     }
 
-    public function mount(TotalsDto $totals, Plan $plan, $page)
+    public function mount(TotalsDto $totals, Order $order, OneTimeProduct $product, $page)
     {
         $this->page = $page;
-        $this->planSlug = $plan->slug;
-        $this->planHasTrial = $plan->has_trial;
+        $this->order = $order;
+        $this->product = $product;
         $this->totals = $totals;
         $this->subtotal = $totals->subtotal;
         $this->discountAmount = $totals->discountAmount;
@@ -42,16 +43,14 @@ class Totals extends Component
         $this->currencyCode = $totals->currencyCode;
     }
 
-    public function getCodeFromSession()
+    private function getCartDto(): ?CartDto
     {
-        /** @var SubscriptionCheckoutDto $subscriptionCheckoutDto */
-        $subscriptionCheckoutDto = session()->get(SessionConstants::SUBSCRIPTION_CHECKOUT_DTO);
+        return session()->get(SessionConstants::CART_DTO);
+    }
 
-        if ($subscriptionCheckoutDto === null) {
-            return null;
-        }
-
-        return $subscriptionCheckoutDto->discountCode;
+    private function saveCartDto(CartDto $cartDto): void
+    {
+        session()->put(SessionConstants::CART_DTO, $cartDto);
     }
 
     public function add()
@@ -63,25 +62,17 @@ class Totals extends Component
             return;
         }
 
-        $plan = Plan::where('slug', $this->planSlug)->where('is_active', true)->firstOrFail();
-
-        $isRedeemable = $this->discountManager->isCodeRedeemable($code, auth()->user(), $plan);
+        $isRedeemable = $this->discountManager->isCodeRedeemableForOneTimeProduct($code, auth()->user(), $this->product);
 
         if (!$isRedeemable) {
             session()->flash('error', __('This discount code is invalid.'));
             return;
         }
 
-        /** @var SubscriptionCheckoutDto $subscriptionCheckoutDto */
-        $subscriptionCheckoutDto = session()->get(SessionConstants::SUBSCRIPTION_CHECKOUT_DTO);
-        if ($subscriptionCheckoutDto === null) {
-            $subscriptionCheckoutDto = new SubscriptionCheckoutDto();
-        }
+        $cartDto = $this->getCartDto();
+        $cartDto->discountCode = $code;
 
-        $subscriptionCheckoutDto->discountCode = $code;
-        $subscriptionCheckoutDto->planSlug = $this->planSlug;
-
-        session()->put(SessionConstants::SUBSCRIPTION_CHECKOUT_DTO, $subscriptionCheckoutDto);
+        $this->saveCartDto($cartDto);
 
         $this->updateTotals();
 
@@ -92,16 +83,9 @@ class Totals extends Component
 
     public function remove()
     {
-        /** @var SubscriptionCheckoutDto $subscriptionCheckoutDto */
-        $subscriptionCheckoutDto = session()->get(SessionConstants::SUBSCRIPTION_CHECKOUT_DTO);
-
-        if ($subscriptionCheckoutDto === null) {
-            return;
-        }
-
-        $subscriptionCheckoutDto->discountCode = null;
-
-        session()->put(SessionConstants::SUBSCRIPTION_CHECKOUT_DTO, $subscriptionCheckoutDto);
+        $cartDto = $this->getCartDto();
+        $cartDto->discountCode = null;
+        $this->saveCartDto($cartDto);
 
         session()->flash('success', __('The discount code has been removed.'));
 
@@ -112,10 +96,11 @@ class Totals extends Component
 
     protected function updateTotals()
     {
-        $totals = $this->calculationManager->calculatePlanTotals(
+        $cartDto = $this->getCartDto();
+        $totals = $this->calculationManager->calculateOrderTotals(
+            $this->order,
             auth()->user(),
-            $this->planSlug,
-            $this->getCodeFromSession(),
+            $cartDto->discountCode
         );
 
         $this->subtotal = $totals->subtotal;
@@ -126,8 +111,8 @@ class Totals extends Component
 
     public function render()
     {
-        return view('livewire.checkout.totals', [
-            'addedCode' => $this->getCodeFromSession(),
+        return view('livewire.checkout.product-totals', [
+            'addedCode' => $this->getCartDto()->discountCode,
         ]);
     }
 }

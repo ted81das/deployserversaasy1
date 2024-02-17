@@ -44,4 +44,9 @@ class Order extends Model
         // used to find a model by its uuid instead of its id
         return 'uuid';
     }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
+    }
 }

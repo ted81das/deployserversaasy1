@@ -11,11 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('discount_plan', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('discount_id')->constrained()->onDelete('cascade');
-            $table->foreignId('plan_id')->constrained()->onDelete('cascade');
-            $table->timestamps();
+        Schema::table('discount_code_redemptions', function (Blueprint $table) {
+            $table->foreignId('order_id')->nullable()->constrained()->onDelete('set null');
         });
     }
 
@@ -24,6 +21,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('discount_plan');
+        Schema::table('discount_code_redemptions', function (Blueprint $table) {
+            $table->dropForeign(['order_id']);
+            $table->dropColumn('order_id');
+        });
     }
 };

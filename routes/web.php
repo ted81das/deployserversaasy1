@@ -122,3 +122,31 @@ Route::get('/terms-of-service', function () {
 Route::get('/privacy-policy', function () {
     return view('pages.privacy-policy');
 })->name('privacy-policy')->middleware('sitemapped');
+
+
+// Product checkout routes
+
+Route::get('/cart/add/{productSlug}/{quantity?}', [
+    App\Http\Controllers\ProductCheckoutController::class,
+    'addToCart',
+])->name('cart.add');
+
+Route::get('/cart/clear', [
+    App\Http\Controllers\ProductCheckoutController::class,
+    'clearCart',
+])->name('cart.clear');
+
+Route::get('/checkout/product', [
+    App\Http\Controllers\ProductCheckoutController::class,
+    'productCheckout',
+])->name('checkout.product')->middleware('auth');
+
+Route::post('/checkout/product', [
+    App\Http\Controllers\ProductCheckoutController::class,
+    'productCheckout',
+])->name('checkout.product.post')->middleware('auth');
+
+Route::get('/checkout/product/success', [
+    App\Http\Controllers\ProductCheckoutController::class,
+    'productCheckoutSuccess',
+])->name('checkout.product.success')->middleware('auth');

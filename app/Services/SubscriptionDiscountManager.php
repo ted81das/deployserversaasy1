@@ -19,7 +19,7 @@ class SubscriptionDiscountManager
     public function applyDiscount(Subscription $subscription, string $discountCode, User $user): bool
     {
         if (!$this->subscriptionManager->canAddDiscount($subscription) ||
-            !$this->discountManager->isCodeRedeemable($discountCode, $user, $subscription->plan)) {
+            !$this->discountManager->isCodeRedeemableForPlan($discountCode, $user, $subscription->plan)) {
             return false;
         }
 
@@ -32,7 +32,7 @@ class SubscriptionDiscountManager
         $result = $paymentProvider->addDiscountToSubscription($subscription, $discount);
 
         if ($result) {
-            $this->discountManager->redeemCode($discountCode, $user, $subscription->id);
+            $this->discountManager->redeemCodeForSubscription($discountCode, $user, $subscription->id);
 
             return true;
         }

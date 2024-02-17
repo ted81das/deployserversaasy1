@@ -2,10 +2,10 @@
 
     <div class="text-center my-4">
         <x-heading.h6 class="text-primary-500">
-            {{ __('Pay securely, cancel any time.') }}
+            {{ __('Pay securely.') }}
         </x-heading.h6>
         <x-heading.h2 class="text-primary-900">
-            {{ __('Complete Subscription') }}
+            {{ __('Complete your purchase') }}
         </x-heading.h2>
     </div>
 
@@ -64,12 +64,11 @@
                     </div>
 
                     <p class="text-xs text-neutral-600 p-4">
-                        {{ __('Cancel anytime in account settings at least one day before each renewal date. Plan automatically renews until cancelled. Your billing date may not line up with your apprenticeship start date.') }}
                         {{ __('By continuing, you agree to our') }} <a target="_blank" href="{{route('terms-of-service')}}" class="text-primary-900 underline">{{ __('Terms of Service') }}</a> {{ __('and') }} <a target="_blank" href="{{route('privacy-policy')}}" class="text-primary-900 underline">{{ __('Privacy Policy') }}</a>.
                     </p>
 
                     <x-button-link.primary class="inline-block !w-full my-4" elementType="button" type="submit">
-                        {{ __('Confirm & Subscribe') }}
+                        {{ __('Confirm & Pay') }}
                     </x-button-link.primary>
             </form>
         </x-section.column>
@@ -77,37 +76,33 @@
 
         <x-section.column>
             <x-heading.h2 class="text-primary-900 !text-xl">
-                {{ __('Plan details') }}
+                {{ __('Product Details') }}
             </x-heading.h2>
 
             <div class="rounded-2xl border border-natural-300 mt-4 overflow-hidden p-6">
+                @php
+                    $orderItem = $order->items()->first();
+                    $product = $orderItem->oneTimeProduct()->first();
+                @endphp
 
                 <div class="flex flex-row gap-3">
                     <div class="rounded-2xl text-5xl bg-primary-50 p-2 text-center w-24 h-24 text-primary-500 justify-self-center self-center">
-                        {{ substr($plan->name, 0, 1) }}
+                        {{ substr($product->name, 0, 1) }}
                     </div>
                     <div class="flex flex-col gap-1">
                         <span class="text-xl font-semibold flex flex-row md:gap-2 flex-wrap">
                             <span class="py-1">
-                                {{ $plan->product->name }}
+                                {{ $product->name }}
                             </span>
-                            @if ($plan->has_trial)
-                                <span class="text-xs font-normal rounded-full border border-primary-500 text-primary-500 px-2 md:px-4 font-semibold py-1 inline-block self-center">
-                                    {{ $plan->trial_interval_count }} {{ $plan->trialInterval()->firstOrFail()->name }} {{ __(' free trial included') }}
-                                </span>
-                            @endif
                         </span>
-                        @if ($plan->interval_count > 1)
-                            <span class="text-xs">{{ $plan->interval_count }} {{ ucfirst($plan->interval->name) }}</span>
-                        @else
-                            <span class="text-xs">{{ ucfirst($plan->interval->adverb) }} {{ __('subscription.') }}</span>
+
+                        @if ($product->description)
+                            <span class="text-xs">{{ $product->description }}</span>
                         @endif
 
                         <span class="text-xs">
-                            {{ __('Starts immediately.') }}
+                            {{ __('Quantity:') }} {{ $orderItem->quantity }}
                         </span>
-
-
 
                     </div>
                 </div>
@@ -117,15 +112,15 @@
                 </div>
                 <div>
                     <ul class="flex flex-col items-start gap-3">
-                        @if ($plan->product->features)
-                            @foreach($plan->product->features as $feature)
+                        @if ($product->features)
+                            @foreach($product->features as $feature)
                                 <x-features.li-item>{{ $feature['feature'] }}</x-features.li-item>
                             @endforeach
                         @endif
                     </ul>
                 </div>
 
-                <livewire:checkout.subscription-totals :totals="$totals" :plan="$plan" page="{{request()->fullUrl()}}"/>
+                <livewire:checkout.product-totals :totals="$totals" :order="$order" :product="$product" page="{{request()->fullUrl()}}"/>
 
             </div>
 
@@ -138,7 +133,7 @@
     @push('head')
         <script>
             let successUrl = '{{ $successUrl }}';
-            let subscriptionUuid = '{{ $subscription->uuid }}';
+            let orderUuid = '{{ $order->uuid }}';
             let userEmail = '{{ $user->email ?? '' }}';
         </script>
         @vite(['resources/js/checkout.js'])

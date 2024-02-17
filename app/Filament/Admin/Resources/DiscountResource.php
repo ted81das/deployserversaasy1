@@ -51,6 +51,11 @@ class DiscountResource extends Resource
                         ->relationship('plans', 'name')
                         ->preload()
                         ->helperText(__('Select the plans that this discount will be applied to. If you leave empty, discount will be applied to all plans.')),
+                        Forms\Components\Select::make('oneTimeProducts')
+                            ->multiple()
+                            ->relationship('oneTimeProducts', 'name')
+                            ->preload()
+                            ->helperText(__('Select the one-time products that this discount will be applied to. If you leave empty, discount will be applied to all one-time products.')),
 //                    Forms\Components\Select::make('action_type')  // TODO: implement this in the future
 //                        ->options(DiscountConstants::ACTION_TYPES)
 //                        // change the default value to null

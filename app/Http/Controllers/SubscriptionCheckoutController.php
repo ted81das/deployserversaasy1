@@ -51,7 +51,7 @@ class SubscriptionCheckoutController extends Controller
                 $request->get('payment-provider')
             );
 
-            $link = $paymentProvider->createSubscriptionRedirectLink(
+            $link = $paymentProvider->createSubscriptionCheckoutRedirectLink(
                 $plan,
                 $subscription,
                 $discount,
@@ -72,7 +72,7 @@ class SubscriptionCheckoutController extends Controller
         /** @var PaymentProviderInterface $paymentProvider */
         foreach ($paymentProviders as $paymentProvider) {
             try {
-                $providerInitData[$paymentProvider->getSlug()] = $paymentProvider->init($plan, $subscription, $discount);
+                $providerInitData[$paymentProvider->getSlug()] = $paymentProvider->initSubscriptionCheckout($plan, $subscription, $discount);
                 $initializedPaymentProviders[] = $paymentProvider;
             } catch (\Exception $e) {
                 Log::error($e->getMessage(), [
@@ -104,7 +104,7 @@ class SubscriptionCheckoutController extends Controller
         $this->subscriptionManager->setAsPending($checkoutDto->subscriptionId);
 
         if ($checkoutDto->discountCode !== null) {
-            $this->discountManager->redeemCode($checkoutDto->discountCode, auth()->user(), $checkoutDto->subscriptionId);
+            $this->discountManager->redeemCodeForSubscription($checkoutDto->discountCode, auth()->user(), $checkoutDto->subscriptionId);
         }
 
         $this->resetSubscriptionCheckoutDto();

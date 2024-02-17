@@ -53,4 +53,9 @@ class Transaction extends Model
         return $this->belongsTo(PaymentProvider::class);
     }
 
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
+
 }

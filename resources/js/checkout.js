@@ -28,6 +28,18 @@ document.addEventListener("DOMContentLoaded", function (event) {
 
 
 function paddleCheckout() {
+    let customData = {};
+
+    // if subscriptionUuid is set, then it's a subscription
+    if (typeof subscriptionUuid !== 'undefined') {
+        customData.subscriptionUuid = subscriptionUuid;
+    }
+
+    // if orderUuid is set, then it's a one-time purchase
+    if (typeof orderUuid !== 'undefined') {
+        customData.orderUuid = orderUuid;
+    }
+
     Paddle.Checkout.open({
         settings: {
             successUrl: successUrl,
@@ -38,9 +50,7 @@ function paddleCheckout() {
                 quantity: 1
             }
         ],
-        customData: {
-            subscriptionUuid: subscriptionUuid
-        },
+        customData: customData,
         customer: {
             email: customerEmail
         },

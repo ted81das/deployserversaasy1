@@ -2,17 +2,19 @@
 
 namespace App\Services\PaymentProviders;
 use App\Models\Discount;
+use App\Models\Order;
 use App\Models\Plan;
 use App\Models\Subscription;
-use App\Models\Transaction;
 
 interface PaymentProviderInterface
 {
     public function getSlug(): string;
 
     public function getName(): string;
-    public function createSubscriptionRedirectLink(Plan $plan, Subscription $subscription, Discount $discount = null): string;
-    public function init(Plan $plan, Subscription $subscription, Discount $discount = null): array;
+    public function createSubscriptionCheckoutRedirectLink(Plan $plan, Subscription $subscription, Discount $discount = null): string;
+    public function createProductCheckoutRedirectLink(Order $order, Discount $discount = null): string;
+    public function initSubscriptionCheckout(Plan $plan, Subscription $subscription, Discount $discount = null): array;
+    public function initProductCheckout(Order $order, Discount $discount = null): array;
 
     public function isRedirectProvider(): bool;
 

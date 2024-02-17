@@ -16,10 +16,10 @@ return new class extends Migration
             $table->foreignId('order_id')->constrained();
             $table->foreignId('one_time_product_id')->constrained();
             $table->unsignedInteger('quantity');
-            $table->foreignId('currency_id')->constrained();
+            $table->foreignId('currency_id')->nullable()->constrained();
             $table->unsignedInteger('price_per_unit');
-            $table->unsignedInteger('price_per_unit_after_discount')->nullable();
-            $table->unsignedInteger('discount_per_unit')->nullable();
+            $table->unsignedInteger('price_per_unit_after_discount')->default(0);
+            $table->unsignedInteger('discount_per_unit')->default(0);
             $table->timestamps();
         });
     }

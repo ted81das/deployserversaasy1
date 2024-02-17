@@ -16,7 +16,7 @@ return new class extends Migration
             $table->uuid('uuid')->unique();
             $table->foreignId('user_id')->nullable()->constrained();
             $table->string('status');
-            $table->foreignId('currency_id')->constrained();
+            $table->foreignId('currency_id')->nullable()->constrained();
             $table->unsignedBigInteger('total_amount')->default(0);
             $table->unsignedBigInteger('total_amount_after_discount')->default(0);
             $table->unsignedBigInteger('total_discount_amount')->default(0);

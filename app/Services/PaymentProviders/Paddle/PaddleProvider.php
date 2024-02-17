@@ -5,10 +5,10 @@ namespace App\Services\PaymentProviders\Paddle;
 use App\Client\PaddleClient;
 use App\Constants\DiscountConstants;
 use App\Constants\PaddleConstants;
-use App\Constants\SubscriptionStatus;
 use App\Filament\Dashboard\Resources\SubscriptionResource\Pages\PaymentProviders\Paddle\PaddleUpdatePaymentDetails;
 use App\Models\Currency;
 use App\Models\Discount;
+use App\Models\Order;
 use App\Models\PaymentProvider;
 use App\Models\Plan;
 use App\Models\PlanPrice;
@@ -19,7 +19,6 @@ use App\Services\PaymentProviders\PaymentProviderInterface;
 use App\Services\PlanManager;
 use App\Services\SubscriptionManager;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Route;
 
 class PaddleProvider implements PaymentProviderInterface
 {
@@ -33,7 +32,7 @@ class PaddleProvider implements PaymentProviderInterface
 
     }
 
-    public function init(Plan $plan, Subscription $subscription, Discount $discount = null): array
+    public function initSubscriptionCheckout(Plan $plan, Subscription $subscription, Discount $discount = null): array
     {
         $paymentProvider = $this->assertProviderIsActive();
 
@@ -160,12 +159,27 @@ class PaddleProvider implements PaymentProviderInterface
         return $url . '?_ptxn=' . $txId;
     }
 
+    public function initProductCheckout(Order $order, Discount $discount = null): array
+    {
+        // todo: implement
+
+        return [
+            'paddleProductId' => '',
+            'paddlePriceId' => '',
+        ];
+    }
+
+    public function createProductCheckoutRedirectLink(Order $order, Discount $discount = null): string
+    {
+        throw new \Exception('Not a redirect payment provider');
+    }
+
     public function getSlug(): string
     {
         return 'paddle';
     }
 
-    public function createSubscriptionRedirectLink(Plan $plan, Subscription $subscription, Discount $discount = null): string
+    public function createSubscriptionCheckoutRedirectLink(Plan $plan, Subscription $subscription, Discount $discount = null): string
     {
         throw new \Exception('Not a redirect payment provider');
     }
