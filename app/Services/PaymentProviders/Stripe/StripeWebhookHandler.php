@@ -14,6 +14,7 @@ use App\Services\TransactionManager;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class StripeWebhookHandler
 {
@@ -138,7 +139,7 @@ class StripeWebhookHandler
             ]);
 
         }
-        else if ($event->type == 'payment_intent.succeeded') { // order event
+        else if ($event->type == 'payment_intent.succeeded' || $event->type == 'payment_intent.payment_failed') { // order event
             $paymentIntentId = $event->data->object->id;
             $orderUuid = $event->data->object->metadata?->order_uuid;
 
@@ -149,34 +150,40 @@ class StripeWebhookHandler
 
                 $transaction = $this->transactionManager->getTransactionByPaymentProviderTxId($paymentIntentId);
 
-                if ($transaction) {
-                    $this->transactionManager->updateTransaction(
-                        $transaction,
-                        $event->data->object->status,
-                        TransactionStatus::SUCCESS,
-                        null,
-                        $event->data->object->amount,
-                        $fees,
-                    );
-                } else {
-                    $this->transactionManager->createForOrder(
-                        $order,
-                        $event->data->object->amount,
-                        0,
-                        $order->total_discount_amount,
-                        $fees,
-                        $currency,
-                        $paymentProvider,
-                        $paymentIntentId,
-                        $event->data->object->status,
-                        TransactionStatus::SUCCESS,
-                    );
-                }
+                $transactionStatus = $event->type == 'payment_intent.succeeded' ? TransactionStatus::SUCCESS : TransactionStatus::FAILED;
 
-                $this->orderManager->updateOrder($order, [
-                    'status' => OrderStatus::SUCCESS,
-                    'total_amount_after_discount' => $event->data->object->amount,
-                ]);
+                DB::transaction(function () use ($order, $event, $transaction, $transactionStatus, $fees, $currency, $paymentProvider, $paymentIntentId) {
+                    if ($transaction) {
+                        $this->transactionManager->updateTransaction(
+                            $transaction,
+                            $event->data->object->status,
+                            $transactionStatus,
+                            null,
+                            $event->data->object->amount,
+                            $fees,
+                        );
+                    } else {
+                        $this->transactionManager->createForOrder(
+                            $order,
+                            $event->data->object->amount,
+                            0,
+                            $order->total_discount_amount,
+                            $fees,
+                            $currency,
+                            $paymentProvider,
+                            $paymentIntentId,
+                            $event->data->object->status,
+                            $transactionStatus,
+                        );
+                    }
+
+                    $orderStatus = $event->type == 'payment_intent.succeeded' ? OrderStatus::SUCCESS : OrderStatus::FAILED;
+
+                    $this->orderManager->updateOrder($order, [
+                        'status' => $orderStatus,
+                        'total_amount_after_discount' => $event->data->object->amount,
+                    ]);
+                });
             }
         }
         elseif ($event->type == 'charge.refunded') { // order event
@@ -193,9 +200,6 @@ class StripeWebhookHandler
                         $transaction,
                         'refunded',
                         TransactionStatus::REFUNDED,
-                        null,
-                        null,
-                        null,
                     );
 
                     if ($transaction->order) {
@@ -203,27 +207,6 @@ class StripeWebhookHandler
                             'status' => OrderStatus::REFUNDED,
                         ]);
                     }
-                }
-            }
-        }
-        elseif ($event->type == 'charge.failed') { // order event
-            $paymentIntentId = $event->data->object->payment_intent;
-
-            $orderUuid = $event->data->object->metadata?->order_uuid;
-
-            if (!empty($orderUuid)) {
-
-                $transaction = $this->transactionManager->getTransactionByPaymentProviderTxId($paymentIntentId);
-
-                if ($transaction) {
-                    $this->transactionManager->updateTransaction(
-                        $transaction,
-                        $event->data->object->status,
-                        TransactionStatus::FAILED,
-                        null,
-                        null,
-                        null,
-                    );
                 }
             }
         }
@@ -245,9 +228,6 @@ class StripeWebhookHandler
                     ]);
                 }
             }
-        }
-        else {
-            return response()->json();
         }
 
         return response()->json();

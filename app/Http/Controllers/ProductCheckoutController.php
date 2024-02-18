@@ -85,7 +85,7 @@ class ProductCheckoutController extends Controller
 
     public function addToCart(string $productSlut, int $quantity = 1)
     {
-        $cartDto = $this->getCartDto();  // use getCartDto() instead of clearCartDto() when allowing full cart checkout with multiple items
+        $cartDto = $this->clearCartDto();  // use getCartDto() instead of clearCartDto() when allowing full cart checkout with multiple items
 
         $product = $this->productManager->getProductWithPriceBySlug($productSlut);
 
@@ -108,9 +108,7 @@ class ProductCheckoutController extends Controller
                 $item->quantity = min($item->quantity, $product->max_quantity);
                 $this->saveCartDto($cartDto);
 
-                return response()->json([
-                    'success' => true,
-                ]);
+                return redirect()->route('checkout.product');
             }
         }
 
@@ -122,9 +120,7 @@ class ProductCheckoutController extends Controller
 
         $this->saveCartDto($cartDto);
 
-        return response()->json([
-            'success' => true,
-        ]);
+        return redirect()->route('checkout.product');
     }
 
     public function productCheckoutSuccess()
