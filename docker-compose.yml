@@ -27,6 +27,7 @@ services:
             - mysql
             - mailpit
             - redis
+            - ngrok
     mysql:
         image: 'mysql/mysql-server:8.0'
         ports:
@@ -99,6 +100,17 @@ services:
                 - ping
             retries: 3
             timeout: 5s
+
+    ngrok:
+        image: ngrok/ngrok:alpine
+        environment:
+            NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+        networks:
+            - sail
+        ports:
+            - "4040:4040"
+        command: [ "http", "--domain=${NGROK_STATIC_DOMAIN}", "laravel.test:80" ]
+
 networks:
     sail:
         driver: bridge

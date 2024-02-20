@@ -2,6 +2,9 @@
 
 namespace App\Filament\Dashboard\Resources;
 
+use App\Constants\TransactionStatus;
+use App\Filament\Dashboard\Resources\OrderResource\Pages\ViewOrder;
+use App\Filament\Dashboard\Resources\SubscriptionResource\Pages\ViewSubscription;
 use App\Filament\Dashboard\Resources\TransactionResource\Pages;
 use App\Mapper\TransactionStatusMapper;
 use App\Models\Transaction;
@@ -35,10 +38,10 @@ class TransactionResource extends Resource
                 }),
                 Tables\Columns\TextColumn::make('status')
                     ->formatStateUsing(fn (string $state, TransactionStatusMapper $mapper): string => $mapper->mapForDisplay($state)),
-                Tables\Columns\TextColumn::make('subscription_id')->formatStateUsing(function (string $state, $record) {
-                        return $record->subscription->plan->name;
-                    })
-                    ->label(_('Subscription Plan')),
+                Tables\Columns\TextColumn::make('owner')
+                    ->label(__('Owner'))
+                    ->getStateUsing(fn (Transaction $record) => $record->subscription_id !== null ? ($record->subscription->plan?->name ?? '-') : ($record->order_id !== null ? __('View Order') : '-'))
+                    ->url(fn (Transaction $record) => $record->subscription_id !== null  ? ViewSubscription::getUrl(['record' => $record->subscription ]) : ($record->order_id !== null ? ViewOrder::getUrl(['record' => $record->order]) : '-')),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(_('Date'))
                     ->dateTime(),
@@ -107,7 +110,7 @@ class TransactionResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->where('user_id', auth()->user()->id)->where('amount' , '>', 0);
+        return parent::getEloquentQuery()->where('user_id', auth()->user()->id)->where('amount' , '>', 0)->where('status', '!=', TransactionStatus::NOT_STARTED->value);
     }
 
     public static function getModelLabel(): string

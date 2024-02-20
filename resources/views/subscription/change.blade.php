@@ -56,7 +56,7 @@
                     <ul class="flex flex-col items-start gap-3">
                         @if ($newPlan->product->features)
                             @foreach($newPlan->product->features as $feature)
-                                <x-plans.li-description-item>{{ $feature['feature'] }}</x-plans.li-description-item>
+                                <x-features.li-item>{{ $feature['feature'] }}</x-features.li-item>
                             @endforeach
                         @endif
                     </ul>

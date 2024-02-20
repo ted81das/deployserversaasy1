@@ -40,16 +40,31 @@ function paddleCheckout() {
         customData.orderUuid = orderUuid;
     }
 
+    let items = [];
+    for (let i = 0; i < paddleProductDetails.length; i++) {
+        items.push({
+            priceId: paddleProductDetails[i].paddlePriceId,
+            quantity: paddleProductDetails[i].quantity
+        });
+    }
+
+    console.log({
+        settings: {
+            successUrl: successUrl,
+        },
+        items: items,
+        customData: customData,
+        customer: {
+            email: customerEmail
+        },
+        discountId: paddleDiscountId,
+    });
+
     Paddle.Checkout.open({
         settings: {
             successUrl: successUrl,
         },
-        items: [
-            {
-                priceId: paddlePriceId,
-                quantity: 1
-            }
-        ],
+        items: items,
         customData: customData,
         customer: {
             email: customerEmail

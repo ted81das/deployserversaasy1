@@ -2,10 +2,14 @@
 
 namespace App\Services\PaymentProviders\Paddle;
 
+use App\Constants\OrderStatus;
+use App\Constants\OrderStatusConstants;
 use App\Constants\SubscriptionStatus;
 use App\Constants\TransactionStatus;
 use App\Models\Currency;
+use App\Models\Order;
 use App\Models\PaymentProvider;
+use App\Services\OrderManager;
 use App\Services\SubscriptionManager;
 use App\Services\TransactionManager;
 use Carbon\Carbon;
@@ -18,6 +22,7 @@ class PaddleWebhookHandler
     public function __construct(
         private SubscriptionManager $subscriptionManager,
         private TransactionManager $transactionManager,
+        private OrderManager $orderManager,
     ) {
 
     }
@@ -94,35 +99,18 @@ class PaddleWebhookHandler
             ]);
         } else if ($eventType == 'transaction.created') {
             $subscriptionUuid = $eventData['custom_data']['subscriptionUuid'] ?? null;
+            $orderUuid = $eventData['custom_data']['orderUuid'] ?? null;
 
-            if (!$subscriptionUuid) {
+            if (!empty($subscriptionUuid)) {
+                $this->handleTransactionCreatedForSubscription($subscriptionUuid, $eventData, $paymentProvider);
+            } elseif (!empty($orderUuid)) {
+                $this->handleTransactionCreatedForOrder($orderUuid, $eventData, $paymentProvider);
+            } else {
                 return response()->json([
-                    'message' => 'Subscription uuid not found'
+                    'message' => 'Subscription uuid or order uuid not found'
                 ], 400);
             }
-            $paddleTransactionId = $eventData['id'] ?? null;
 
-            $subscription = $this->subscriptionManager->findByUuidOrFail($subscriptionUuid);
-            $currency = Currency::where('code', strtoupper($eventData['currency_code']))->firstOrFail();
-            $paddleTransactionStatus = $eventData['status'];
-            $total = $eventData['details']['totals']['grand_total'];
-            $fees = $eventData['details']['totals']['fee'] ?? 0;
-            $discounts = $eventData['details']['totals']['discount'] ?? 0;
-            $taxes = $eventData['details']['totals']['tax'] ?? 0;
-            // create transaction
-
-            $this->transactionManager->createForSubscription(
-                $subscription,
-                intval($total),
-                intval($taxes),
-                intval($discounts),
-                intval($fees),
-                $currency,
-                $paymentProvider,
-                $paddleTransactionId,
-                $paddleTransactionStatus,
-                $this->mapPaddleTransactionStatusToTransactionStatus($paddleTransactionStatus),
-            );
         } else if (
             $eventType == 'transaction.billed' ||
             $eventType == 'transaction.canceled' ||
@@ -145,6 +133,22 @@ class PaddleWebhookHandler
                 intval($total),
                 intval($fees),
             );
+
+            $orderUuid = $eventData['custom_data']['orderUuid'] ?? null;
+            if (!empty($orderUuid)) {
+                $order = $this->orderManager->findByUuidOrFail($orderUuid);
+                $currentStatus = OrderStatus::tryFrom($order->status);
+                $newStatus = $this->mapPaddleTransactionStatusToOrderStatus($paddleTransactionStatus);
+
+                if (!in_array($currentStatus, OrderStatusConstants::FINAL_STATUSES) ||
+                    (in_array($currentStatus, OrderStatusConstants::FINAL_STATUSES) && in_array($newStatus, OrderStatusConstants::FINAL_STATUSES))) {
+                    // we only update the order status if it's not in a final state or if it's in a final state and the new status is also a final state
+                    // this is to prevent updating the order status from a final state to a non-final state due to a webhook event coming in late
+                    $this->orderManager->updateOrder($order, [
+                        'status' => $this->mapPaddleTransactionStatusToOrderStatus($paddleTransactionStatus),
+                    ]);
+                }
+            }
         } else if (
             $eventType == 'transaction.past_due' ||
             $eventType == 'transaction.payment_failed'
@@ -163,15 +167,132 @@ class PaddleWebhookHandler
             );
 
             $subscriptionUuid = $eventData['custom_data']['subscriptionUuid'] ?? null;
-            $subscription = $this->subscriptionManager->findByUuidOrFail($subscriptionUuid);
-            $this->subscriptionManager->handleInvoicePaymentFailed($subscription);
+            $orderUuid = $eventData['custom_data']['orderUuid'] ?? null;
 
+            if (!empty($subscriptionUuid)) {
+                $this->handleTransactionFailedOrPastDueForSubscription($subscriptionUuid);
+            } elseif (!empty($orderUuid)) {
+                $this->handleTransactionFailedOrPastDueForOrder($orderUuid);
+            } else {
+                return response()->json([
+                    'message' => 'Subscription uuid or order uuid not found'
+                ], 400);
+            }
+        }
+        else if (
+            $eventType == 'adjustment.created' ||
+            $eventType == 'adjustment.updated'
+        ) {
+            $paddleTransactionId = $eventData['transaction_id'] ?? null;
+            $action = $eventData['action'];
+            $paddleTransactionStatus = $eventData['status'];
+            // update transaction
+
+            if ($action == 'refund' && $paddleTransactionStatus == 'approved') {
+                $this->transactionManager->updateTransactionByPaymentProviderTxId(
+                    $paddleTransactionId,
+                    'refunded',
+                    TransactionStatus::REFUNDED,
+                );
+
+                $transaction = $this->transactionManager->getTransactionByPaymentProviderTxId($paddleTransactionId);
+                $order = $transaction->order;
+
+                if ($order) {
+                    $this->orderManager->updateOrder($order, [
+                        'status' => OrderStatus::REFUNDED,
+                    ]);
+                }
+            } elseif ($action == 'chargeback') {
+                $this->transactionManager->updateTransactionByPaymentProviderTxId(
+                    $paddleTransactionId,
+                    'chargeback',
+                    TransactionStatus::DISPUTED,
+                );
+
+                $transaction = $this->transactionManager->getTransactionByPaymentProviderTxId($paddleTransactionId);
+                $order = $transaction->order;
+
+                if ($order) {
+                    $this->orderManager->updateOrder($order, [
+                        'status' => OrderStatus::DISPUTED,
+                    ]);
+                }
+            }
         }
         else {
             return response()->json();
         }
 
         return response()->json();
+    }
+
+    private function handleTransactionCreatedForSubscription(string $subscriptionUuid, array $eventData, PaymentProvider $paymentProvider): void
+    {
+        $paddleTransactionId = $eventData['id'] ?? null;
+
+        $subscription = $this->subscriptionManager->findByUuidOrFail($subscriptionUuid);
+        $currency = Currency::where('code', strtoupper($eventData['currency_code']))->firstOrFail();
+        $paddleTransactionStatus = $eventData['status'];
+        $total = $eventData['details']['totals']['grand_total'];
+        $fees = $eventData['details']['totals']['fee'] ?? 0;
+        $discounts = $eventData['details']['totals']['discount'] ?? 0;
+        $taxes = $eventData['details']['totals']['tax'] ?? 0;
+        // create transaction
+
+        $this->transactionManager->createForSubscription(
+            $subscription,
+            intval($total),
+            intval($taxes),
+            intval($discounts),
+            intval($fees),
+            $currency,
+            $paymentProvider,
+            $paddleTransactionId,
+            $paddleTransactionStatus,
+            $this->mapPaddleTransactionStatusToTransactionStatus($paddleTransactionStatus),
+        );
+    }
+
+    private function handleTransactionCreatedForOrder(string $orderUuid, array $eventData, PaymentProvider $paymentProvider): void
+    {
+        $paddleTransactionId = $eventData['id'] ?? null;
+
+        $order = $this->orderManager->findByUuidOrFail($orderUuid);
+        $currency = Currency::where('code', strtoupper($eventData['currency_code']))->firstOrFail();
+        $paddleTransactionStatus = $eventData['status'];
+        $total = $eventData['details']['totals']['grand_total'];
+        $fees = $eventData['details']['totals']['fee'] ?? 0;
+        $discounts = $eventData['details']['totals']['discount'] ?? 0;
+        $taxes = $eventData['details']['totals']['tax'] ?? 0;
+        // create transaction
+
+        $this->transactionManager->createForOrder(
+            $order,
+            intval($total),
+            intval($taxes),
+            intval($discounts),
+            intval($fees),
+            $currency,
+            $paymentProvider,
+            $paddleTransactionId,
+            $paddleTransactionStatus,
+            $this->mapPaddleTransactionStatusToTransactionStatus($paddleTransactionStatus),
+        );
+    }
+
+    private function handleTransactionFailedOrPastDueForSubscription(string $subscriptionUuid): void
+    {
+        $subscription = $this->subscriptionManager->findByUuidOrFail($subscriptionUuid);
+        $this->subscriptionManager->handleInvoicePaymentFailed($subscription);
+    }
+
+    private function handleTransactionFailedOrPastDueForOrder(string $oderUuid): void
+    {
+        $order = $this->orderManager->findByUuidOrFail($oderUuid);
+        $this->orderManager->updateOrder($order, [
+            'status' => OrderStatus::FAILED,
+        ]);
     }
 
     private function mapPaddleTransactionStatusToTransactionStatus(string $paddleStatus): TransactionStatus
@@ -197,6 +318,27 @@ class PaddleWebhookHandler
         }
 
         return TransactionStatus::NOT_STARTED;
+    }
+
+    private function mapPaddleTransactionStatusToOrderStatus(string $paddleStatus): OrderStatus
+    {
+        if ($paddleStatus == 'completed') {
+            return OrderStatus::SUCCESS;
+        }
+
+        if ($paddleStatus == 'canceled') {
+            return OrderStatus::FAILED;
+        }
+
+        if ($paddleStatus == 'ready' ||
+            $paddleStatus == 'billed' ||
+            $paddleStatus == 'past_due' ||
+            $paddleStatus == 'paid'
+        ) {
+            return OrderStatus::PENDING;
+        }
+
+        return OrderStatus::NEW;
     }
 
     private function mapPaddleSubscriptionStatusToSubscriptionStatus(string $paddleSubscriptionStatus)

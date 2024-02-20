@@ -35,9 +35,9 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('total_amount')->formatStateUsing(function (string $state, $record) {
+                Tables\Columns\TextColumn::make('total_amount_after_discount')->formatStateUsing(function (string $state, $record) {
                     return money($state, $record->currency->code);
-                }),
+                })->label(__('Total Amount')),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->colors([
@@ -48,12 +48,6 @@ class OrderResource extends Resource
                             return $mapper->mapForDisplay($state);
                         })
                     ->searchable(),
-                Tables\Columns\TextColumn::make('total_amount_after_discount')->formatStateUsing(function (string $state, $record) {
-                    return money($state, $record->currency->code);
-                }),
-                Tables\Columns\TextColumn::make('total_discount_amount')->formatStateUsing(function (string $state, $record) {
-                    return money($state, $record->currency->code);
-                }),
                 Tables\Columns\TextColumn::make('updated_at')->label(__('Updated At'))
                     ->dateTime(config('app.datetime_format'))
                     ->searchable()->sortable(),
@@ -90,7 +84,7 @@ class OrderResource extends Resource
                                         }),
                                         TextEntry::make('total_discount_amount')->formatStateUsing(function (string $state, $record) {
                                             return money($state, $record->currency->code);
-                                        }),
+                                        })->visible(fn (Order $record): bool => $record->discounts()->count() > 0),
                                         TextEntry::make('status')
                                             ->formatStateUsing(fn (string $state, OrderStatusMapper $mapper): string => $mapper->mapForDisplay($state))
                                             ->badge(),

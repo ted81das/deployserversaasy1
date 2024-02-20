@@ -19,7 +19,7 @@ class PaddleClient
         ]);
     }
 
-    public function createPrice(
+    public function createPriceForPlan(
         string $productId,
         string $interval,
         int $frequency,
@@ -52,6 +52,32 @@ class PaddleClient
                 'frequency' => $trialFrequency,
             ];
         }
+
+        return Http::withHeaders([
+            'Authorization' => 'Bearer ' . config('services.paddle.vendor_auth_code'),
+        ])->post($this->getApiUrl('/prices'), $priceObject);
+    }
+
+    public function createPriceForOneTimeProduct(
+        string $productId,
+        int $amount,
+        string $currencyCode,
+        string $description,
+        int $maxQuantity = 1,
+    ): Response {
+
+        $priceObject = [
+            'product_id' => $productId,
+            'description' => $description,
+            'unit_price' => [
+                'amount' => (string) $amount,
+                'currency_code' => $currencyCode,
+            ],
+            "quantity" => [
+                "minimum" => 1,
+                "maximum" => $maxQuantity,
+            ],
+        ];
 
         return Http::withHeaders([
             'Authorization' => 'Bearer ' . config('services.paddle.vendor_auth_code'),
