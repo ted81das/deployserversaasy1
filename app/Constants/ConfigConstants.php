@@ -45,5 +45,8 @@ class ConfigConstants
         'services.stripe.publishable_key',
         'services.stripe.webhook_signing_secret',
         'services.postmark.token',
+        'customer_dashboard.show_subscriptions',
+        'customer_dashboard.show_orders',
+        'customer_dashboard.show_transactions',
     ];
 }

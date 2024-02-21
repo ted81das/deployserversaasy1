@@ -126,10 +126,10 @@ Route::get('/privacy-policy', function () {
 
 // Product checkout routes
 
-Route::get('/cart/add/{productSlug}/{quantity?}', [
+Route::get('/buy/product/{productSlug}/{quantity?}', [
     App\Http\Controllers\ProductCheckoutController::class,
     'addToCart',
-])->name('cart.add');
+])->name('buy.product');
 
 Route::get('/cart/clear', [
     App\Http\Controllers\ProductCheckoutController::class,

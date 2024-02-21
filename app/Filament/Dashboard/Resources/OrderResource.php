@@ -8,6 +8,7 @@ use App\Filament\Dashboard\Resources\OrderResource\Pages;
 use App\Filament\Dashboard\Resources\OrderResource\RelationManagers;
 use App\Mapper\OrderStatusMapper;
 use App\Models\Order;
+use App\Services\ConfigManager;
 use Filament\Forms\Form;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
@@ -167,5 +168,10 @@ class OrderResource extends Resource
     public static function canEdit($record): bool
     {
         return false;
+    }
+
+    public static function isDiscovered(): bool
+    {
+        return app()->make(ConfigManager::class)->get('customer_dashboard.show_orders', true);
     }
 }

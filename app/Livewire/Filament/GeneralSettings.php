@@ -46,6 +46,9 @@ class GeneralSettings extends Component implements HasForms
             'default_email_provider' => $this->configManager->get('mail.default'),
             'default_email_from_name' => $this->configManager->get('mail.from.name'),
             'default_email_from_email' => $this->configManager->get('mail.from.address'),
+            'show_subscriptions' => $this->configManager->get('customer_dashboard.show_subscriptions', true),
+            'show_orders' => $this->configManager->get('customer_dashboard.show_orders', true),
+            'show_transactions' => $this->configManager->get('customer_dashboard.show_transactions', true),
 
         ]);
     }
@@ -148,6 +151,22 @@ class GeneralSettings extends Component implements HasForms
                                 ->helperText(__('This is the email address that will be used as the "From" address for all emails.'))
                                 ->required()
                                 ->email(),
+                        ]),
+                    Tabs\Tab::make(__('Customer Dashboard'))
+                        ->icon('heroicon-o-squares-2x2')
+                        ->schema([
+                            Toggle::make('show_subscriptions')
+                                ->label(__('Show Subscriptions'))
+                                ->helperText(__('If enabled, customers will be able to see their subscriptions on the dashboard.'))
+                                ->required(),
+                            Toggle::make('show_orders')
+                                ->label(__('Show Orders'))
+                                ->helperText(__('If enabled, customers will be able to see their orders on the dashboard.'))
+                                ->required(),
+                            Toggle::make('show_transactions')
+                                ->label(__('Show Transactions'))
+                                ->helperText(__('If enabled, customers will be able to see their transactions on the dashboard.'))
+                                ->required(),
                         ])
                 ])
                 ->persistTabInQueryString('settings-tab')
@@ -169,6 +188,9 @@ class GeneralSettings extends Component implements HasForms
         $this->configManager->set('mail.default', $data['default_email_provider']);
         $this->configManager->set('mail.from.name', $data['default_email_from_name']);
         $this->configManager->set('mail.from.address', $data['default_email_from_email']);
+        $this->configManager->set('customer_dashboard.show_subscriptions', $data['show_subscriptions']);
+        $this->configManager->set('customer_dashboard.show_orders', $data['show_orders']);
+        $this->configManager->set('customer_dashboard.show_transactions', $data['show_transactions']);
 
 
         Notification::make()

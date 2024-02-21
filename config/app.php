@@ -157,6 +157,12 @@ return [
         'proration_enabled' => env('PAYMENT_PRORATION_ENABLED', true),
     ],
 
+    'customer_dashboard' => [
+        'show_subscriptions' => true,
+        'show_orders' => true,
+        'show_transactions' => true,
+    ],
+
 
     /*
     |--------------------------------------------------------------------------

@@ -41,7 +41,22 @@
                 <code class="bg-gray-100 px-4 py-2 block my-4 overflow-x-scroll">
                     {{ route('payments-providers.paddle.webhook') }}
                 </code>
-                {{ __('From the list of events, select all the events under "Transaction" and "Subscription". So all "transaction.xyz" and "subscription.xyz" should be selected.') }}
+                {{ __('From the list of events, select all the events under "Transaction", "Subscription" and "Adjustment". So all the following events should be selected:') }}
+            </p>
+
+            <ul class="list-disc ps-4 mt-2">
+                <li>
+                    {{ __('"transaction.xyz".') }}
+                </li>
+                <li>
+                    {{ __('"subscription.xyz".') }}
+                </li>
+                <li>
+                    {{ __('"adjustment.xyz".') }}
+                </li>
+            </ul>
+
+            <p class="mt-4">
                 {{ __('Click on "Save Destination" and copy the generated webhook secret key and enter it into the field in the form.') }}
             </p>
         </li>

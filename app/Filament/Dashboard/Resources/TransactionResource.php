@@ -8,6 +8,7 @@ use App\Filament\Dashboard\Resources\SubscriptionResource\Pages\ViewSubscription
 use App\Filament\Dashboard\Resources\TransactionResource\Pages;
 use App\Mapper\TransactionStatusMapper;
 use App\Models\Transaction;
+use App\Services\ConfigManager;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -114,5 +115,10 @@ class TransactionResource extends Resource
     public static function getModelLabel(): string
     {
         return _('Payments');
+    }
+
+    public static function isDiscovered(): bool
+    {
+        return app()->make(ConfigManager::class)->get('customer_dashboard.show_transactions', true);
     }
 }
