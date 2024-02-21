@@ -150,9 +150,3 @@ Route::get('/checkout/product/success', [
     App\Http\Controllers\ProductCheckoutController::class,
     'productCheckoutSuccess',
 ])->name('checkout.product.success')->middleware('auth');
-
-Route::get('/mailable', function () {
-    $order = \App\Models\Order::find(11);
-
-    return new \App\Mail\Order\Ordered($order);
-});
