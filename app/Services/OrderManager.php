@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Constants\OrderStatus;
 use App\Dto\CartDto;
 use App\Dto\TotalsDto;
+use App\Events\Order\Ordered;
 use App\Models\OneTimeProduct;
 use App\Models\Order;
 use App\Models\User;
@@ -59,7 +60,7 @@ class OrderManager
         if ($oldStatus !== $newStatus) {
             switch ($newStatus) {
                 case OrderStatus::SUCCESS->value:
-//                    Subscribed::dispatch($order);  // TODO: implement event
+                    Ordered::dispatch($order);
                     break;
             }
         }

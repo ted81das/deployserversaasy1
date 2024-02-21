@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Events\Order\Ordered;
 use App\Events\Subscription\InvoicePaymentFailed;
 use App\Events\Subscription\Subscribed;
 use App\Events\Subscription\SubscriptionCancelled;
+use App\Listeners\Order\SendOrderNotification;
 use App\Listeners\Subscription\SendInvoicePaymentFailedNotification;
 use App\Listeners\Subscription\SendSubscribedNotification;
 use App\Listeners\Subscription\SendSubscriptionCancellationNotification;
@@ -32,6 +34,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         InvoicePaymentFailed::class => [
             SendInvoicePaymentFailedNotification::class
+        ],
+        Ordered::class => [
+            SendOrderNotification::class
         ],
     ];
 

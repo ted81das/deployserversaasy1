@@ -1,13 +1,13 @@
 <?php
 
+use App\Http\Controllers\Admin\RoleController as AdminRoleController;
 use App\Http\Controllers\Admin\Settings\OAuthSettingsController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Auth\OAuthController;
 use App\Http\Controllers\PaymentProviders\PaddleController as PaddleController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\UserController as AdminUserController;
-use App\Http\Controllers\Admin\RoleController as AdminRoleController;
-use App\Http\Controllers\Auth\OAuthController;
 
 
 /*
@@ -150,3 +150,9 @@ Route::get('/checkout/product/success', [
     App\Http\Controllers\ProductCheckoutController::class,
     'productCheckoutSuccess',
 ])->name('checkout.product.success')->middleware('auth');
+
+Route::get('/mailable', function () {
+    $order = \App\Models\Order::find(11);
+
+    return new \App\Mail\Order\Ordered($order);
+});
