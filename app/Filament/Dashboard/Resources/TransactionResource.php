@@ -8,14 +8,12 @@ use App\Filament\Dashboard\Resources\SubscriptionResource\Pages\ViewSubscription
 use App\Filament\Dashboard\Resources\TransactionResource\Pages;
 use App\Mapper\TransactionStatusMapper;
 use App\Models\Transaction;
-use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class TransactionResource extends Resource
 {

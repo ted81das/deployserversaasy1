@@ -38,7 +38,7 @@ class SubscriptionManagerTest extends FeatureTest
         $manager->create($slug, $user->id);
     }
 
-    public function nonDeadSubscriptionProvider()
+    public static function nonDeadSubscriptionProvider()
     {
         return [
             'pending' => [
