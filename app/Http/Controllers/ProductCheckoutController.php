@@ -89,6 +89,10 @@ class ProductCheckoutController extends Controller
 
         $product = $this->productManager->getProductWithPriceBySlug($productSlut);
 
+        if (!$product->is_active) {
+            abort(404);
+        }
+
         if ($product === null) {
             abort(404);
         }

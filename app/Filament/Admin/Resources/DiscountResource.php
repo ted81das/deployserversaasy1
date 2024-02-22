@@ -52,6 +52,7 @@ class DiscountResource extends Resource
                         ->preload()
                         ->helperText(__('Select the plans that this discount will be applied to. If you leave empty, discount will be applied to all plans.')),
                         Forms\Components\Select::make('oneTimeProducts')
+                            ->label(__('One-time purchase products'))
                             ->multiple()
                             ->relationship('oneTimeProducts', 'name')
                             ->preload()

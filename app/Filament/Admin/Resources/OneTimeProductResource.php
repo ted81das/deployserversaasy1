@@ -53,6 +53,10 @@ class OneTimeProductResource extends Resource
 //                        ->default(1)
 //                        ->minValue(1)
 //                        ->helperText(__('The maximum quantity of this product that can be purchased at once. If set to 1, customers will not be able to edit the quantity on the checkout page.')),
+                    Forms\Components\Toggle::make('is_active')
+                        ->helperText(__('If the product is not active, your customers will not be able to purchase it.'))
+                        ->default(true)
+                        ->label(__('Active')),
                     Forms\Components\KeyValue::make('metadata')
                         ->helperText(__('Add any additional data to this product. You can use this to store product features that could later be retrieved to serve your users.'))
                         ->keyLabel(__('Property name'))
@@ -69,7 +73,7 @@ class OneTimeProductResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->description(__('A one time purchase product is a product that is purchased once and does not have any plans.'))
+            ->description(__('A one-time purchase product is a non-recurring product that is purchased once for a certain price.'))
             ->columns([
                 Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('slug')->searchable()->sortable(),
@@ -97,7 +101,7 @@ class OneTimeProductResource extends Resource
 
     public static function getModelLabel(): string
     {
-        return __('One Time Purchase Product');
+        return __('One-time Purchase Product');
     }
 
     public static function getRelations(): array

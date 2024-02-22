@@ -16,6 +16,7 @@ class OneTimeProduct extends Model
         'max_quantity',
         'metadata',
         'features',
+        'is_active',
     ];
 
     protected $casts = [
