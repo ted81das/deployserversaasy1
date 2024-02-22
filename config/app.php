@@ -152,6 +152,7 @@ return [
     'support_email' => 'support@saasykit.com',
 
     'google_tracking_id' => env('GOOGLE_TRACKING_ID'),
+    'posthog_html_snippet' => env('POSTHOG_HTML_SNIPPET'),
 
     'payment' => [
         'proration_enabled' => env('PAYMENT_PRORATION_ENABLED', true),

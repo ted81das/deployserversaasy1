@@ -8,3 +8,7 @@
         gtag('config', '{{config('app.google_tracking_id')}}');
     </script>
 @endif
+
+@if (!empty(config('app.posthog_html_snippet')))
+    {!! config('app.posthog_html_snippet') !!}
+@endif

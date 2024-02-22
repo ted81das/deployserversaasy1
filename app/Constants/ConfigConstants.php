@@ -11,6 +11,7 @@ class ConfigConstants
         'app.datetime_format',
         'app.default_currency',
         'app.google_tracking_id',
+        'app.posthog_html_snippet',
         'app.payment.proration_enabled',
         'mail.default',
         'mail.from.name',
