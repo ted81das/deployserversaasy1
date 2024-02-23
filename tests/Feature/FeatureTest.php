@@ -16,10 +16,12 @@ class FeatureTest extends TestCase
         if (!static::$setUpHasRunOnce) {
             $this->artisan('migrate:fresh');
             $this->seed(TestingDatabaseSeeder::class);
+
             static::$setUpHasRunOnce = true;
         }
 
         $this->withoutExceptionHandling();
+        $this->withoutVite();
     }
 
     protected function createUser()

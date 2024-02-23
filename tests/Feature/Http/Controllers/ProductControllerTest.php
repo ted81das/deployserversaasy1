@@ -26,7 +26,7 @@ class ProductControllerTest extends FeatureTest
 
         $this->expectException(NotFoundHttpException::class);
 
-        $response = $this->get(route('cart.add', [
+        $response = $this->get(route('buy.product', [
             'productSlug' => $product->slug,
         ]));
     }
@@ -46,7 +46,7 @@ class ProductControllerTest extends FeatureTest
             'price' => 100,
         ]);
 
-        $response = $this->get(route('cart.add', [
+        $response = $this->get(route('buy.product', [
             'productSlug' => $product->slug,
         ]));
 
