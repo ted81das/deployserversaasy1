@@ -22,6 +22,7 @@ class ProductControllerTest extends FeatureTest
 
         $product = OneTimeProduct::factory()->create([
             'slug' => 'product-slug',
+            'is_active' => true,
         ]);
 
         $this->expectException(NotFoundHttpException::class);
@@ -38,6 +39,7 @@ class ProductControllerTest extends FeatureTest
 
         $product = OneTimeProduct::factory()->create([
             'slug' => 'product-slug1',
+            'is_active' => true,
         ]);
 
         OneTimeProductPrice::create([
