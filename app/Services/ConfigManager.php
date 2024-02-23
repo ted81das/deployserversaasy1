@@ -29,7 +29,11 @@ class ConfigManager
 
     public function get(string $key, string $default = null): ?string
     {
-        return Config::get($key) ?? config($key) ?? $default;
+        try {
+            return Config::get($key) ?? config($key) ?? $default;
+        } catch (\Exception $e) {
+            return $default;
+        }
     }
 
     private function toKeyValueArray($configs): array
