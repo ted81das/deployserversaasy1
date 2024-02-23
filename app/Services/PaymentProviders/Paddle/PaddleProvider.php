@@ -5,21 +5,23 @@ namespace App\Services\PaymentProviders\Paddle;
 use App\Client\PaddleClient;
 use App\Constants\DiscountConstants;
 use App\Constants\PaddleConstants;
-use App\Constants\SubscriptionStatus;
 use App\Filament\Dashboard\Resources\SubscriptionResource\Pages\PaymentProviders\Paddle\PaddleUpdatePaymentDetails;
 use App\Models\Currency;
 use App\Models\Discount;
+use App\Models\OneTimeProduct;
+use App\Models\OneTimeProductPrice;
+use App\Models\Order;
 use App\Models\PaymentProvider;
 use App\Models\Plan;
 use App\Models\PlanPrice;
 use App\Models\Subscription;
 use App\Services\CalculationManager;
 use App\Services\DiscountManager;
+use App\Services\OneTimeProductManager;
 use App\Services\PaymentProviders\PaymentProviderInterface;
 use App\Services\PlanManager;
 use App\Services\SubscriptionManager;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Route;
 
 class PaddleProvider implements PaymentProviderInterface
 {
@@ -29,18 +31,19 @@ class PaddleProvider implements PaymentProviderInterface
         private PlanManager $planManager,
         private CalculationManager $calculationManager,
         private DiscountManager $discountManager,
+        private OneTimeProductManager $oneTimeProductManager,
     ) {
 
     }
 
-    public function init(Plan $plan, Subscription $subscription, Discount $discount = null): array
+    public function initSubscriptionCheckout(Plan $plan, Subscription $subscription, Discount $discount = null): array
     {
         $paymentProvider = $this->assertProviderIsActive();
 
         $paddleProductId = $this->planManager->getPaymentProviderProductId($plan, $paymentProvider);
 
         if ($paddleProductId === null) {
-            $paddleProductId = $this->createPaddleProduct($plan, $paymentProvider);
+            $paddleProductId = $this->createPaddleProductForPlan($plan, $paymentProvider);
         }
 
         $currency = $subscription->currency()->firstOrFail();
@@ -50,12 +53,17 @@ class PaddleProvider implements PaymentProviderInterface
         $paddlePrice = $this->planManager->getPaymentProviderPriceId($planPrice, $paymentProvider);
 
         if ($paddlePrice === null) {
-            $paddlePrice = $this->createPaddlePrice($plan, $paddleProductId, $currency, $paymentProvider, $planPrice);
+            $paddlePrice = $this->createPaddlePriceForPlan($plan, $paddleProductId, $currency, $paymentProvider, $planPrice);
         }
 
         $results = [
-            'paddleProductId' => $paddleProductId,
-            'paddlePriceId' => $paddlePrice,
+            'productDetails' => [
+                [
+                    'paddleProductId' => $paddleProductId,
+                    'paddlePriceId' => $paddlePrice,
+                    'quantity' => 1,
+                ],
+            ]
         ];
 
         if ($discount !== null) {
@@ -76,7 +84,7 @@ class PaddleProvider implements PaymentProviderInterface
         $paddleProductId = $this->planManager->getPaymentProviderProductId($newPlan, $paymentProvider);
 
         if ($paddleProductId === null) {
-            $paddleProductId = $this->createPaddleProduct($newPlan, $paymentProvider);
+            $paddleProductId = $this->createPaddleProductForPlan($newPlan, $paymentProvider);
         }
 
         $currency = $subscription->currency()->firstOrFail();
@@ -85,7 +93,7 @@ class PaddleProvider implements PaymentProviderInterface
         $paddlePrice = $this->planManager->getPaymentProviderPriceId($planPrice, $paymentProvider);
 
         if ($paddlePrice === null) {
-            $paddlePrice = $this->createPaddlePrice($newPlan, $paddleProductId, $currency, $paymentProvider, $planPrice);
+            $paddlePrice = $this->createPaddlePriceForPlan($newPlan, $paddleProductId, $currency, $paymentProvider, $planPrice);
         }
 
         $response = $this->paddleClient->updateSubscription(
@@ -160,12 +168,57 @@ class PaddleProvider implements PaymentProviderInterface
         return $url . '?_ptxn=' . $txId;
     }
 
+    public function initProductCheckout(Order $order, Discount $discount = null): array
+    {
+        $paymentProvider = $this->assertProviderIsActive();
+
+        $results = [
+            'productDetails' => [],
+        ];
+        foreach ($order->items()->get() as $item) {
+            $product = $item->oneTimeProduct()->firstOrFail();
+            $paddleProductId = $this->oneTimeProductManager->getPaymentProviderProductId($product, $paymentProvider);
+
+            if ($paddleProductId === null) {
+                $paddleProductId = $this->createPaddleProductForOneTimeProduct($product, $paymentProvider);
+            }
+
+            $currency = $order->currency()->firstOrFail();
+
+            $oneTimeProductPrice = $this->calculationManager->getOneTimeProductPrice($product);
+
+            $paddlePrice = $this->oneTimeProductManager->getPaymentProviderPriceId($oneTimeProductPrice, $paymentProvider);
+
+            if ($paddlePrice === null) {
+                $paddlePrice = $this->createPaddlePriceForOneTimeProduct($product, $paddleProductId, $currency, $paymentProvider, $oneTimeProductPrice);
+            }
+
+            $results['productDetails'][] = [
+                'paddleProductId' => $paddleProductId,
+                'paddlePriceId' => $paddlePrice,
+                'quantity' => $item->quantity,
+            ];
+        }
+
+        if ($discount !== null) {
+            $paddleDiscountId = $this->findOrCreatePaddleDiscount($discount, $paymentProvider, $currency->code);
+            $results['paddleDiscountId'] = $paddleDiscountId;
+        }
+
+        return $results;
+    }
+
+    public function createProductCheckoutRedirectLink(Order $order, Discount $discount = null): string
+    {
+        throw new \Exception('Not a redirect payment provider');
+    }
+
     public function getSlug(): string
     {
         return 'paddle';
     }
 
-    public function createSubscriptionRedirectLink(Plan $plan, Subscription $subscription, Discount $discount = null): string
+    public function createSubscriptionCheckoutRedirectLink(Plan $plan, Subscription $subscription, Discount $discount = null): string
     {
         throw new \Exception('Not a redirect payment provider');
     }
@@ -219,7 +272,7 @@ class PaddleProvider implements PaymentProviderInterface
         return $paddleDiscountId;
     }
 
-    private function createPaddleProduct(Plan $plan, PaymentProvider $paymentProvider): mixed
+    private function createPaddleProductForPlan(Plan $plan, PaymentProvider $paymentProvider): mixed
     {
         $createProductResponse = $this->paddleClient->createProduct(
             $plan->name,
@@ -238,7 +291,26 @@ class PaddleProvider implements PaymentProviderInterface
         return $paddleProductId;
     }
 
-    private function createPaddlePrice(
+    private function createPaddleProductForOneTimeProduct(OneTimeProduct $oneTimeProduct, PaymentProvider $paymentProvider): mixed
+    {
+        $createProductResponse = $this->paddleClient->createProduct(
+            $oneTimeProduct->name,
+            strip_tags($oneTimeProduct->description ?? $oneTimeProduct->name),
+            'standard'
+        );
+
+        if ($createProductResponse->failed()) {
+            throw new \Exception('Failed to create paddle product: ' . $createProductResponse->body());
+        }
+
+        $paddleProductId = $createProductResponse->json()['data']['id'];
+
+        $this->oneTimeProductManager->addPaymentProviderProductId($oneTimeProduct, $paymentProvider, $paddleProductId);
+
+        return $paddleProductId;
+    }
+
+    private function createPaddlePriceForPlan(
         Plan $plan,
         string $paddleProductId,
         Currency $currency,
@@ -253,7 +325,7 @@ class PaddleProvider implements PaymentProviderInterface
             $trialFrequency = $plan->trial_interval_count;
         }
 
-        $response = $this->paddleClient->createPrice(
+        $response = $this->paddleClient->createPriceForPlan(
             $paddleProductId,
             $plan->interval()->firstOrFail()->date_identifier,
             $plan->interval_count,
@@ -270,6 +342,32 @@ class PaddleProvider implements PaymentProviderInterface
         $paddlePrice = $response->json()['data']['id'];
 
         $this->planManager->addPaymentProviderPriceId($planPrice, $paymentProvider, $paddlePrice);
+
+        return $paddlePrice;
+    }
+
+    private function createPaddlePriceForOneTimeProduct(
+        OneTimeProduct $oneTimeProduct,
+        string $paddleProductId,
+        Currency $currency,
+        PaymentProvider $paymentProvider,
+        OneTimeProductPrice $oneTimeProductPrice
+    ) {
+
+        $response = $this->paddleClient->createPriceForOneTimeProduct(
+            $paddleProductId,
+            $oneTimeProductPrice->price,
+            $currency->code,
+            $oneTimeProduct->name,
+        );
+
+        if ($response->failed()) {
+            throw new \Exception('Failed to create paddle price: ' . $response->body());
+        }
+
+        $paddlePrice = $response->json()['data']['id'];
+
+        $this->oneTimeProductManager->addPaymentProviderPriceId($oneTimeProductPrice, $paymentProvider, $paddlePrice);
 
         return $paddlePrice;
     }

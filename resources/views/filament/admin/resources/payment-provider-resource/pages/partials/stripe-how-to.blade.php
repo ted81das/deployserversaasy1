@@ -38,7 +38,27 @@
                 <code class="bg-gray-100 px-4 py-2 block my-4 overflow-x-scroll">
                     {{ route('payments-providers.stripe.webhook') }}
                 </code>
-                {{ __('Click on "Select events" then select all events under "Payment Intent", "Customer" and "Invoice". So all "payment_intent.xyz", "customer.xyz" and "invoice.xyz" should be selected.') }}
+                {{ __('Click on "Select events" then select all the following events:') }}
+            </p>
+            <ul class="list-disc ps-4">
+                <li>
+                    {{ __('Check all the "payment_intent.xyz" events.') }}
+                </li>
+                <li>
+                    {{ __('Check all the "customer.xyz" events.') }}
+                </li>
+                <li>
+                    {{ __('Check all the "invoice.xyz" events.') }}
+                </li>
+                <li>
+                    {{ __('Check the "charge.refunded" event.') }}
+                </li>
+                <li>
+                    {{ __('Check the "charge.failed" event.') }}
+                </li>
+            </ul>
+
+            <p class="mt-4">
                 {{ __('Click on "Add endpoint" and copy the generated webhook signing secret and enter it into the field in the form.') }}
             </p>
         </li>

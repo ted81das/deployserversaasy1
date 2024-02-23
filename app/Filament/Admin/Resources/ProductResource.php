@@ -10,6 +10,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Unique;
+use const _PHPStan_7c8075089\__;
 
 class ProductResource extends Resource
 {
@@ -110,5 +111,10 @@ class ProductResource extends Resource
             'create' => \App\Filament\Admin\Resources\ProductResource\Pages\CreateProduct::route('/create'),
             'edit' => \App\Filament\Admin\Resources\ProductResource\Pages\EditProduct::route('/{record}/edit'),
         ];
+    }
+
+    public static function getModelLabel(): string
+    {
+        return  __('Subscription Product');
     }
 }

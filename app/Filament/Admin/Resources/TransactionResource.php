@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources;
 
 use App\Constants\TransactionStatus;
+use App\Filament\Admin\Resources\OrderResource\Pages\ViewOrder;
 use App\Filament\Admin\Resources\SubscriptionResource\Pages\ViewSubscription;
 use App\Filament\Admin\Resources\TransactionResource\Pages;
 use App\Filament\Admin\Resources\TransactionResource\Widgets\TransactionOverview;
@@ -23,7 +24,9 @@ class TransactionResource extends Resource
 
     protected static ?string $model = Transaction::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
+    protected static ?string $navigationGroup = 'Revenue';
+
+//    protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
 
     public static function form(Form $form): Form
     {
@@ -55,11 +58,10 @@ class TransactionResource extends Resource
                     ->label(__('Payment Provider'))
                     ->getStateUsing(fn (Transaction $record) => $record->paymentProvider->name)
                     ->sortable(),
-                Tables\Columns\TextColumn::make('subscription_id')
-                    ->label(__('Subscription'))
-                    ->url(fn (Transaction $record) => $record->subscription ? ViewSubscription::getUrl(['record' => $record->subscription ]) : '-')
-                    ->numeric()->badge()
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('owner')
+                    ->label(__('Owner'))
+                    ->getStateUsing(fn (Transaction $record) => $record->subscription_id !== null ? ($record->subscription->plan?->name ?? '-') : ($record->order_id !== null ? __('Order Nr. ') . $record->order_id : '-'))
+                    ->url(fn (Transaction $record) => $record->subscription_id !== null  ? ViewSubscription::getUrl(['record' => $record->subscription ]) : ($record->order_id !== null ? ViewOrder::getUrl(['record' => $record->order]) : '-')),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label(__('Updated At'))
                     ->dateTime(config('app.datetime_format'))

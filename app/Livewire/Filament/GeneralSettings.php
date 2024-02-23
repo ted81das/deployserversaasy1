@@ -7,6 +7,7 @@ use App\Models\EmailProvider;
 use App\Services\ConfigManager;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Tabs;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -42,10 +43,14 @@ class GeneralSettings extends Component implements HasForms
             'datetime_format' => $this->configManager->get('app.datetime_format'),
             'default_currency' => $this->configManager->get('app.default_currency'),
             'google_tracking_id' => $this->configManager->get('app.google_tracking_id'),
+            'posthog_html_snippet' => $this->configManager->get('app.posthog_html_snippet'),
             'payment_proration_enabled' => $this->configManager->get('app.payment.proration_enabled'),
             'default_email_provider' => $this->configManager->get('mail.default'),
             'default_email_from_name' => $this->configManager->get('mail.from.name'),
             'default_email_from_email' => $this->configManager->get('mail.from.address'),
+            'show_subscriptions' => $this->configManager->get('customer_dashboard.show_subscriptions', true),
+            'show_orders' => $this->configManager->get('customer_dashboard.show_orders', true),
+            'show_transactions' => $this->configManager->get('customer_dashboard.show_transactions', true),
 
         ]);
     }
@@ -97,8 +102,6 @@ class GeneralSettings extends Component implements HasForms
                                     },
                                 ])
                                 ->required(),
-                            TextInput::make('google_tracking_id')
-                                ->label(__('Google Tracking ID')),
                     ]),
                     Tabs\Tab::make(__('Payment'))
                         ->icon('heroicon-o-credit-card')
@@ -148,6 +151,31 @@ class GeneralSettings extends Component implements HasForms
                                 ->helperText(__('This is the email address that will be used as the "From" address for all emails.'))
                                 ->required()
                                 ->email(),
+                        ]),
+                    Tabs\Tab::make(__('Analytics'))
+                        ->icon('heroicon-o-squares-2x2')
+                        ->schema([
+                            TextInput::make('google_tracking_id')
+                                ->label(__('Google Tracking ID')),
+                            Textarea::make('posthog_html_snippet')
+                                ->helperText(__('Paste your Posthog HTML snippet here.'))
+                                ->label(__('Posthog HTML Snippet'))
+                        ]),
+                    Tabs\Tab::make(__('Customer Dashboard'))
+                        ->icon('heroicon-o-squares-2x2')
+                        ->schema([
+                            Toggle::make('show_subscriptions')
+                                ->label(__('Show Subscriptions'))
+                                ->helperText(__('If enabled, customers will be able to see their subscriptions on the dashboard.'))
+                                ->required(),
+                            Toggle::make('show_orders')
+                                ->label(__('Show Orders'))
+                                ->helperText(__('If enabled, customers will be able to see their orders on the dashboard.'))
+                                ->required(),
+                            Toggle::make('show_transactions')
+                                ->label(__('Show Transactions'))
+                                ->helperText(__('If enabled, customers will be able to see their transactions on the dashboard.'))
+                                ->required(),
                         ])
                 ])
                 ->persistTabInQueryString('settings-tab')
@@ -165,10 +193,14 @@ class GeneralSettings extends Component implements HasForms
         $this->configManager->set('app.datetime_format', $data['datetime_format']);
         $this->configManager->set('app.default_currency', $data['default_currency']);
         $this->configManager->set('app.google_tracking_id', $data['google_tracking_id'] ?? '');
+        $this->configManager->set('app.posthog_html_snippet', $data['posthog_html_snippet'] ?? '');
         $this->configManager->set('app.payment.proration_enabled', $data['payment_proration_enabled']);
         $this->configManager->set('mail.default', $data['default_email_provider']);
         $this->configManager->set('mail.from.name', $data['default_email_from_name']);
         $this->configManager->set('mail.from.address', $data['default_email_from_email']);
+        $this->configManager->set('customer_dashboard.show_subscriptions', $data['show_subscriptions']);
+        $this->configManager->set('customer_dashboard.show_orders', $data['show_orders']);
+        $this->configManager->set('customer_dashboard.show_transactions', $data['show_transactions']);
 
 
         Notification::make()

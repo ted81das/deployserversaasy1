@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Database\Seeders\Testing\TestingDatabaseSeeder;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class FeatureTest extends TestCase

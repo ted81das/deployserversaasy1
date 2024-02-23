@@ -8,6 +8,7 @@ use App\Filament\Dashboard\Resources\SubscriptionResource\ActionHandlers\Discard
 use App\Filament\Dashboard\Resources\SubscriptionResource\Pages;
 use App\Mapper\SubscriptionStatusMapper;
 use App\Models\Subscription;
+use App\Services\ConfigManager;
 use Filament\Forms\Form;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
@@ -23,7 +24,7 @@ class SubscriptionResource extends Resource
 {
     protected static ?string $model = Subscription::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-fire';
 
     public static function form(Form $form): Form
     {
@@ -188,4 +189,8 @@ class SubscriptionResource extends Resource
             ]);
     }
 
+    public static function isDiscovered(): bool
+    {
+        return app()->make(ConfigManager::class)->get('customer_dashboard.show_subscriptions', true);
+    }
 }

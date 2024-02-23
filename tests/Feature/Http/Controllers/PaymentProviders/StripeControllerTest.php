@@ -2,15 +2,18 @@
 
 namespace Tests\Feature\Http\Controllers\PaymentProviders;
 
+use App\Constants\OrderStatus;
 use App\Constants\SubscriptionStatus;
 use App\Constants\TransactionStatus;
+use App\Models\Currency;
+use App\Models\Order;
 use App\Models\PaymentProvider;
 use App\Models\Subscription;
+use App\Services\OrderManager;
 use App\Services\PaymentProviders\Stripe\StripeWebhookHandler;
 use App\Services\SubscriptionManager;
 use App\Services\TransactionManager;
 use Illuminate\Support\Str;
-use Mockery\MockInterface;
 use Tests\Feature\FeatureTest;
 
 class StripeControllerTest extends FeatureTest
@@ -255,7 +258,7 @@ class StripeControllerTest extends FeatureTest
         $payloadString = json_encode($payload);
         $signature = \hash_hmac('sha256', "{$timestamp}.{$payloadString}", config('services.stripe.webhook_signing_secret'));
 
-        $mock = \Mockery::mock(StripeWebhookHandler::class, [resolve(SubscriptionManager::class), resolve(TransactionManager::class)])->makePartial()->shouldAllowMockingProtectedMethods();
+        $mock = \Mockery::mock(StripeWebhookHandler::class, [resolve(SubscriptionManager::class), resolve(TransactionManager::class), resolve(OrderManager::class)])->makePartial()->shouldAllowMockingProtectedMethods();
         $mock->shouldReceive('calculateFees')->once()->andReturn(0);
         $this->app->instance(StripeWebhookHandler::class, $mock);
 
@@ -313,7 +316,7 @@ class StripeControllerTest extends FeatureTest
         $payloadString = json_encode($payload);
         $signature = \hash_hmac('sha256', "{$timestamp}.{$payloadString}", config('services.stripe.webhook_signing_secret'));
 
-        $mock = \Mockery::mock(StripeWebhookHandler::class, [resolve(SubscriptionManager::class), resolve(TransactionManager::class)])->makePartial()->shouldAllowMockingProtectedMethods();
+        $mock = \Mockery::mock(StripeWebhookHandler::class, [resolve(SubscriptionManager::class), resolve(TransactionManager::class), resolve(OrderManager::class)])->makePartial()->shouldAllowMockingProtectedMethods();
         $mock->shouldReceive('calculateFees')->once()->andReturn(0);
         $this->app->instance(StripeWebhookHandler::class, $mock);
 
@@ -438,6 +441,635 @@ class StripeControllerTest extends FeatureTest
             'payment_provider_transaction_id' => $invoiceId,
             'payment_provider_status' => 'pending',
         ]);
+    }
+
+    public function test_payment_intent_success_webhook()
+    {
+        $user = $this->createUser();
+        $currency = Currency::where('code', 'USD')->firstOrFail();
+        $orderUUID = (string) Str::uuid();
+        $order = Order::create([
+            'user_id' => $user->id,
+            'uuid' => $orderUUID,
+            'status' => 'new',
+            'currency_id' => $currency->id,
+            'total_amount' => 100,
+        ]);
+
+        $paymentIntentId = 'pi_3Okqv0JQC7CL5JsV2lwbUtu66';
+        $payload = $this->getStripePaymentIntentSucceeded($paymentIntentId, $orderUUID);
+
+        $timestamp = time();
+        $payloadString = json_encode($payload);
+        $signature = \hash_hmac('sha256', "{$timestamp}.{$payloadString}", config('services.stripe.webhook_signing_secret'));
+
+        $mock = \Mockery::mock(StripeWebhookHandler::class, [resolve(SubscriptionManager::class), resolve(TransactionManager::class), resolve(OrderManager::class)])->makePartial()->shouldAllowMockingProtectedMethods();
+        $mock->shouldReceive('calculateFees')->once()->andReturn(0);
+        $this->app->instance(StripeWebhookHandler::class, $mock);
+
+        $response = $this->postJson(route('payments-providers.stripe.webhook'), $payload, [
+            'Stripe-Signature' => 't=' . $timestamp . ',v1=' . $signature,
+            'Content-Type' => 'application/json',
+        ]);
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('transactions', [
+            'order_id' => $order->id,
+            'status' => TransactionStatus::SUCCESS->value,
+            'payment_provider_transaction_id' => $paymentIntentId,
+            'payment_provider_status' => 'succeeded',
+        ]);
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => OrderStatus::SUCCESS->value,
+        ]);
+
+    }
+
+    public function test_charge_refunded_webhook()
+    {
+        $user = $this->createUser();
+        $currency = Currency::where('code', 'USD')->firstOrFail();
+        $orderUUID = (string) Str::uuid();
+        $order = Order::create([
+            'user_id' => $user->id,
+            'uuid' => $orderUUID,
+            'status' => OrderStatus::SUCCESS,
+            'currency_id' => $currency->id,
+            'total_amount' => 100,
+        ]);
+
+        $paymentIntentId = 'pi_3Okqv0JQC7CL5JsV2lwbUtu67';
+
+        $transaction = $order->transactions()->create([
+            'uuid' => (string) Str::uuid(),
+            'user_id' => $user->id,
+            'currency_id' => $currency->id,
+            'amount' => 100,
+            'status' => TransactionStatus::SUCCESS->value,
+            'payment_provider_id' => PaymentProvider::where('slug', 'stripe')->firstOrFail()->id,
+            'payment_provider_status' => 'success',
+            'payment_provider_transaction_id' => $paymentIntentId,
+        ]);
+
+        $payload = $this->getStripeCharge($paymentIntentId, 'charge.refunded', $orderUUID);
+
+        $timestamp = time();
+        $payloadString = json_encode($payload);
+        $signature = \hash_hmac('sha256', "{$timestamp}.{$payloadString}", config('services.stripe.webhook_signing_secret'));
+
+        $mock = \Mockery::mock(StripeWebhookHandler::class, [resolve(SubscriptionManager::class), resolve(TransactionManager::class), resolve(OrderManager::class)])->makePartial()->shouldAllowMockingProtectedMethods();
+        $this->app->instance(StripeWebhookHandler::class, $mock);
+
+        $response = $this->postJson(route('payments-providers.stripe.webhook'), $payload, [
+            'Stripe-Signature' => 't=' . $timestamp . ',v1=' . $signature,
+            'Content-Type' => 'application/json',
+        ]);
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $transaction->id,
+            'order_id' => $order->id,
+            'status' => TransactionStatus::REFUNDED->value,
+            'payment_provider_transaction_id' => $paymentIntentId,
+            'payment_provider_status' => 'refunded',
+        ]);
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => OrderStatus::REFUNDED->value,
+        ]);
+    }
+
+    public function test_payment_intent_payment_failed_webhook()
+    {
+        $user = $this->createUser();
+        $currency = Currency::where('code', 'USD')->firstOrFail();
+        $orderUUID = (string) Str::uuid();
+        $order = Order::create([
+            'user_id' => $user->id,
+            'uuid' => $orderUUID,
+            'status' => OrderStatus::NEW,
+            'currency_id' => $currency->id,
+            'total_amount' => 100,
+        ]);
+
+        $paymentIntentId = 'pi_3OlDhGJQC7CL5JsV0c0a4vVU';
+
+        $payload = $this->getStripePaymentIntentPaymentFailed($paymentIntentId, $orderUUID);
+
+        $timestamp = time();
+        $payloadString = json_encode($payload);
+        $signature = \hash_hmac('sha256', "{$timestamp}.{$payloadString}", config('services.stripe.webhook_signing_secret'));
+
+        $mock = \Mockery::mock(StripeWebhookHandler::class, [resolve(SubscriptionManager::class), resolve(TransactionManager::class), resolve(OrderManager::class)])->makePartial()->shouldAllowMockingProtectedMethods();
+        $mock->shouldReceive('calculateFees')->once()->andReturn(0);
+        $this->app->instance(StripeWebhookHandler::class, $mock);
+
+        $response = $this->postJson(route('payments-providers.stripe.webhook'), $payload, [
+            'Stripe-Signature' => 't=' . $timestamp . ',v1=' . $signature,
+            'Content-Type' => 'application/json',
+        ]);
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('transactions', [
+            'order_id' => $order->id,
+            'status' => TransactionStatus::FAILED->value,
+            'payment_provider_transaction_id' => $paymentIntentId,
+        ]);
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => OrderStatus::FAILED->value,
+        ]);
+    }
+
+    public function test_dispute_created_webhook()
+    {
+        $user = $this->createUser();
+        $currency = Currency::where('code', 'USD')->firstOrFail();
+        $orderUUID = (string) Str::uuid();
+        $order = Order::create([
+            'user_id' => $user->id,
+            'uuid' => $orderUUID,
+            'status' => OrderStatus::NEW,
+            'currency_id' => $currency->id,
+            'total_amount' => 100,
+        ]);
+
+        $paymentIntentId = 'pi_3OlDhGJQC7CL5JsV0c0a4vV34';
+
+        $transaction = $order->transactions()->create([
+            'uuid' => (string) Str::uuid(),
+            'user_id' => $user->id,
+            'currency_id' => $currency->id,
+            'amount' => 100,
+            'status' => TransactionStatus::SUCCESS->value,
+            'payment_provider_id' => PaymentProvider::where('slug', 'stripe')->firstOrFail()->id,
+            'payment_provider_status' => 'success',
+            'payment_provider_transaction_id' => $paymentIntentId,
+        ]);
+
+        $payload = $this->getStripeDispute($paymentIntentId);
+
+        $timestamp = time();
+        $payloadString = json_encode($payload);
+        $signature = \hash_hmac('sha256', "{$timestamp}.{$payloadString}", config('services.stripe.webhook_signing_secret'));
+
+        $mock = \Mockery::mock(StripeWebhookHandler::class, [resolve(SubscriptionManager::class), resolve(TransactionManager::class), resolve(OrderManager::class)])->makePartial()->shouldAllowMockingProtectedMethods();
+        $this->app->instance(StripeWebhookHandler::class, $mock);
+
+        $response = $this->postJson(route('payments-providers.stripe.webhook'), $payload, [
+            'Stripe-Signature' => 't=' . $timestamp . ',v1=' . $signature,
+            'Content-Type' => 'application/json',
+        ]);
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('transactions', [
+            'order_id' => $order->id,
+            'status' => TransactionStatus::DISPUTED->value,
+            'payment_provider_transaction_id' => $paymentIntentId,
+        ]);
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => OrderStatus::DISPUTED->value,
+        ]);
+    }
+
+    public function getStripeCharge(string $paymentIntentId, string $type, string $orderUUID)
+    {
+        $json = <<<JSON
+        {
+          "type": "$type",
+          "id": "evt_1J5X2n2eZvKYlo2C0Q2Z2Z2Z",
+          "object": "event",
+          "api_version": "2020-08-27",
+          "created": 1632830000,
+          "data": {
+            "object": {
+                "id": "ch_3OklVUJQC7CL5JsV0q7nOBqG",
+                "object": "charge",
+                "livemode": false,
+                "payment_intent": "$paymentIntentId",
+                "status": "succeeded",
+                "amount": 20000,
+                "amount_captured": 20000,
+                "amount_refunded": 20000,
+                "application": null,
+                "application_fee": null,
+                "application_fee_amount": null,
+                "balance_transaction": "txn_3OklVUJQC7CL5JsV0DjWFum2",
+                "billing_details": {
+                "address": {
+                  "city": null,
+                  "country": "DE",
+                  "line1": null,
+                  "line2": null,
+                  "postal_code": null,
+                  "state": null
+                },
+                "email": "hojuwymyj@mailinator.com",
+                "name": "234234234234",
+                "phone": null
+                },
+                "calculated_statement_descriptor": "Stripe",
+                "captured": true,
+                "created": 1708167152,
+                "currency": "usd",
+                "customer": "cus_PYa7B3aW0GR8Tp",
+                "description": null,
+                "destination": null,
+                "dispute": null,
+                "disputed": false,
+                "failure_balance_transaction": null,
+                "failure_code": null,
+                "failure_message": null,
+                "fraud_details": {
+                },
+                "invoice": null,
+                "metadata": {
+                  "order_uuid": "$orderUUID"
+                },
+                "on_behalf_of": null,
+                "order": null,
+                "outcome": {
+                "network_status": "approved_by_network",
+                "reason": null,
+                "risk_level": "normal",
+                "risk_score": 58,
+                "seller_message": "Payment complete.",
+                "type": "authorized"
+                },
+                "paid": true,
+                "payment_method": "pm_1OjSxvJQC7CL5JsVXORPI3ow",
+                "payment_method_details": {
+                "card": {
+                  "amount_authorized": 20000,
+                  "brand": "visa",
+                  "checks": {
+                    "address_line1_check": null,
+                    "address_postal_code_check": null,
+                    "cvc_check": null
+                  },
+                  "country": "US",
+                  "exp_month": 2,
+                  "exp_year": 2034,
+                  "extended_authorization": {
+                    "status": "disabled"
+                  },
+                  "fingerprint": "FeBglJntP9jUtZ9s",
+                  "funding": "credit",
+                  "incremental_authorization": {
+                    "status": "unavailable"
+                  },
+                  "installments": null,
+                  "last4": "4242",
+                  "mandate": null,
+                  "multicapture": {
+                    "status": "unavailable"
+                  },
+                  "network": "visa",
+                  "network_token": {
+                    "used": false
+                  },
+                  "overcapture": {
+                    "maximum_amount_capturable": 20000,
+                    "status": "unavailable"
+                  },
+                  "three_d_secure": null,
+                  "wallet": null
+                },
+                "type": "card"
+                },
+                "radar_options": {
+                },
+                "receipt_email": null,
+                "receipt_number": null,
+                "receipt_url": "https://pay.stripe.com/receipts/payment/CAcaFwoVYWNjdF8xTmhlS1RKUUM3Q0w1SnNWKImFw64GMgaGkgN0CXs6LBae7nxE_zOpRx39z8SBysbBsikMWd5q6z2-0bOhKWvK-EUBZ0YkiI6NNXtn",
+                "refunded": true,
+                "review": null,
+                "shipping": null,
+                "source": null,
+                "source_transfer": null,
+                "statement_descriptor": null,
+                "statement_descriptor_suffix": null,
+                "transfer_data": null,
+                "transfer_group": null
+                }
+          }
+        }
+JSON;
+
+        return json_decode($json, true);
+    }
+
+    private function getStripeDispute(string $paymentIntentId)
+    {
+        $json = <<<JSON
+        {
+          "type": "charge.dispute.created",
+          "id": "evt_1J5X2n2eZvKYlo2C0Q2Z2Z2Z",
+          "object": "event",
+          "api_version": "2020-08-27",
+          "created": 1632830000,
+          "data": {
+            "object": {
+              "id": "dp_1Okp9NJQC7CL5JsVnOrOgGuY",
+              "object": "dispute",
+              "livemode": false,
+              "payment_intent": "$paymentIntentId",
+              "status": "needs_response",
+              "amount": 10000,
+              "balance_transaction": "txn_1Okp9NJQC7CL5JsVHAyXzvYA",
+              "balance_transactions": [
+                {
+                  "id": "txn_1Okp9NJQC7CL5JsVHAyXzvYA",
+                  "object": "balance_transaction",
+                  "amount": -9280,
+                  "available_on": 1708732800,
+                  "created": 1708181157,
+                  "currency": "eur",
+                  "description": "Chargeback withdrawal for ch_3Okp9LJQC7CL5JsV2LAHHPCi",
+                  "exchange_rate": null,
+                  "fee": 2000,
+                  "fee_details": [
+                    {
+                      "amount": 2000,
+                      "application": null,
+                      "currency": "eur",
+                      "description": "Dispute fee",
+                      "type": "stripe_fee"
+                    }
+                  ],
+                  "net": -11280,
+                  "reporting_category": "dispute",
+                  "source": "dp_1Okp9NJQC7CL5JsVnOrOgGuY",
+                  "status": "pending",
+                  "type": "adjustment"
+                }
+              ],
+              "charge": "ch_3Okp9LJQC7CL5JsV2LAHHPCi",
+              "created": 1708181157,
+              "currency": "usd",
+              "evidence": {
+                "access_activity_log": null,
+                "billing_address": "DE",
+                "cancellation_policy": null,
+                "cancellation_policy_disclosure": null,
+                "cancellation_rebuttal": null,
+                "customer_communication": null,
+                "customer_email_address": "hojuwymyj@mailinator.com",
+                "customer_name": "234234234234",
+                "customer_purchase_ip": null,
+                "customer_signature": null,
+                "duplicate_charge_documentation": null,
+                "duplicate_charge_explanation": null,
+                "duplicate_charge_id": null,
+                "product_description": null,
+                "receipt": null,
+                "refund_policy": null,
+                "refund_policy_disclosure": null,
+                "refund_refusal_explanation": null,
+                "service_date": null,
+                "service_documentation": null,
+                "shipping_address": null,
+                "shipping_carrier": null,
+                "shipping_date": null,
+                "shipping_documentation": null,
+                "shipping_tracking_number": null,
+                "uncategorized_file": null,
+                "uncategorized_text": null
+              },
+              "evidence_details": {
+                "due_by": 1708991999,
+                "has_evidence": false,
+                "past_due": false,
+                "submission_count": 0
+              },
+              "is_charge_refundable": false,
+              "metadata": {
+              },
+              "payment_method_details": {
+                "card": {
+                  "brand": "visa",
+                  "network_reason_code": "83"
+                },
+                "type": "card"
+              },
+              "reason": "fraudulent"
+            }
+          }
+        }
+
+JSON;
+
+        return json_decode($json, true);
+    }
+
+    private function getStripePaymentIntentSucceeded(string $paymentIntentId, string $orderUUID) {
+        $json = <<<JSON
+        {
+          "type": "payment_intent.succeeded",
+          "id": "evt_1J5X2n2eZvKYlo2C0Q2Z2Z2Z",
+          "object": "event",
+          "api_version": "2020-08-27",
+          "created": 1632830000,
+          "data": {
+            "object": {
+              "id": "$paymentIntentId",
+              "object": "payment_intent",
+              "last_payment_error": null,
+              "livemode": false,
+              "next_action": null,
+              "status": "succeeded",
+              "amount": 12600,
+              "amount_capturable": 0,
+              "amount_details": {
+                "tip": {
+                }
+              },
+              "amount_received": 12600,
+              "application": null,
+              "application_fee_amount": null,
+              "automatic_payment_methods": null,
+              "canceled_at": null,
+              "cancellation_reason": null,
+              "capture_method": "automatic",
+              "client_secret": "pi_3Okqv0JQC7CL5JsV2lwbUtu6_secret_aNRpNbLaL1F63oFdS6GwNmnX8",
+              "confirmation_method": "automatic",
+              "created": 1708187954,
+              "currency": "usd",
+              "customer": "cus_PYa7B3aW0GR8Tp",
+              "description": null,
+              "invoice": null,
+              "latest_charge": "ch_3Okqv0JQC7CL5JsV2z46y9CL",
+              "metadata": {
+                "order_uuid": "$orderUUID"
+              },
+              "on_behalf_of": null,
+              "payment_method": "pm_1OjSxvJQC7CL5JsVXORPI3ow",
+              "payment_method_configuration_details": null,
+              "payment_method_options": {
+                "card": {
+                  "installments": null,
+                  "mandate_options": null,
+                  "network": null,
+                  "request_three_d_secure": "automatic"
+                }
+              },
+              "payment_method_types": [
+                "card"
+              ],
+              "processing": null,
+              "receipt_email": null,
+              "review": null,
+              "setup_future_usage": null,
+              "shipping": null,
+              "source": null,
+              "statement_descriptor": null,
+              "statement_descriptor_suffix": null,
+              "transfer_data": null,
+              "transfer_group": null
+            }
+          }
+        }
+JSON;
+
+        return json_decode($json, true);
+    }
+
+    private function getStripePaymentIntentPaymentFailed(string $paymentIntentId, string $orderUUID) {
+        $json = <<<JSON
+        {
+          "type": "payment_intent.payment_failed",
+          "id": "evt_1J5X2n2eZvKYlo2C0Q2Z2Z2Z",
+          "object": "event",
+          "api_version": "2020-08-27",
+          "created": 1632830000,
+          "data": {
+            "object": {
+                  "id": "$paymentIntentId",
+                  "object": "payment_intent",
+                  "last_payment_error": {
+                    "charge": "ch_3OlDhGJQC7CL5JsV0cQm0tC8",
+                    "code": "card_declined",
+                    "decline_code": "stolen_card",
+                    "doc_url": "https://stripe.com/docs/error-codes/card-declined",
+                    "message": "Your card was declined.",
+                    "payment_method": {
+                      "id": "pm_1OlDtOJQC7CL5JsV44LfwPNG",
+                      "object": "payment_method",
+                      "billing_details": {
+                        "address": {
+                          "city": null,
+                          "country": "DE",
+                          "line1": null,
+                          "line2": null,
+                          "postal_code": null,
+                          "state": null
+                        },
+                        "email": "hojuwymyj@mailinator.com",
+                        "name": "234234234234",
+                        "phone": null
+                      },
+                      "card": {
+                        "brand": "visa",
+                        "checks": {
+                          "address_line1_check": null,
+                          "address_postal_code_check": null,
+                          "cvc_check": "pass"
+                        },
+                        "country": "US",
+                        "display_brand": "visa",
+                        "exp_month": 3,
+                        "exp_year": 2033,
+                        "fingerprint": "AVcPfRlDRkMRXmJx",
+                        "funding": "credit",
+                        "generated_from": null,
+                        "last4": "9979",
+                        "networks": {
+                          "available": [
+                            "visa"
+                          ],
+                          "preferred": null
+                        },
+                        "three_d_secure_usage": {
+                          "supported": true
+                        },
+                        "wallet": null
+                      },
+                      "created": 1708276266,
+                      "customer": null,
+                      "livemode": false,
+                      "metadata": {
+                      },
+                      "type": "card"
+                    },
+                    "type": "card_error"
+                  },
+                  "livemode": false,
+                  "next_action": null,
+                  "status": "requires_payment_method",
+                  "amount": 20000,
+                  "amount_capturable": 0,
+                  "amount_details": {
+                    "tip": {
+                    }
+                  },
+                  "amount_received": 0,
+                  "application": null,
+                  "application_fee_amount": null,
+                  "automatic_payment_methods": null,
+                  "canceled_at": null,
+                  "cancellation_reason": null,
+                  "capture_method": "automatic",
+                  "client_secret": "pi_3OlDhGJQC7CL5JsV0c0a4vVU_secret_GEGMfr21myXAeeJPcrjLMExE4",
+                  "confirmation_method": "automatic",
+                  "created": 1708275514,
+                  "currency": "usd",
+                  "customer": "cus_PYa7B3aW0GR8Tp",
+                  "description": null,
+                  "invoice": null,
+                  "latest_charge": "ch_3OlDhGJQC7CL5JsV0cQm0tC8",
+                  "metadata": {
+                    "order_uuid": "$orderUUID"
+                  },
+                  "on_behalf_of": null,
+                  "payment_method": null,
+                  "payment_method_configuration_details": null,
+                  "payment_method_options": {
+                    "card": {
+                      "installments": null,
+                      "mandate_options": null,
+                      "network": null,
+                      "request_three_d_secure": "automatic"
+                    }
+                  },
+                  "payment_method_types": [
+                    "card"
+                  ],
+                  "processing": null,
+                  "receipt_email": null,
+                  "review": null,
+                  "setup_future_usage": null,
+                  "shipping": null,
+                  "source": null,
+                  "statement_descriptor": null,
+                  "statement_descriptor_suffix": null,
+                  "transfer_data": null,
+                  "transfer_group": null
+                }
+          }
+        }
+JSON;
+
+        return json_decode($json, true);
     }
 
     private function getStripeInvoice(

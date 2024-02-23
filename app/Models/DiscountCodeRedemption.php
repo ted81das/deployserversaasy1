@@ -13,6 +13,7 @@ class DiscountCodeRedemption extends Model
         'discount_id',
         'subscription_id',
         'user_id',
+        'order_id',
     ];
 
     public function discountCode()
@@ -28,5 +29,10 @@ class DiscountCodeRedemption extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
     }
 }

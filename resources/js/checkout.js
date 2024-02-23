@@ -28,19 +28,44 @@ document.addEventListener("DOMContentLoaded", function (event) {
 
 
 function paddleCheckout() {
+    let customData = {};
+
+    // if subscriptionUuid is set, then it's a subscription
+    if (typeof subscriptionUuid !== 'undefined') {
+        customData.subscriptionUuid = subscriptionUuid;
+    }
+
+    // if orderUuid is set, then it's a one-time purchase
+    if (typeof orderUuid !== 'undefined') {
+        customData.orderUuid = orderUuid;
+    }
+
+    let items = [];
+    for (let i = 0; i < paddleProductDetails.length; i++) {
+        items.push({
+            priceId: paddleProductDetails[i].paddlePriceId,
+            quantity: paddleProductDetails[i].quantity
+        });
+    }
+
+    console.log({
+        settings: {
+            successUrl: successUrl,
+        },
+        items: items,
+        customData: customData,
+        customer: {
+            email: customerEmail
+        },
+        discountId: paddleDiscountId,
+    });
+
     Paddle.Checkout.open({
         settings: {
             successUrl: successUrl,
         },
-        items: [
-            {
-                priceId: paddlePriceId,
-                quantity: 1
-            }
-        ],
-        customData: {
-            subscriptionUuid: subscriptionUuid
-        },
+        items: items,
+        customData: customData,
         customer: {
             email: customerEmail
         },

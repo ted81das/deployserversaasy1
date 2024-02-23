@@ -54,14 +54,23 @@ class Plan extends Model
 
     protected static function booted(): void
     {
-        static::updated(function (Plan $plan) {
-            $plan->paymentProviderData()->delete();
-            foreach ($plan->prices as $planPrice) {
-                $planPrice->planPricePaymentProviderData()->delete();
+        static::updating(function (Plan $plan) {
+            // booleans are a bit tricky to compare, so we use boolval to compare them
+            if ($plan->isDirty([
+                'product_id',
+                'interval_id',
+                'interval_count',
+                'trial_interval_id',
+                'trial_interval_count',
+                ]) || boolval($plan->getOriginal('has_trial')) !== boolval($plan->has_trial)) {
+                $plan->paymentProviderData()->delete();
+                foreach ($plan->prices as $planPrice) {
+                    $planPrice->planPricePaymentProviderData()->delete();
+                }
             }
         });
 
-        static::deleted(function (Plan $plan) {
+        static::deleting(function (Plan $plan) {
             $plan->paymentProviderData()->delete();
             foreach ($plan->prices as $planPrice) {
                 $planPrice->planPricePaymentProviderData()->delete();

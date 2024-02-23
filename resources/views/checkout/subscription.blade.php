@@ -119,13 +119,13 @@
                     <ul class="flex flex-col items-start gap-3">
                         @if ($plan->product->features)
                             @foreach($plan->product->features as $feature)
-                                <x-plans.li-description-item>{{ $feature['feature'] }}</x-plans.li-description-item>
+                                <x-features.li-item>{{ $feature['feature'] }}</x-features.li-item>
                             @endforeach
                         @endif
                     </ul>
                 </div>
 
-                <livewire:checkout.totals :totals="$totals" :plan="$plan" page="{{request()->fullUrl()}}"/>
+                <livewire:checkout.subscription-totals :totals="$totals" :plan="$plan" page="{{request()->fullUrl()}}"/>
 
             </div>
 

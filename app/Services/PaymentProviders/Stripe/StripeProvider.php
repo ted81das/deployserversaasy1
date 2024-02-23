@@ -4,12 +4,15 @@ namespace App\Services\PaymentProviders\Stripe;
 use App\Constants\DiscountConstants;
 use App\Filament\Dashboard\Resources\SubscriptionResource;
 use App\Models\Discount;
+use App\Models\OneTimeProduct;
+use App\Models\Order;
 use App\Models\PaymentProvider;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Services\CalculationManager;
 use App\Services\DiscountManager;
+use App\Services\OneTimeProductManager;
 use App\Services\PaymentProviders\PaymentProviderInterface;
 use App\Services\PlanManager;
 use App\Services\SubscriptionManager;
@@ -28,21 +31,23 @@ class StripeProvider implements PaymentProviderInterface
         private CalculationManager $calculationManager,
         private PlanManager $planManager,
         private DiscountManager $discountManager,
+        private OneTimeProductManager $oneTimeProductManager,
     ) {
 
     }
 
-    public function createSubscriptionRedirectLink(Plan $plan, Subscription $subscription, Discount $discount = null): string
+    public function createSubscriptionCheckoutRedirectLink(Plan $plan, Subscription $subscription, Discount $discount = null): string
     {
         $paymentProvider = $this->assertProviderIsActive();
 
         /** @var User $user */
         $user = auth()->user();
 
-        $stripeCustomerId = $this->findOrCreateStripeCustomer($user);
-        $stripeProductId = $this->findOrCreateStripeProduct($plan, $paymentProvider);
-
         try {
+
+            $stripeCustomerId = $this->findOrCreateStripeCustomer($user);
+            $stripeProductId = $this->findOrCreateStripeSubscriptionProduct($plan, $paymentProvider);
+            $stripePriceId = $this->findOrCreateStripeSubscriptionProductPrice($plan, $paymentProvider, $stripeProductId);
 
             $stripe = $this->getClient();
 
@@ -59,15 +64,7 @@ class StripeProvider implements PaymentProviderInterface
                 'cancel_url' => route('checkout.subscription', ['planSlug' => $plan->slug]),
                 'mode' => 'subscription',
                 'line_items' => [[
-                    'price_data' => [
-                        'unit_amount' => $subscription->price,
-                        'currency' => $currencyCode,
-                        'product' => $stripeProductId,
-                        'recurring' => [
-                            'interval' => $subscription->interval()->firstOrFail()->date_identifier,
-                            'interval_count' => $subscription->interval_count,
-                        ],
-                    ],
+                    'price' => $stripePriceId,
                     'quantity' => 1,
                 ]],
                 'subscription_data' => [
@@ -102,6 +99,67 @@ class StripeProvider implements PaymentProviderInterface
         return $session->url;
     }
 
+    public function initProductCheckout(Order $order, Discount $discount = null): array
+    {
+        // stripe does not need any initialization
+
+        return [];
+    }
+
+    public function createProductCheckoutRedirectLink(Order $order, Discount $discount = null): string
+    {
+        $paymentProvider = $this->assertProviderIsActive();
+
+        try {
+            $stripe = $this->getClient();
+
+            $stripeCustomerId = $this->findOrCreateStripeCustomer($order->user);
+
+            $sessionCreationObject = [
+                'customer' => $stripeCustomerId,
+                'success_url' => route('checkout.product.success'),
+                'cancel_url' => route('checkout.product'),
+                'mode' => 'payment',
+                'line_items' => [],
+                'payment_intent_data' => [
+                    'metadata' => [
+                        'order_uuid' => $order->uuid,
+                    ],
+                ],
+            ];
+
+            foreach ($order->items()->get() as $item) {
+                $product = $item->oneTimeProduct()->firstOrFail();
+                $stripeProductId = $this->findOrCreateStripeOneTimeProduct($product, $paymentProvider);
+                $stripePriceId = $this->findOrCreateStripeOneTimeProductPrice($product, $paymentProvider, $stripeProductId);
+
+                $sessionCreationObject['line_items'][] = [
+                    'price' => $stripePriceId,
+                    'quantity' => $item->quantity,
+                ];
+            }
+
+            if ($discount !== null) {  // rethink about that when adding support for cart checkout (multiple products checkout) as this discount will be applied to the whole cart (to all products)
+                $stripeDiscountId = $this->findOrCreateStripeDiscount($discount, $paymentProvider, $order->currency()->firstOrFail()->code);
+
+                $sessionCreationObject['discounts'] = [
+                    [
+                        'coupon' => $stripeDiscountId,
+                    ],
+                ];
+            }
+
+            $session = $stripe->checkout->sessions->create($sessionCreationObject);
+
+        } catch (ApiErrorException $e) {
+            Log::error($e->getMessage());
+
+            throw $e;
+        }
+
+        return $session->url;
+    }
+
     public function changePlan(
         Subscription $subscription,
         Plan $newPlan,
@@ -109,8 +167,10 @@ class StripeProvider implements PaymentProviderInterface
     ): bool {
         $paymentProvider = $this->assertProviderIsActive();
 
-        $stripeProductId = $this->findOrCreateStripeProduct($newPlan, $paymentProvider);
         try {
+
+            $stripeProductId = $this->findOrCreateStripeSubscriptionProduct($newPlan, $paymentProvider);
+            $stripePriceId = $this->findOrCreateStripeSubscriptionProductPrice($newPlan, $paymentProvider, $stripeProductId);
 
             $stripe = $this->getClient();
 
@@ -132,15 +192,7 @@ class StripeProvider implements PaymentProviderInterface
             $subscriptionUpdateObject = [
                 'items' => array_merge($itemsToDelete, [
                     [
-                        'price_data' => [
-                            'unit_amount' => $planPrice->price,
-                            'currency' => $planPrice->currency()->firstOrFail()->code,
-                            'product' => $stripeProductId,
-                            'recurring' => [
-                                'interval' => $newPlan->interval()->firstOrFail()->date_identifier,
-                                'interval_count' => $newPlan->interval_count,
-                            ],
-                        ],
+                        'price' => $stripePriceId,
                         'quantity' => 1,
                     ],
                 ]),
@@ -268,7 +320,7 @@ class StripeProvider implements PaymentProviderInterface
         return 'stripe';
     }
 
-    public function init(Plan $plan, Subscription $subscription, Discount $discount = null): array
+    public function initSubscriptionCheckout(Plan $plan, Subscription $subscription, Discount $discount = null): array
     {
         // stripe does not need any initialization
 
@@ -290,7 +342,7 @@ class StripeProvider implements PaymentProviderInterface
         return new StripeClient(config('services.stripe.secret_key'));
     }
 
-    private function findOrCreateStripeProduct(Plan $plan, PaymentProvider $paymentProvider): string
+    private function findOrCreateStripeSubscriptionProduct(Plan $plan, PaymentProvider $paymentProvider): string
     {
         $stripeProductId = $this->planManager->getPaymentProviderProductId($plan, $paymentProvider);
 
@@ -307,6 +359,27 @@ class StripeProvider implements PaymentProviderInterface
         ])->id;
 
         $this->planManager->addPaymentProviderProductId($plan, $paymentProvider, $stripeProductId);
+
+        return $stripeProductId;
+    }
+
+    private function findOrCreateStripeOneTimeProduct(OneTimeProduct $product, PaymentProvider $paymentProvider): string
+    {
+        $stripeProductId = $this->oneTimeProductManager->getPaymentProviderProductId($product, $paymentProvider);
+
+        if ($stripeProductId !== null) {
+            return $stripeProductId;
+        }
+
+        $stripe = $this->getClient();
+
+        $stripeProductId = $stripe->products->create([
+            'id' => $product->slug . '-' . Str::random(),
+            'name' => $product->name,
+            'description' => !empty($product->description) ? strip_tags($product->description) : $product->name,
+        ])->id;
+
+        $this->oneTimeProductManager->addPaymentProviderProductId($product, $paymentProvider, $stripeProductId);
 
         return $stripeProductId;
     }
@@ -390,6 +463,56 @@ class StripeProvider implements PaymentProviderInterface
         $this->discountManager->addPaymentProviderDiscountId($discount, $paymentProvider, $stripeDiscountId);
 
         return $stripeDiscountId;
+    }
+
+    private function findOrCreateStripeSubscriptionProductPrice(Plan $plan, PaymentProvider $paymentProvider, string $stripeProductId): string
+    {
+        $planPrice = $this->calculationManager->getPlanPrice($plan);
+
+        $stripeProductPriceId = $this->planManager->getPaymentProviderPriceId($planPrice, $paymentProvider);
+
+        if ($stripeProductPriceId !== null) {
+            return $stripeProductPriceId;
+        }
+
+        $stripe = $this->getClient();
+
+        $stripeProductPriceId = $stripe->prices->create([
+            'product' => $stripeProductId,
+            'unit_amount' => $planPrice->price,
+            'currency' => $planPrice->currency()->firstOrFail()->code,
+            'recurring' => [
+                'interval' => $plan->interval()->firstOrFail()->date_identifier,
+                'interval_count' => $plan->interval_count,
+            ],
+        ])->id;
+
+        $this->planManager->addPaymentProviderPriceId($planPrice, $paymentProvider, $stripeProductPriceId);
+
+        return $stripeProductPriceId;
+    }
+
+    private function findOrCreateStripeOneTimeProductPrice(OneTimeProduct $oneTimeProduct, PaymentProvider $paymentProvider, string $stripeProductId): string
+    {
+        $productPrice = $this->calculationManager->getOneTimeProductPrice($oneTimeProduct);
+
+        $stripeProductPriceId = $this->oneTimeProductManager->getPaymentProviderPriceId($productPrice, $paymentProvider);
+
+        if ($stripeProductPriceId !== null) {
+            return $stripeProductPriceId;
+        }
+
+        $stripe = $this->getClient();
+
+        $stripeProductPriceId = $stripe->prices->create([
+            'product' => $stripeProductId,
+            'unit_amount' => $productPrice->price,
+            'currency' => $productPrice->currency()->firstOrFail()->code,
+        ])->id;
+
+        $this->oneTimeProductManager->addPaymentProviderPriceId($productPrice, $paymentProvider, $stripeProductPriceId);
+
+        return $stripeProductPriceId;
     }
 
     public function getName(): string

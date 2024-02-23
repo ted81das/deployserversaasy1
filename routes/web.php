@@ -1,13 +1,13 @@
 <?php
 
+use App\Http\Controllers\Admin\RoleController as AdminRoleController;
 use App\Http\Controllers\Admin\Settings\OAuthSettingsController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Auth\OAuthController;
 use App\Http\Controllers\PaymentProviders\PaddleController as PaddleController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\UserController as AdminUserController;
-use App\Http\Controllers\Admin\RoleController as AdminRoleController;
-use App\Http\Controllers\Auth\OAuthController;
 
 
 /*
@@ -68,17 +68,17 @@ Route::get('/auth/{provider}/callback', [OAuthController::class, 'callback'])
     ->name('auth.oauth.callback');
 
 Route::get('/checkout/plan/{planSlug}', [
-    App\Http\Controllers\CheckoutController::class,
+    App\Http\Controllers\SubscriptionCheckoutController::class,
     'subscriptionCheckout',
 ])->name('checkout.subscription')->middleware(\App\Http\Middleware\RedirectedAuth::class);
 
 Route::post('/checkout/plan/{planSlug}', [
-    App\Http\Controllers\CheckoutController::class,
+    App\Http\Controllers\SubscriptionCheckoutController::class,
     'subscriptionCheckout',
 ])->name('checkout.subscription.post')->middleware(\App\Http\Middleware\RedirectedAuth::class);
 
 Route::get('/checkout/subscription/success', [
-    App\Http\Controllers\CheckoutController::class,
+    App\Http\Controllers\SubscriptionCheckoutController::class,
     'subscriptionCheckoutSuccess',
 ])->name('checkout.subscription.success')->middleware('auth');
 
@@ -122,3 +122,31 @@ Route::get('/terms-of-service', function () {
 Route::get('/privacy-policy', function () {
     return view('pages.privacy-policy');
 })->name('privacy-policy')->middleware('sitemapped');
+
+
+// Product checkout routes
+
+Route::get('/buy/product/{productSlug}/{quantity?}', [
+    App\Http\Controllers\ProductCheckoutController::class,
+    'addToCart',
+])->name('buy.product');
+
+Route::get('/cart/clear', [
+    App\Http\Controllers\ProductCheckoutController::class,
+    'clearCart',
+])->name('cart.clear');
+
+Route::get('/checkout/product', [
+    App\Http\Controllers\ProductCheckoutController::class,
+    'productCheckout',
+])->name('checkout.product')->middleware('auth');
+
+Route::post('/checkout/product', [
+    App\Http\Controllers\ProductCheckoutController::class,
+    'productCheckout',
+])->name('checkout.product.post')->middleware('auth');
+
+Route::get('/checkout/product/success', [
+    App\Http\Controllers\ProductCheckoutController::class,
+    'productCheckoutSuccess',
+])->name('checkout.product.success')->middleware('auth');

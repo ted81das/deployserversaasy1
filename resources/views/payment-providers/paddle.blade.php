@@ -5,7 +5,7 @@
 
     <script>
         let customerEmail = '{{ $user->email ?? '' }}';
-        let paddlePriceId = '{{ $data['paddlePriceId'] }}';
+        let paddleProductDetails = {!! json_encode($data['productDetails']) !!};
         @if (isset($data['paddleDiscountId']))
             let paddleDiscountId = '{{ $data['paddleDiscountId'] }}';
         @else

@@ -2,23 +2,25 @@
 
 namespace App\Filament\Dashboard\Resources;
 
+use App\Constants\TransactionStatus;
+use App\Filament\Dashboard\Resources\OrderResource\Pages\ViewOrder;
+use App\Filament\Dashboard\Resources\SubscriptionResource\Pages\ViewSubscription;
 use App\Filament\Dashboard\Resources\TransactionResource\Pages;
 use App\Mapper\TransactionStatusMapper;
 use App\Models\Transaction;
-use Filament\Forms;
+use App\Services\ConfigManager;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class TransactionResource extends Resource
 {
     protected static ?string $model = Transaction::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
 
     public static function form(Form $form): Form
     {
@@ -35,10 +37,10 @@ class TransactionResource extends Resource
                 }),
                 Tables\Columns\TextColumn::make('status')
                     ->formatStateUsing(fn (string $state, TransactionStatusMapper $mapper): string => $mapper->mapForDisplay($state)),
-                Tables\Columns\TextColumn::make('subscription_id')->formatStateUsing(function (string $state, $record) {
-                        return $record->subscription->plan->name;
-                    })
-                    ->label(_('Subscription Plan')),
+                Tables\Columns\TextColumn::make('owner')
+                    ->label(__('Owner'))
+                    ->getStateUsing(fn (Transaction $record) => $record->subscription_id !== null ? ($record->subscription->plan?->name ?? '-') : ($record->order_id !== null ? __('View Order') : '-'))
+                    ->url(fn (Transaction $record) => $record->subscription_id !== null  ? ViewSubscription::getUrl(['record' => $record->subscription ]) : ($record->order_id !== null ? ViewOrder::getUrl(['record' => $record->order]) : '-')),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(_('Date'))
                     ->dateTime(),
@@ -107,11 +109,16 @@ class TransactionResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->where('user_id', auth()->user()->id)->where('amount' , '>', 0);
+        return parent::getEloquentQuery()->where('user_id', auth()->user()->id)->where('amount' , '>', 0)->where('status', '!=', TransactionStatus::NOT_STARTED->value);
     }
 
     public static function getModelLabel(): string
     {
         return _('Payments');
+    }
+
+    public static function isDiscovered(): bool
+    {
+        return app()->make(ConfigManager::class)->get('customer_dashboard.show_transactions', true);
     }
 }

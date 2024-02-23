@@ -15,7 +15,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-class CheckoutController extends Controller
+class SubscriptionCheckoutController extends Controller
 {
     public function __construct(
         private CheckoutManager    $checkoutManager,
@@ -35,7 +35,7 @@ class CheckoutController extends Controller
             $checkoutDto = $this->resetSubscriptionCheckoutDto();
         }
 
-        $subscription = $this->checkoutManager->initCheckout($planSlug);
+        $subscription = $this->checkoutManager->initSubscriptionCheckout($planSlug);
 
         $discount = null;
         if ($checkoutDto->discountCode !== null) {
@@ -51,7 +51,7 @@ class CheckoutController extends Controller
                 $request->get('payment-provider')
             );
 
-            $link = $paymentProvider->createSubscriptionRedirectLink(
+            $link = $paymentProvider->createSubscriptionCheckoutRedirectLink(
                 $plan,
                 $subscription,
                 $discount,
@@ -72,7 +72,7 @@ class CheckoutController extends Controller
         /** @var PaymentProviderInterface $paymentProvider */
         foreach ($paymentProviders as $paymentProvider) {
             try {
-                $providerInitData[$paymentProvider->getSlug()] = $paymentProvider->init($plan, $subscription, $discount);
+                $providerInitData[$paymentProvider->getSlug()] = $paymentProvider->initSubscriptionCheckout($plan, $subscription, $discount);
                 $initializedPaymentProviders[] = $paymentProvider;
             } catch (\Exception $e) {
                 Log::error($e->getMessage(), [
@@ -104,7 +104,7 @@ class CheckoutController extends Controller
         $this->subscriptionManager->setAsPending($checkoutDto->subscriptionId);
 
         if ($checkoutDto->discountCode !== null) {
-            $this->discountManager->redeemCode($checkoutDto->discountCode, auth()->user(), $checkoutDto->subscriptionId);
+            $this->discountManager->redeemCodeForSubscription($checkoutDto->discountCode, auth()->user(), $checkoutDto->subscriptionId);
         }
 
         $this->resetSubscriptionCheckoutDto();

@@ -48,6 +48,11 @@ class Discount extends Model
         return $this->belongsToMany(Plan::class);
     }
 
+    public function oneTimeProducts()
+    {
+        return $this->belongsToMany(OneTimeProduct::class);
+    }
+
     public function subscriptions()
     {
         return $this->belongsToMany(Subscription::class);

@@ -65,6 +65,10 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->navigationGroups([
                 NavigationGroup::make()
+                    ->label('Revenue')
+                    ->icon('heroicon-s-rocket-launch')
+                    ->collapsed(),
+                NavigationGroup::make()
                     ->label('Product Management')
                     ->icon('heroicon-s-shopping-cart')
                     ->collapsed(),
