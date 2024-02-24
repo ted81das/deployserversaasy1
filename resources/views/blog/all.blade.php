@@ -4,7 +4,7 @@
             {{ __('From our blog') }}
         </x-heading.h1>
         <p class="pt-4">
-            ({{ __('Check out our latest news and updates') }})
+            {{ __('Check out our latest news and updates') }}
         </p>
 
         <div class="flex gap-3 justify-center pt-6">
