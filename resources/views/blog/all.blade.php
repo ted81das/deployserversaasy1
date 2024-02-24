@@ -4,7 +4,7 @@
             {{ __('From our blog') }}
         </x-heading.h1>
         <p class="pt-4">
-            Lorem Ipsum is simply dummy text of the printing and typesetting industry.
+            ({{ __('Check out our latest news and updates') }})
         </p>
 
         <div class="flex gap-3 justify-center pt-6">
