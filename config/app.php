@@ -18,6 +18,8 @@ return [
 
     'name' => env('APP_NAME', 'SaaSykit'),
 
+    'description' => env('APP_DESCRIPTION', ''),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

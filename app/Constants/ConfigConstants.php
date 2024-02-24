@@ -6,6 +6,7 @@ class ConfigConstants
 {
     public const OVERRIDABLE_CONFIGS = [  // correspond to laravel config keys
         'app.name',
+        'app.description',
         'app.support_email',
         'app.date_format',
         'app.datetime_format',

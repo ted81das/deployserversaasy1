@@ -38,6 +38,7 @@ class GeneralSettings extends Component implements HasForms
     {
         $this->form->fill([
             'site_name' => $this->configManager->get('app.name'),
+            'description' => $this->configManager->get('app.description'),
             'support_email' => $this->configManager->get('app.support_email'),
             'date_format' => $this->configManager->get('app.date_format'),
             'datetime_format' => $this->configManager->get('app.datetime_format'),
@@ -66,6 +67,8 @@ class GeneralSettings extends Component implements HasForms
                             TextInput::make('site_name')
                                 ->label(__('Site Name'))
                                 ->required(),
+                            Textarea::make('description')
+                                ->helperText(__('This will be used as the meta description for your site (for pages that have no description).')),
                             TextInput::make('support_email')
                                 ->label(__('Support Email'))
                                 ->required()
@@ -188,6 +191,7 @@ class GeneralSettings extends Component implements HasForms
         $data = $this->form->getState();
 
         $this->configManager->set('app.name', $data['site_name']);
+        $this->configManager->set('app.description', $data['description']);
         $this->configManager->set('app.support_email', $data['support_email']);
         $this->configManager->set('app.date_format', $data['date_format']);
         $this->configManager->set('app.datetime_format', $data['datetime_format']);

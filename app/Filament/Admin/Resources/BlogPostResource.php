@@ -30,6 +30,11 @@ class BlogPostResource extends Resource
                     Forms\Components\TextInput::make('title')
                         ->required()
                         ->maxLength(1000),
+                    Forms\Components\Textarea::make('description')
+                        ->maxLength(1000)
+                        ->helperText(__('A short description of the post (will be used in meta tags).'))
+                        ->label('Description')
+                        ->rows(2),
                     TinyEditor::make('body')
                         ->columns(10)
                         ->required()

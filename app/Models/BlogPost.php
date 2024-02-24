@@ -17,6 +17,7 @@ class BlogPost extends Model implements HasMedia
         'author_id',
         'blog_post_category_id',
         'title',
+        'description',
         'slug',
         'body',
         'is_published',

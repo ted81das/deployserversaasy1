@@ -1,6 +1,10 @@
 <x-layouts.app>
     <x-slot name="title">{{ $post->title }}</x-slot>
 
+    @if(!empty($post->description))
+        <x-slot name="description">{{ $post->description }}</x-slot>
+    @endif
+
     <x-blog.post :post="$post" />
 
     <div class="text-center">
