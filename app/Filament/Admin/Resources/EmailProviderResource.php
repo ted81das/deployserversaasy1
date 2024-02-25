@@ -14,6 +14,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\HtmlString;
 
 class EmailProviderResource extends Resource
@@ -47,7 +48,8 @@ class EmailProviderResource extends Resource
                     ->getStateUsing(function (EmailProvider $record) {
                         return new HtmlString(
                             '<div class="flex gap-2">'.
-                            svg('colored/' . $record->slug)->contents() .  $record->name
+                            ' <img src="' .asset('images/email-providers/' . $record->slug . '.svg') . '"  class="h-6"> '
+                            . $record->name
                             . '</div>'
                         );
                     }),

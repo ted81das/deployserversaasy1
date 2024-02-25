@@ -46,7 +46,8 @@ class OauthLoginProviderResource extends Resource
                     ->getStateUsing(function (OauthLoginProvider $record) {
                         return new HtmlString(
                             '<div class="flex gap-2">'.
-                            svg('colored/' . $record->provider_name, 'w-8 h-8')->contents() .  $record->name
+                            ' <img src="' .asset('images/oauth-providers/' . $record->provider_name . '.svg') . '"  class="h-6"> '
+                            . $record->name
                             . '</div>'
                         );
                     }),
