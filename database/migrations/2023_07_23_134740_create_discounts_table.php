@@ -24,7 +24,10 @@ return new class extends Migration
             $table->integer('max_redemptions')->nullable();
             $table->integer('max_redemptions_per_user')->nullable();
             $table->unsignedInteger('redemptions')->default(0);
-            $table->boolean('is_sticky')->default(false);
+            $table->boolean('is_recurring')->default(false);
+            $table->dropColumn('is_combinable');
+            $table->integer('duration_in_months')->nullable();
+            $table->integer('maximum_recurring_intervals')->nullable();
             $table->timestamps();
         });
     }

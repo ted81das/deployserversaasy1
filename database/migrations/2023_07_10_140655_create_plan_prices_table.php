@@ -14,9 +14,8 @@ return new class extends Migration
         Schema::create('plan_prices', function (Blueprint $table) {
             $table->id();
             $table->foreignId('plan_id')->constrained()->cascadeOnDelete()->cascadeOnUpdate();
-            $table->string('currency');
+            $table->foreignId('currency_id')->constrained()->cascadeOnDelete()->cascadeOnUpdate();
             $table->unsignedInteger('price');
-            $table->boolean('is_default')->default(false);
             $table->timestamps();
         });
     }

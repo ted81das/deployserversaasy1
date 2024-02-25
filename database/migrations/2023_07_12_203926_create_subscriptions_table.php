@@ -13,15 +13,23 @@ return new class extends Migration
     {
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->id();
+            $table->string('uuid');
             $table->foreignId('user_id')->constrained();
             $table->foreignId('plan_id')->constrained();
             $table->unsignedInteger('price');
             $table->foreignId('currency_id')->constrained();
-            $table->timestamp('renew_at')->nullable();
+            $table->timestamp('ends_at')->nullable();
             $table->timestamp('cancelled_at')->nullable();
-            $table->timestamp('grace_period_ends_at')->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->boolean('is_trial_active')->default(true);
+            $table->string('payment_provider_subscription_id')->nullable();
+            $table->string('payment_provider_status')->nullable();
+            $table->foreignId('payment_provider_id')->nullable()->constrained();
+            $table->timestamp('trial_ends_at')->nullable();
+            $table->string('status');
+            $table->foreignId('interval_id')->constrained();
+            $table->unsignedInteger('interval_count');
+            $table->boolean('is_canceled_at_end_of_cycle')->default(false);
+            $table->string('cancellation_reason')->nullable();
+            $table->mediumText('cancellation_additional_info')->nullable();
             $table->timestamps();
         });
     }

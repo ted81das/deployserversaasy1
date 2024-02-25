@@ -20,7 +20,9 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->boolean('has_trial')->default(false);
             $table->foreignId('trial_interval_id')->nullable()->constrained('intervals')->cascadeOnDelete()->cascadeOnUpdate();
-            $table->json('metadata')->nullable();
+            $table->unsignedInteger('interval_count');
+            $table->integer('trial_interval_count')->nullable();
+            $table->text('description')->nullable();
 
             $table->timestamps();
         });

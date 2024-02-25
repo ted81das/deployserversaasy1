@@ -22,6 +22,7 @@ return new class extends Migration
             $table->foreignId('author_id')->nullable()->constrained('users');
             $table->foreignId('blog_post_category_id')->nullable()->constrained();
             $table->fullText(['title', 'body']);
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }

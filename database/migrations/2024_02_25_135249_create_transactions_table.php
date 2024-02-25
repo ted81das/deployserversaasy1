@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-            $table->timestamps();
+            $table->uuid('uuid');
             $table->foreignId('user_id')
                 ->constrained()
                 ->onDelete('cascade');
@@ -25,6 +25,7 @@ return new class extends Migration
                 ->nullable()
                 ->constrained()
                 ->onDelete('cascade');
+            $table->foreignId('order_id')->nullable()->constrained();
             $table->string('status');
             $table->foreignId('payment_provider_id')
                 ->nullable()
@@ -32,6 +33,11 @@ return new class extends Migration
                 ->onDelete('cascade');
             $table->string('payment_provider_status')->nullable();
             $table->string('payment_provider_transaction_id')->nullable();
+            $table->string('error_reason')->nullable();
+            $table->bigInteger('total_discount')->default(0);
+            $table->bigInteger('total_tax')->default(0);
+            $table->bigInteger('total_fees')->default(0);
+            $table->timestamps();
         });
     }
 

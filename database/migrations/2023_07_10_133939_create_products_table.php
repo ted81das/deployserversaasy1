@@ -16,6 +16,10 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug')->unique();
             $table->mediumText('description')->nullable();
+            $table->json('metadata')->nullable();
+            $table->json('features')->nullable();
+            $table->boolean('is_popular')->default(false);
+            $table->boolean('is_default')->default(false);
             $table->timestamps();
         });
     }

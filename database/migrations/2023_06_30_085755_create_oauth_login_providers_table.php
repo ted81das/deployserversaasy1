@@ -15,8 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('provider_name')->unique();
-            $table->string('client_id')->default('');
-            $table->string('client_secret')->default('');
             $table->boolean('enabled')->default(false);
             $table->timestamps();
         });

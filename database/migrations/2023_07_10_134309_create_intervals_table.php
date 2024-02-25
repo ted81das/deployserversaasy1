@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('slug')->unique();
-            $table->string("date_diff");
+            $table->string('date_identifier');
+            $table->string('adverb')->nullable();
             $table->timestamps();
         });
     }

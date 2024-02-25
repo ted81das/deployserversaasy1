@@ -15,6 +15,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('subscription_id')->constrained()->onDelete('cascade');
             $table->foreignId('discount_id')->constrained()->onDelete('cascade');
+            $table->string('type');
+            $table->unsignedFloat('amount');
+            $table->dateTime('valid_until')->nullable();
+            $table->boolean('is_recurring')->default(false);
             $table->timestamps();
         });
     }

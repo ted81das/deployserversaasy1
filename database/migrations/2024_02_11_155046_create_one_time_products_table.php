@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('max_quantity')->default(1);
             $table->json('metadata')->nullable();
             $table->json('features')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }
