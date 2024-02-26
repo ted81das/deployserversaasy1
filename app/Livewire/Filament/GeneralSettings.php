@@ -52,7 +52,13 @@ class GeneralSettings extends Component implements HasForms
             'show_subscriptions' => $this->configManager->get('customer_dashboard.show_subscriptions', true),
             'show_orders' => $this->configManager->get('customer_dashboard.show_orders', true),
             'show_transactions' => $this->configManager->get('customer_dashboard.show_transactions', true),
-
+            'social_links_facebook' => $this->configManager->get('social_links.facebook') ?? '',
+            'social_links_x' => $this->configManager->get('social_links.x') ?? '',
+            'social_links_linkedin' => $this->configManager->get('social_links.linkedin') ?? '',
+            'social_links_instagram' => $this->configManager->get('social_links.instagram') ?? '',
+            'social_links_youtube' => $this->configManager->get('social_links.youtube') ?? '',
+            'social_links_github' => $this->configManager->get('social_links.github') ?? '',
+            'social_links_discord' => $this->configManager->get('social_links.discord') ?? '',
         ]);
     }
 
@@ -179,6 +185,24 @@ class GeneralSettings extends Component implements HasForms
                                 ->label(__('Show Transactions'))
                                 ->helperText(__('If enabled, customers will be able to see their transactions on the dashboard.'))
                                 ->required(),
+                        ]),
+                    Tabs\Tab::make(__('Social Links'))
+                        ->icon('heroicon-o-heart')
+                        ->schema([
+                            TextInput::make('social_links_facebook')
+                                ->label(__('Facebook')),
+                            TextInput::make('social_links_x')
+                                ->label(__('X (Twitter)')),
+                            TextInput::make('social_links_linkedin')
+                                ->label(__('LinkedIn')),
+                            TextInput::make('social_links_instagram')
+                                ->label(__('Instagram')),
+                            TextInput::make('social_links_youtube')
+                                ->label(__('YouTube')),
+                            TextInput::make('social_links_github')
+                                ->label(__('GitHub')),
+                            TextInput::make('social_links_discord')
+                                ->label(__('Discord')),
                         ])
                 ])
                 ->persistTabInQueryString('settings-tab')
@@ -205,6 +229,13 @@ class GeneralSettings extends Component implements HasForms
         $this->configManager->set('customer_dashboard.show_subscriptions', $data['show_subscriptions']);
         $this->configManager->set('customer_dashboard.show_orders', $data['show_orders']);
         $this->configManager->set('customer_dashboard.show_transactions', $data['show_transactions']);
+        $this->configManager->set('social_links.facebook', $data['social_links_facebook']);
+        $this->configManager->set('social_links.x', $data['social_links_x']);
+        $this->configManager->set('social_links.linkedin', $data['social_links_linkedin']);
+        $this->configManager->set('social_links.instagram', $data['social_links_instagram']);
+        $this->configManager->set('social_links.youtube', $data['social_links_youtube']);
+        $this->configManager->set('social_links.github', $data['social_links_github']);
+        $this->configManager->set('social_links.discord', $data['social_links_discord']);
 
 
         Notification::make()

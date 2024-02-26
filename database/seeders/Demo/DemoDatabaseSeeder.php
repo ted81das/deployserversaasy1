@@ -8,6 +8,7 @@ use App\Models\Currency;
 use App\Models\Discount;
 use App\Models\Interval;
 use App\Models\OauthLoginProvider;
+use App\Models\OneTimeProduct;
 use App\Models\Plan;
 use App\Models\Product;
 use App\Models\User;
@@ -115,9 +116,67 @@ class DemoDatabaseSeeder extends Seeder
             'features' => [["feature"=> "Amazing Feature 1"], ["feature"=> "Amazing Feature 2"], ["feature"=> "Amazing Feature 3"], ["feature"=> "Amazing Feature 4"], ["feature"=> "Amazing Feature 5"]],
         ]);
 
+        $this->createOneTimeProduct('Lemon', 'lemon', 1000);
+        $this->createOneTimeProduct('Orange', 'orange', 2500);
+        $this->createOneTimeProduct('Apple', 'apple', 5000);
+
         $this->createPlans($basicProduct, 1000, 10000);
         $this->createPlans($proProduct, 2500, 25000);
         $this->createPlans($ultimateProduct, 5000, 50000);
+    }
+
+    private function createOneTimeProduct($name, $slug, $price): void
+    {
+        $product = $this->findOrCreateOneTimeProduct([
+            'name' => $name,
+            'slug' => $slug,
+            'description' => 'One time product',
+            'features' => [["feature"=> "Amazing Feature 1"], ["feature"=> "Amazing Feature 2"], ["feature"=> "Amazing Feature 3"], ["feature"=> "Amazing Feature 4"], ["feature"=> "Amazing Feature 5"]],
+            'is_active' => true,
+        ]);
+
+        $product->prices()->create([
+            'currency_id' => Currency::where('code', 'USD')->first()->id,
+            'price' => $price,
+        ]);
+
+        $this->addOneTimeProductOrders($product);
+    }
+
+    private function addOneTimeProductOrders(OneTimeProduct $product): void
+    {
+        $numberOfOrders = rand(15, 25);
+
+        for ($i = 0; $i < $numberOfOrders; $i++) {
+            $user = User::factory()->create();
+
+            $order = $user->orders()->create([
+                'uuid' => Str::uuid(),
+                'status' => 'success',
+                'currency_id' => Currency::where('code', 'USD')->first()->id,
+                'total_amount' => $product->prices()->first()->price,
+                'total_amount_after_discount' => $product->prices()->first()->price,
+                'created_at' => now()->sub(rand(1, 10), 'days'),
+            ]);
+
+            $order->items()->create([
+                'one_time_product_id' => $product->id,
+                'quantity' => 1,
+                'currency_id' => Currency::where('code', 'USD')->first()->id,
+                'price_per_unit' => $product->prices()->first()->price,
+            ]);
+        }
+    }
+
+    private function findOrCreateOneTimeProduct(array $data)
+    {
+        $product = OneTimeProduct::where('slug', $data['slug'])->first();
+
+        if ($product) {
+            return $product;
+        }
+
+        return OneTimeProduct::create($data);
     }
 
     private function findOrCreateProduct(array $data)

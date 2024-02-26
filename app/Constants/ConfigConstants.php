@@ -50,5 +50,12 @@ class ConfigConstants
         'customer_dashboard.show_subscriptions',
         'customer_dashboard.show_orders',
         'customer_dashboard.show_transactions',
+        'social_links.facebook',
+        'social_links.x',
+        'social_links.linkedin',
+        'social_links.github',
+        'social_links.instagram',
+        'social_links.youtube',
+        'social_links.discord',
     ];
 }

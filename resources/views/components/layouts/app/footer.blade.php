@@ -23,11 +23,27 @@
           <span class="text-xs text-primary-100 sm:text-center dark:text-gray-400">© {{ date('Y') }} <a href="/" class="hover:underline text-primary-100">{{ config('app.name', 'Laravel') }}™</a>. {{ __('All rights reserved.') }}
           </span>
             <div class="flex gap-3 mt-4 sm:justify-center sm:mt-0">
-                <x-link.social-icon name="facebook" title="{{ __('Facebook page') }}" link="#" class="text-primary-100 border-primary-200 hover:text-primary-50"/>
-                <x-link.social-icon name="discord" title="{{ __('Discord community') }}" link="#" class="text-primary-100 border-primary-200 hover:text-primary-50"/>
-                <x-link.social-icon name="x" title="{{ __('Twitter page') }}" link="#" class="text-primary-100 border-primary-200 hover:text-primary-50"/>
-                <x-link.social-icon name="github" title="{{ __('Github page') }}" link="#" class="text-primary-100 border-primary-200 hover:text-primary-50"/>
-                <x-link.social-icon name="linkedin" title="{{ __('Linkedin page') }}" link="#" class="text-primary-100 border-primary-200 hover:text-primary-50"/>
+                @if (!empty(config('social_links.facebook')))
+                    <x-link.social-icon name="facebook" title="{{ __('Facebook page') }}" link="{{config('social_links.facebook')}}" class="text-primary-100 border-primary-200 hover:text-primary-50"/>
+                @endif
+                @if (!empty(config('social_links.instagram')))
+                    <x-link.social-icon name="instagram" title="{{ __('Instagram page') }}" link="{{config('social_links.instagram')}}" class="text-primary-100 border-primary-200 hover:text-primary-50"/>
+                @endif
+                @if (!empty(config('social_links.youtube')))
+                    <x-link.social-icon name="youtube" title="{{ __('YouTube page') }}" link="{{config('social_links.youtube')}}" class="text-primary-100 border-primary-200 hover:text-primary-50"/>
+                @endif
+                @if (!empty(config('social_links.x')))
+                    <x-link.social-icon name="x" title="{{ __('Twitter page') }}" link="{{config('social_links.x')}}" class="text-primary-100 border-primary-200 hover:text-primary-50"/>
+                @endif
+                @if (!empty(config('social_links.linkedin')))
+                    <x-link.social-icon name="linkedin" title="{{ __('Linkedin page') }}" link="{{config('social_links.linkedin')}}" class="text-primary-100 border-primary-200 hover:text-primary-50"/>
+                @endif
+                @if (!empty(config('social_links.github')))
+                    <x-link.social-icon name="github" title="{{ __('Github page') }}" link="{{config('social_links.github')}}" class="text-primary-100 border-primary-200 hover:text-primary-50"/>
+                @endif
+                @if (!empty(config('social_links.discord')))
+                    <x-link.social-icon name="discord" title="{{ __('Discord community') }}" link="{{config('social_links.discord')}}" class="text-primary-100 border-primary-200 hover:text-primary-50"/>
+                @endif
             </div>
         </div>
     </div>

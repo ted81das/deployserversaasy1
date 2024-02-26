@@ -24,7 +24,7 @@ class Config extends Model
         return null;
     }
 
-    public static function set(string $key, string $value): void
+    public static function set(string $key, ?string $value): void
     {
         $config = self::where('key', $key)->first();
         if ($config) {

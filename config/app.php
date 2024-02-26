@@ -166,6 +166,15 @@ return [
         'show_transactions' => true,
     ],
 
+    'social_links' => [
+        'facebook' => env('SOCIAL_FACEBOOK_URL'),
+        'x' => env('SOCIAL_X_URL'),
+        'linkedin' => env('SOCIAL_LINKEDIN_URL'),
+        'instagram' => env('SOCIAL_INSTAGRAM_URL'),
+        'youtube' => env('SOCIAL_YOUTUBE_URL'),
+        'github' => env('SOCIAL_GITHUB_URL'),
+        'discord' => env('SOCIAL_DISCORD_URL'),
+    ],
 
     /*
     |--------------------------------------------------------------------------

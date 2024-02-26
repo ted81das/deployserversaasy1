@@ -7,6 +7,14 @@
 
     <x-blog.post :post="$post" />
 
+    <div class="text-primary-500 text-sm text-center mx-auto">
+        {{ __('Share this post.') }}
+    </div>
+    <div class="flex gap-3 justify-center pt-3">
+        <x-link.social-icon name="x" title="{{ __('Twitter page') }}" link="https://x.com/intent/post?text={{ urlencode($post->title) }}&url={{ urlencode(url()->current()) }}" class="hover:text-primary-500"/>
+        <x-link.social-icon name="linkedin" title="{{ __('LinkedIn community') }}" link="https://www.linkedin.com/shareArticle?url={{ urlencode(url()->current()) }}&title={{ urlencode($post->title) }}" class="hover:text-primary-500"/>
+    </div>
+
     <div class="text-center">
         <x-section.outro>
             <x-heading.h6 class="text-primary-50">
