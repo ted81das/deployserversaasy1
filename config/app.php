@@ -176,6 +176,12 @@ return [
         'discord' => env('SOCIAL_DISCORD_URL'),
     ],
 
+    // this is the name of the logo file in the public directory
+    'logo' => [
+        'light' => 'images/logo-light.png',
+        'dark' => 'images/logo-dark.png',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers

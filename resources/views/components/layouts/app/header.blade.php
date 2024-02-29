@@ -1,7 +1,7 @@
 <nav class="relative bg-primary-500 text-white border-gray-200 dark:bg-gray-900">
     <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-2">
         <a href="/" class="flex items-center space-x-3 rtl:space-x-reverse">
-            <img src="{{asset('images/logo-light.png')}}" class="h-6" alt="Logo" />
+            <img src="{{asset(config('app.logo.light') )}}" class="h-6" alt="Logo" />
         </a>
         <div class="flex md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse gap-1">
             @auth
