@@ -10,42 +10,50 @@
     }
 
     article.blog-post p {
-        @apply my-8;
+        @apply mt-6;
     }
 
     article.blog-post h1 {
         @apply text-4xl;
+        @apply mt-6;
     }
 
     article.blog-post h2 {
         @apply text-3xl;
+        @apply mt-6;
     }
 
     article.blog-post h3 {
         @apply text-2xl;
+        @apply mt-6;
     }
 
     article.blog-post h4 {
         @apply text-xl;
+        @apply mt-6;
     }
 
     article.blog-post h5 {
         @apply text-lg;
+        @apply mt-6;
     }
 
     article.blog-post h6 {
         @apply text-base;
+        @apply mt-6;
     }
 
     // ul and ol styles
     article.blog-post ul {
         @apply list-disc;
         @apply pl-6;
+        @apply mt-6;
     }
 
     article.blog-post ol {
         @apply list-decimal;
         @apply pl-6;
+        @apply mt-6;
     }
 
     /* For Webkit-based browsers (Chrome, Safari and Opera) */
