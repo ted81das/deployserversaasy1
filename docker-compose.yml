@@ -83,7 +83,7 @@ services:
         networks:
             - sail
         ports:
-            - "4040:4040"
+            - "${FORWARD_NGROK_PORT:-4040}:4040"
         command: [ "http", "--domain=${NGROK_STATIC_DOMAIN}", "laravel.test:80" ]
 
 networks:

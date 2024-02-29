@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 @layer base {
+    /* Blog Post Styles */
     article.blog-post {
         @apply font-light;
         @apply text-lg	;
@@ -10,6 +11,41 @@
 
     article.blog-post p {
         @apply my-8;
+    }
+
+    article.blog-post h1 {
+        @apply text-4xl;
+    }
+
+    article.blog-post h2 {
+        @apply text-3xl;
+    }
+
+    article.blog-post h3 {
+        @apply text-2xl;
+    }
+
+    article.blog-post h4 {
+        @apply text-xl;
+    }
+
+    article.blog-post h5 {
+        @apply text-lg;
+    }
+
+    article.blog-post h6 {
+        @apply text-base;
+    }
+
+    // ul and ol styles
+    article.blog-post ul {
+        @apply list-disc;
+        @apply pl-6;
+    }
+
+    article.blog-post ol {
+        @apply list-decimal;
+        @apply pl-6;
     }
 
     /* For Webkit-based browsers (Chrome, Safari and Opera) */
