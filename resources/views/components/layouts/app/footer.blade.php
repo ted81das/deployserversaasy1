@@ -20,7 +20,7 @@
         </div>
         <hr class="my-6 border-primary-300 sm:mx-auto lg:my-8" />
         <div class="sm:flex sm:items-center sm:justify-between">
-          <span class="text-xs text-primary-100 sm:text-center dark:text-gray-400">© {{ date('Y') }} <a href="/" class="hover:underline text-primary-100">{{ config('app.name', 'Laravel') }}™</a>. {{ __('All rights reserved.') }}
+          <span class="text-xs text-primary-100 sm:text-center dark:text-gray-400">© {{ date('Y') }} <a href="/" class="hover:underline text-primary-100">{{ config('app.name') }}™</a>. {{ __('All rights reserved.') }}
           </span>
             <div class="flex gap-3 mt-4 sm:justify-center sm:mt-0">
                 @if (!empty(config('social_links.facebook')))
