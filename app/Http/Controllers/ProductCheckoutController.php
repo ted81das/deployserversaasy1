@@ -83,11 +83,11 @@ class ProductCheckoutController extends Controller
         ]);
     }
 
-    public function addToCart(string $productSlut, int $quantity = 1)
+    public function addToCart(string $productSlug, int $quantity = 1)
     {
         $cartDto = $this->clearCartDto();  // use getCartDto() instead of clearCartDto() when allowing full cart checkout with multiple items
 
-        $product = $this->productManager->getProductWithPriceBySlug($productSlut);
+        $product = $this->productManager->getProductWithPriceBySlug($productSlug);
 
         if ($product === null) {
             abort(404);

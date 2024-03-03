@@ -3,10 +3,10 @@
 namespace App\Services;
 
 use App\Constants\OrderStatus;
-use App\Constants\ProductConstants;
 use App\Dto\CartDto;
 use App\Dto\TotalsDto;
 use App\Events\Order\Ordered;
+use App\Events\Order\OrderedRefunded;
 use App\Models\OneTimeProduct;
 use App\Models\Order;
 use App\Models\User;
@@ -62,6 +62,9 @@ class OrderManager
             switch ($newStatus) {
                 case OrderStatus::SUCCESS->value:
                     Ordered::dispatch($order);
+                    break;
+                case OrderStatus::REFUNDED->value:
+                    OrderedRefunded::dispatch($order);
                     break;
             }
         }

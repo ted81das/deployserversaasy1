@@ -92,7 +92,5 @@ networks:
 volumes:
     sail-mysql:
         driver: local
-    sail-mysql_test:
-        driver: local
     sail-redis:
         driver: local
