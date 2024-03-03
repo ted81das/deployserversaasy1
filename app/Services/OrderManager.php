@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Constants\OrderStatus;
+use App\Constants\ProductConstants;
 use App\Dto\CartDto;
 use App\Dto\TotalsDto;
 use App\Events\Order\Ordered;
@@ -123,5 +124,19 @@ class OrderManager
         return Order::where('user_id', $userId)
             ->where('status', OrderStatus::NEW)
             ->first();
+    }
+
+    public function hasOrderedProduct(User $user, string $productSlug): bool
+    {
+        $product = OneTimeProduct::where('slug', $productSlug)->first();
+
+        if (!$product) {
+            return false;
+        }
+
+        return $user->orders()->join('order_items', 'orders.id', '=', 'order_items.order_id')
+            ->where('order_items.one_time_product_id', $product->id)
+            ->where('orders.status', OrderStatus::SUCCESS)
+            ->exists();
     }
 }
