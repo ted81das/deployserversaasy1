@@ -14,6 +14,9 @@
         </li>
         <li class="pb-4">
             In the Callback URL field, paste the generated URL from the Redirect URI field in Hub.
+            <code class="bg-gray-100 px-4 py-2 block my-4 overflow-x-scroll">
+                {{ config('app.url') . config('services.bitbucket.redirect') }}
+            </code>
         </li>
         <li class="pb-4">
             In the Permissions section, enable the Email and Read options in the Account section.

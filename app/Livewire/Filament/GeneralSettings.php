@@ -139,7 +139,7 @@ class GeneralSettings extends Component implements HasForms
                                 ->label(__('Default Email Provider'))
                                 ->options(function () {
                                     $providers = [
-                                        'smtp' => 'SMTP ' . __(' - Only recommended for testing (Not for production)'),
+                                        'smtp' => 'SMTP'
                                     ];
 
                                     foreach (EmailProvider::all() as $provider) {

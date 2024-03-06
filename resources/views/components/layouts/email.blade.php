@@ -1,40 +1,82 @@
-@php
-    use Illuminate\Support\Facades\Vite;
-@endphp
-
-<!doctype html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<!DOCTYPE html>
+<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml">
 <head>
     <meta charset="utf-8">
+    <meta name="x-apple-disable-message-reformatting">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
+    <meta name="format-detection" content="telephone=no, date=no, address=no, email=no, url=no">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings xmlns:o="urn:schemas-microsoft-com:office:office">
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
     <style>
-{{--  If you do changes to this file (add styles), you need to run `npm run build` because this is the only way to get the styles inlined in the email. --}}
-        {!! Vite::content('resources/sass/email.scss') !!}
+        td,th,div,p,a,h1,h2,h3,h4,h5,h6 {font-family: "Segoe UI", sans-serif; mso-line-height-rule: exactly;}
     </style>
-
-{{--    @vite(['resources/sass/email.scss'])--}}
-
+    <![endif]-->
+    <style>
+        @media (max-width: 600px) {
+            .sm-my-8 {
+                margin-top: 32px !important;
+                margin-bottom: 32px !important
+            }
+            .sm-px-4 {
+                padding-left: 16px !important;
+                padding-right: 16px !important
+            }
+            .sm-px-6 {
+                padding-left: 24px !important;
+                padding-right: 24px !important
+            }
+            .sm-leading-8 {
+                line-height: 32px !important
+            }
+        }
+    </style>
 </head>
-<body class="text-primary-900">
-<div id="app">
-    <div class="max-w-3xl mx-auto">
-        <div class="flex flex-col p-4 items-center justify-center">
-            <a href="{{route('home')}}">
-                <img src="{{asset(config('app.logo.dark') )}}" class="h-6" alt="Logo" />
-            </a>
-            <div class="p-4 mt-4">
-                <div class="rounded border border-t-2 border-t-primary-500 shadow w-full p-4">
-                    {{$slot}}
-                </div>
-            </div>
-        </div>
-        <div class="text-neutral-400 text-sm mb-4 text-center">
-            {{ __('© :year :app. All rights reserved.', ['year' => date('Y'), 'app' => config('app.name')]) }}
-        </div>
+<body style="margin: 0; width: 100%; padding: 0; -webkit-font-smoothing: antialiased; word-break: break-word" bgcolor="#f8fafc">
+<div style="display: none">
+    @if ($preview)
+        {{ $preview }}
+    @endif
+    &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847;
+</div>
+<div role="article" aria-roledescription="email" aria-label lang="en">
+    <div class="sm-px-4" style="background-color: #f8fafc; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif">
+        <table align="center" cellpadding="0" cellspacing="0" role="none">
+            <tr>
+                <td style="width: 552px; max-width: 100%">
+                    <div class="sm-my-8" style="margin-top: 48px; margin-bottom: 48px; text-align: center">
+                        <a href="{{route('home')}}">
+                            <img src="{{asset(config('app.logo.dark') )}}" style="max-width: 100%; vertical-align: middle; height: 1.6rem;" alt="Logo" />
+                        </a>
+                    </div>
 
+                    <table style="width: 100%;" cellpadding="0" cellspacing="0" role="none">
+
+                        {{$slot}}
+
+                        <tr role="separator">
+                            <td style="line-height: 48px">&zwj;</td>
+                        </tr>
+                        <tr>
+                            <td style="padding-left: 24px; padding-right: 24px; text-align: center; font-size: 12px; color: #475569">
+                                <p style="margin: 0 0 16px;">
+                                    {{ __('© :year :app. All rights reserved.', ['year' => date('Y'), 'app' => config('app.name')]) }}
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+
+                </td>
+            </tr>
+        </table>
     </div>
-
 </div>
 </body>
 </html>

@@ -1,35 +1,37 @@
 <x-layouts.email>
-    <h1 class="text-2xl font-bold">
+    <x-slot name="preview">
         {{ __('Sorry to see you go! :(') }}
-    </h1>
-    <div class="mt-3">
-        <p class="pt-2">
-            {{ __('Hi :name,', ['name' => $subscription->user->name]) }}
-        </p>
+    </x-slot>
 
-        <p class="py-2">
-            {{ __('We are sad to see you go. Please let us know if there is anything we can do to improve our service.') }}
-        </p>
+    <tr>
+        <td class="sm-px-6" style="border-radius: 4px; padding: 48px; font-size: 16px; color: #334155; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05)" bgcolor="#ffffff">
+            <h1 class="sm-leading-8" style="margin: 0 0 24px; font-size: 24px; font-weight: 600; color: #000">
+                {{ __('Hi :name,', ['name' => $subscription->user->name]) }}
+            </h1>
+            <p style="margin: 0; line-height: 24px">
+                {{ __('We are sad to see you go. Please let us know if there is anything we can do to improve our service.') }}
+            </p>
 
-        <p class="py-3">
-            {{ __('Please drop us an email if you have any suggestions or feedback that you would like to share with us at') }}
-            <a href="mailto:{{ config('app.support_email') }}" class="text-primary-500 hover:text-primary-600">
-                {{ config('app.support_email') }}.
-            </a>
-        </p>
+            <p style="margin-top: 16px; padding-top: 12px; padding-bottom: 12px">
+                {{ __('Please drop us an email if you have any suggestions or feedback that you would like to share with us at') }}
+                <a href="mailto:{{ config('app.support_email') }}">
+                    {{ config('app.support_email') }}
+                </a>.
+            </p>
 
-        <p class="py-3">
-            {{ __('If you change your mind in the future, you can always subscribe again from your account dashboard.') }}
-        </p>
+            <p style="padding-top: 12px; padding-bottom: 12px;">
+                {{ __('If you change your mind in the future, you can always subscribe again from your account dashboard.') }}
+            </p>
 
-        <p class="py-3">
-            {{ __('Thank you for being a part of our community. We hope to see you again soon!') }}
-        </p>
+            <p style="padding-top: 12px; padding-bottom: 12px;">
+                {{ __('Thank you for using our services. We hope to see you again soon!') }}
+            </p>
 
-        <p class="py-3">
-            {{ __('Sincerely,') }}<br>
-            {{ config('app.name') }} {{ __('Team') }}
-        </p>
+            <p style="padding-top: 12px; padding-bottom: 12px;">
+                {{ __('Sincerely,') }}<br>
+                {{ config('app.name') }} {{ __('Team') }}
+            </p>
+        </td>
+    </tr>
 
-    </div>
 </x-layouts.email>

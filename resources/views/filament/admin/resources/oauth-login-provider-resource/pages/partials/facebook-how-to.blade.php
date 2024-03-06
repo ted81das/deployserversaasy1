@@ -6,4 +6,10 @@
             {{__('getting access to the Facebook API.')}}
         </a>
     </p>
+    <p>
+        {{__('When prompted to enter a redirect URI, use the following:')}}
+        <code class="bg-gray-100 px-4 py-2 block my-4 overflow-x-scroll">
+            {{ config('app.url') . config('services.facebook.redirect') }}
+        </code>
+    </p>
 </div>
