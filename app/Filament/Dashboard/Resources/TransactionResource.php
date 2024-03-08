@@ -119,6 +119,6 @@ class TransactionResource extends Resource
 
     public static function isDiscovered(): bool
     {
-        return app()->make(ConfigManager::class)->get('customer_dashboard.show_transactions', true);
+        return app()->make(ConfigManager::class)->get('app.customer_dashboard.show_transactions', true);
     }
 }
