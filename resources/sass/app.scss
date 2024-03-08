@@ -14,31 +14,37 @@
     }
 
     article.blog-post h1 {
+        @apply font-medium;
         @apply text-4xl;
         @apply mt-6;
     }
 
     article.blog-post h2 {
+        @apply font-medium;
         @apply text-3xl;
         @apply mt-6;
     }
 
     article.blog-post h3 {
+        @apply font-medium;
         @apply text-2xl;
         @apply mt-6;
     }
 
     article.blog-post h4 {
+        @apply font-medium;
         @apply text-xl;
         @apply mt-6;
     }
 
     article.blog-post h5 {
+        @apply font-medium;
         @apply text-lg;
         @apply mt-6;
     }
 
     article.blog-post h6 {
+        @apply font-medium;
         @apply text-base;
         @apply mt-6;
     }
@@ -54,6 +60,29 @@
         @apply list-decimal;
         @apply pl-6;
         @apply mt-6;
+    }
+
+    strong {
+        @apply font-semibold;
+    }
+
+    code {
+        @apply font-mono;
+        @apply bg-gray-100 #{!important};
+        @apply rounded-md;
+        @apply p-4 #{!important};
+        @apply block;
+        @apply whitespace-pre;
+        @apply relative;
+        @apply text-sm;
+        @apply overflow-x-auto #{!important};
+        @apply overflow-y-hidden #{!important};
+        @apply max-w-full;
+    }
+
+    code:hover .copy-button {
+        @apply block;
+        @apply visible;
     }
 
     /* For Webkit-based browsers (Chrome, Safari and Opera) */
@@ -73,6 +102,21 @@
 
     a {
         @apply text-primary-500;
+    }
+
+    .copy-button {
+        @apply text-xs;
+        @apply font-semibold;
+        @apply bg-gray-200;
+        @apply rounded-md;
+        @apply p-2;
+        @apply absolute;
+        @apply right-0;
+        @apply top-0;
+        @apply mt-2;
+        @apply mr-2;
+        @apply cursor-pointer;
+        @apply invisible;
     }
 }
 

@@ -1,4 +1,9 @@
 <x-layouts.app>
+
+    @push('head')
+        @vite(['resources/js/blog.js'])
+    @endpush
+
     <x-slot name="title">{{ $post->title }}</x-slot>
 
     @if(!empty($post->description))
@@ -34,15 +39,18 @@
         </x-section.outro>
     </div>
 
-    <div class="text-center">
-        <x-heading.h6 class="text-primary-500">
-            {{ __('Don\'t miss this') }}
-        </x-heading.h6>
-        <x-heading.h2>
-            {{ __('You might also like') }}
-        </x-heading.h2>
-    </div>
+    @if (count($morePosts) > 0)
 
-    <x-blog.post-cards :posts="$morePosts" link-to-more-posts="true"/>
+        <div class="text-center">
+            <x-heading.h6 class="text-primary-500">
+                {{ __('Don\'t miss this') }}
+            </x-heading.h6>
+            <x-heading.h2>
+                {{ __('You might also like') }}
+            </x-heading.h2>
+        </div>
+
+        <x-blog.post-cards :posts="$morePosts" link-to-more-posts="true"/>
+    @endif
 
 </x-layouts.app>
