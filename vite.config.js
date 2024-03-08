@@ -8,7 +8,6 @@ export default defineConfig({
                 'resources/sass/app.scss',
                 'resources/js/app.js',
                 'resources/js/checkout.js',
-                'resources/sass/email.scss',
                 'resources/css/filament/dashboard/theme.css',
                 'resources/css/filament/admin/theme.css',
             ],
