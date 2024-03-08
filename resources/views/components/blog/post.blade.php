@@ -14,6 +14,10 @@
 
 
     @if ($post->media->count() > 0)
+        <x-slot name="socialCard">
+            {{ $post->getFirstMediaUrl('blog-images') }}
+        </x-slot>
+
         <div class="mt-8">
             <img src="{{$post->getFirstMediaUrl('blog-images')}}" alt="{{$post->title}}" class="rounded-2xl	">
         </div>

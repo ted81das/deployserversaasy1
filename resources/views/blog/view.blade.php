@@ -12,7 +12,7 @@
 
     <x-blog.post :post="$post" />
 
-    <div class="text-primary-500 text-sm text-center mx-auto">
+    <div class="text-primary-500 text-sm text-center mx-auto mt-8">
         {{ __('Share this post.') }}
     </div>
     <div class="flex gap-3 justify-center pt-3">
