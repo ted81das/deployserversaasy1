@@ -84,6 +84,7 @@ class EmailProviderResource extends Resource
             'mailgun-settings' => Pages\MailgunSettings::route('/mailgun-settings'),
             'postmark-settings' => Pages\PostmarkSettings::route('/postmark-settings'),
             'ses-settings' => Pages\AmazonSesSettings::route('/ses-settings'),
+            'smtp-settings' => Pages\SmtpSettings::route('/smtp-settings'),
         ];
     }
 

@@ -40,7 +40,6 @@ class PaddleSettings extends Component implements HasForms
             'client_side_token' => $this->configManager->get('services.paddle.client_side_token'),
             'vendor_auth_code' => $this->configManager->get('services.paddle.vendor_auth_code'),
             'webhook_secret' => $this->configManager->get('services.paddle.webhook_secret'),
-            'public_key' => $this->configManager->get('services.paddle.public_key'),
             'is_sandbox' => $this->configManager->get('services.paddle.is_sandbox'),
         ]);
     }
@@ -53,21 +52,13 @@ class PaddleSettings extends Component implements HasForms
                     ->schema([
 
                         TextInput::make('vendor_id')
-                            ->label(__('Vendor ID'))
-                            ->required(),
+                            ->label(__('Vendor ID')),
                         TextInput::make('client_side_token')
-                            ->label(__('Client Side Token'))
-                            ->required(),
+                            ->label(__('Client Side Token')),
                         TextInput::make('vendor_auth_code')
-                            ->label(__('Vendor Auth Code'))
-                            ->required(),
+                            ->label(__('Vendor Auth Code')),
                         TextInput::make('webhook_secret')
-                            ->label(__('Webhook Secret'))
-                            ->required(),
-                        Textarea::make('public_key')
-                            ->label(__('Public Key'))
-                            ->rows(20)
-                            ->required(),
+                            ->label(__('Webhook Secret')),
                         Toggle::make('is_sandbox')
                             ->label(__('Is Sandbox'))
                             ->required(),
@@ -97,7 +88,6 @@ class PaddleSettings extends Component implements HasForms
         $this->configManager->set('services.paddle.client_side_token', $data['client_side_token']);
         $this->configManager->set('services.paddle.vendor_auth_code', $data['vendor_auth_code']);
         $this->configManager->set('services.paddle.webhook_secret', $data['webhook_secret']);
-        $this->configManager->set('services.paddle.public_key', $data['public_key']);
         $this->configManager->set('services.paddle.is_sandbox', $data['is_sandbox']);
 
         Notification::make()

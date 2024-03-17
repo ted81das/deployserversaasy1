@@ -41,7 +41,6 @@ class ConfigConstants
         'services.paddle.client_side_token',
         'services.paddle.vendor_auth_code',
         'services.paddle.webhook_secret',
-        'services.paddle.public_key',
         'services.paddle.is_sandbox',
         'services.stripe.secret_key',
         'services.stripe.publishable_key',
@@ -57,5 +56,9 @@ class ConfigConstants
         'app.social_links.instagram',
         'app.social_links.youtube',
         'app.social_links.discord',
+        'mail.mailers.smtp.host',
+        'mail.mailers.smtp.port',
+        'mail.mailers.smtp.username',
+        'mail.mailers.smtp.password',
     ];
 }

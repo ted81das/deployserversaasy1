@@ -5,7 +5,7 @@
     <ol class="list-decimal ">
         <li class="pb-4">
             <strong>
-                {{ __('Login to ') }} <a href="https://login.paddle.com/login" target="_blank" class="text-blue-500 hover:underline">{{ __('Paddle Billing Dashboard') }}</a>
+                {{ __('Login to ') }} <a href="https://vendors.paddle.com/overview/billing" target="_blank" class="text-blue-500 hover:underline">{{ __('Paddle Billing Dashboard') }}</a>
             </strong>
         </li>
         <li class="pb-4">
@@ -62,14 +62,6 @@
         </li>
         <li class="pb-4">
             <strong>
-                {{ __('Public Key') }}
-            </strong>
-            <p>
-                {{ __('Under "Developer Tools" > "Public Key" you will find your Public Key. Copy it and enter it into the field in the form.') }}
-            </p>
-        </li>
-        <li class="pb-4">
-            <strong>
                 {{ __('Sandbox mode') }}
             </strong>
             <p>
@@ -79,6 +71,21 @@
             <p>
                 <strong>{{ __('Important:') }}</strong>
                 {{ __('NEVER enable sandbox mode on a production environment!') }}
+            </p>
+        </li>
+        <li class="pb-4">
+            <strong>
+                {{ __('Default Payment Link') }}
+            </strong>
+            <p>
+                {{ __('Head to "Checkout" > "Checkout Settings" and under "Default payment link", enter the following URL:') }}
+                <code class="bg-gray-100 px-4 py-2 block my-4 overflow-x-scroll">
+                    {{ route('payment-link.paddle') }}
+                </code>
+            </p>
+
+            <p class="mt-4">
+                {{ __('Click on "Save".') }}
             </p>
         </li>
     </ol>
