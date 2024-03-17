@@ -139,12 +139,12 @@ Route::get('/cart/clear', [
 Route::get('/checkout/product', [
     App\Http\Controllers\ProductCheckoutController::class,
     'productCheckout',
-])->name('checkout.product')->middleware('auth');
+])->name('checkout.product')->middleware(\App\Http\Middleware\RedirectedAuth::class);
 
 Route::post('/checkout/product', [
     App\Http\Controllers\ProductCheckoutController::class,
     'productCheckout',
-])->name('checkout.product.post')->middleware('auth');
+])->name('checkout.product.post')->middleware(\App\Http\Middleware\RedirectedAuth::class);
 
 Route::get('/checkout/product/success', [
     App\Http\Controllers\ProductCheckoutController::class,

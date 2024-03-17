@@ -19,7 +19,7 @@ class Authenticate extends Middleware
         $route = $request->route()->getName();
 
         // If the user is trying to access the checkout page, we redirect them to the register page to create an account.
-        if ($route === 'checkout.subscription') {
+        if ($route === 'checkout.subscription' || $route === 'checkout.product') {
             return route('register');
         }
 
