@@ -18,7 +18,6 @@ class PaymentProvidersSeeder extends Seeder
                 'name' => 'Stripe',
                 'slug' => 'stripe',
                 'type' => 'multi',
-                'is_active' => true,
                 'created_at' => now()->format('Y-m-d H:i:s'),
                 'updated_at' => now()->format('Y-m-d H:i:s')
             ],
@@ -26,7 +25,6 @@ class PaymentProvidersSeeder extends Seeder
                 'name' => 'Paddle',
                 'slug' => 'paddle',
                 'type' => 'multi',
-                'is_active' => true,
                 'created_at' => now()->format('Y-m-d H:i:s'),
                 'updated_at' => now()->format('Y-m-d H:i:s')
             ],
