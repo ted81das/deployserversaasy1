@@ -20,6 +20,8 @@ return new class extends Migration
             $table->unsignedBigInteger('total_amount')->default(0);
             $table->unsignedBigInteger('total_amount_after_discount')->default(0);
             $table->unsignedBigInteger('total_discount_amount')->default(0);
+            $table->string('payment_provider_order_id')->nullable();
+            $table->foreignId('payment_provider_id')->nullable()->constrained();
             $table->timestamps();
         });
     }
