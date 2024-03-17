@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->tinyText('description')->nullable();
             $table->string('type');
-            $table->unsignedFloat('amount');
+            $table->float('amount');
             $table->dateTime('valid_until')->nullable();
             $table->boolean('is_active')->default(true);
             $table->boolean('is_combinable')->default(true);
