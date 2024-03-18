@@ -90,6 +90,9 @@ class SubscriptionResource extends Resource
                             return $mapper->mapForDisplay($state);
                         })
                     ->searchable(),
+                Tables\Columns\TextColumn::make('created_at')->label(__('Created At'))
+                    ->dateTime(config('app.datetime_format'))
+                    ->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('updated_at')->label(__('Updated At'))
                     ->dateTime(config('app.datetime_format'))
                     ->searchable()->sortable(),

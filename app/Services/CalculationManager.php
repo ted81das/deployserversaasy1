@@ -132,6 +132,7 @@ class CalculationManager
 
         $order->total_amount = $totalAmount;
         $order->total_amount_after_discount = $totalAmountAfterDiscount;
+        $order->total_discount_amount = max(0, $totalAmount - $totalAmountAfterDiscount);
         $order->currency_id = $currency->id;
 
         $order->save();

@@ -5,7 +5,6 @@ namespace App\Filament\Dashboard\Resources;
 use App\Constants\DiscountConstants;
 use App\Constants\OrderStatus;
 use App\Filament\Dashboard\Resources\OrderResource\Pages;
-use App\Filament\Dashboard\Resources\OrderResource\RelationManagers;
 use App\Mapper\OrderStatusMapper;
 use App\Models\Order;
 use App\Services\ConfigManager;
@@ -101,7 +100,7 @@ class OrderResource extends Resource
                                         TextEntry::make('created_at')->dateTime(config('app.datetime_format')),
                                         TextEntry::make('updated_at')->dateTime(config('app.datetime_format')),
                                     ])->columns(3),
-                                Section::make(_('Order Items'))
+                                Section::make(__('Order Items'))
                                     ->description(__('View details about order items.'))
                                     ->schema(
                                         function ($record) {

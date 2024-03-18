@@ -59,8 +59,9 @@ class OrderResource extends Resource
                 }),
                 Tables\Columns\TextColumn::make('updated_at')->label(__('Updated At'))
                     ->dateTime(config('app.datetime_format'))
-                    ->searchable()->sortable(),
+                    ->searchable()->sortable()
             ])
+            ->defaultSort('updated_at', 'desc')
             ->filters([
                 //
             ])

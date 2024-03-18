@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Constants\SubscriptionStatus;
+use App\Constants\TransactionStatus;
 use App\Models\Interval;
 use App\Models\Subscription;
 use App\Models\Transaction;
@@ -308,7 +309,7 @@ class MetricsManager
 
     public function getTotalRevenue()
     {
-        return money(Transaction::all()->sum('amount'), config('app.default_currency'));
+        return money(Transaction::where('status', TransactionStatus::SUCCESS->value)->sum('amount'), config('app.default_currency'));
     }
 
     public function getActiveSubscriptions()
