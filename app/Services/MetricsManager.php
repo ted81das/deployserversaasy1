@@ -16,12 +16,12 @@ class MetricsManager
     public function calculateAverageRevenuePerUserChart()
     {
         $transactions = DB::table('transactions')
-            ->select([DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'), DB::raw('SUM(amount) as total_revenue')])
+            ->select([DB::raw($this->getDateFormattingForDriver('created_at')), DB::raw('SUM(amount) as total_revenue')])
             ->groupBy('month')
             ->get();
 
         $users = DB::table('users')
-            ->select([DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'), DB::raw('COUNT(*) as total_users')])
+            ->select([DB::raw($this->getDateFormattingForDriver('created_at')), DB::raw('COUNT(*) as total_users')])
             ->groupBy('month')
             ->get();
 
@@ -138,7 +138,7 @@ class MetricsManager
 
         $results = DB::table('subscriptions')
             ->select([
-                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+                DB::raw($this->getDateFormattingForDriver('created_at')),
                 DB::raw('
                 SUM(CASE
                     ' . implode("\n", $cases) . '
@@ -204,7 +204,7 @@ class MetricsManager
         # subscriptions that end each month
         $endsEachMonthResults = DB::table('subscriptions')
             ->select([
-                DB::raw('DATE_FORMAT(ends_at, "%Y-%m") as month'),
+                DB::raw($this->getDateFormattingForDriver('ends_at')),
                 DB::raw('count(*) as total_ended')
             ])
             ->where('status', '!=', SubscriptionStatus::ACTIVE->value)
@@ -224,7 +224,7 @@ class MetricsManager
         # subscriptions that start each month
         $startsEachMonthResults = DB::table('subscriptions')
             ->select([
-                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+                DB::raw($this->getDateFormattingForDriver('created_at')),
                 DB::raw('count(*) as total_started')
             ])
             ->where('status', SubscriptionStatus::ACTIVE->value)
@@ -333,5 +333,18 @@ class MetricsManager
         $totalUsers = User::all()->count();
 
         return number_format(($totalUsers > 0 ? $totalSubscriptions / $totalUsers * 100 : 0), 2) . '%';
+    }
+
+    private function getDateFormattingForDriver(string $field)
+    {
+        $driver = config('database.default');
+        if ($driver == 'pgsql') {
+            return "TO_CHAR($field, 'YYYY-MM') as month";
+        } else if ($driver == 'sqlite') {
+            return "strftime('%Y-%m', $field) as month";
+        }
+
+        // mysql
+        return "DATE_FORMAT($field, '%Y-%m') as month";
     }
 }
