@@ -14,4 +14,14 @@ class OneTimeProductPaymentProviderData extends Model
         'payment_provider_id',
         'payment_provider_product_id',
     ];
+
+    public function oneTimeProduct()
+    {
+        return $this->belongsTo(OneTimeProduct::class);
+    }
+
+    public function paymentProvider()
+    {
+        return $this->belongsTo(PaymentProvider::class);
+    }
 }

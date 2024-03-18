@@ -123,7 +123,7 @@ class PlanResource extends Resource
     {
         return $table
             ->heading(__('Plans are the different tiers of your product that you offer to your customers.'))
-            ->description(__('For example: if you have Starter, Pro and Premium products, you would create a plan monthly and yearly plan for each of those to offer them in different intervals.'))
+            ->description(__('For example: if you have Starter, Pro and Premium products, you would create a monthly and yearly plans for each of those to offer them in different intervals.'))
             ->columns([
                 Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('slug')->searchable()->sortable(),
@@ -162,6 +162,7 @@ class PlanResource extends Resource
     {
         return [
             \App\Filament\Admin\Resources\PlanResource\RelationManagers\PricesRelationManager::class,
+            \App\Filament\Admin\Resources\PlanResource\RelationManagers\PaymentProviderDataRelationManager::class,
         ];
     }
 

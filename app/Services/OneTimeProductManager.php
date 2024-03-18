@@ -11,6 +11,20 @@ use App\Models\PaymentProvider;
 
 class OneTimeProductManager
 {
+
+    public function findByPaymentProviderProductId(PaymentProvider $paymentProvider, string $paymentProviderProductId): ?OneTimeProduct
+    {
+        $result = OneTimeProductPaymentProviderData::where('payment_provider_id', $paymentProvider->id)
+            ->where('payment_provider_product_id', $paymentProviderProductId)
+            ->first();
+
+        if ($result) {
+            return OneTimeProduct::find($result->one_time_product_id);
+        }
+
+        return null;
+    }
+
     public function getProductWithPriceBySlug(string $slug): ?OneTimeProduct
     {
         $defaultCurrency = config('app.default_currency');

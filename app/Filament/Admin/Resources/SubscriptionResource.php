@@ -80,6 +80,12 @@ class SubscriptionResource extends Resource
                 Tables\Columns\TextColumn::make('price')->formatStateUsing(function (string $state, $record) {
                     return money($state, $record->currency->code) . ' / ' . $record->interval->name;
                 }),
+                Tables\Columns\TextColumn::make('payment_provider_id')
+                    ->formatStateUsing(function (string $state, $record) {
+                        return $record->paymentProvider->name;
+                    })
+                    ->label(__('Payment Provider'))
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->colors([
@@ -211,6 +217,11 @@ class SubscriptionResource extends Resource
                                         TextEntry::make('price')->formatStateUsing(function (string $state, $record) {
                                             return money($state, $record->currency->code) . ' / ' . $record->interval->name;
                                         }),
+                                        TextEntry::make('payment_provider_id')
+                                            ->formatStateUsing(function (string $state, $record) {
+                                                return $record->paymentProvider->name;
+                                            })
+                                            ->label(__('Payment Provider')),
                                         TextEntry::make('ends_at')->dateTime(config('app.datetime_format'))->label(__('Next Renewal'))->visible(fn (Subscription $record): bool => !$record->is_canceled_at_end_of_cycle ),
                                         TextEntry::make('trial_ends_at')->dateTime(config('app.datetime_format'))->label(__('Trial Ends At'))->visible(fn (Subscription $record): bool => $record->trial_ends_at !== null ),
                                         TextEntry::make('status')

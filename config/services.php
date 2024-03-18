@@ -88,4 +88,11 @@ return [
         'is_sandbox' => env('PADDLE_IS_SANDBOX', false),
     ],
 
+    'lemon-squeezy' => [
+        'api_key' => env('LEMON_SQUEEZY_API_KEY'),
+        'store_id' => env('LEMON_SQUEEZY_STORE_ID'),
+        'signing_secret' => env('LEMON_SQUEEZY_SIGNING_SECRET'),
+        'is_test_mode' => env('LEMON_SQUEEZY_IS_TEST_MODE', false),
+    ],
+
 ];

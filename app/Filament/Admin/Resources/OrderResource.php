@@ -38,9 +38,6 @@ class OrderResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('user.name')->label(__('User'))->searchable(),
-                Tables\Columns\TextColumn::make('total_amount')->formatStateUsing(function (string $state, $record) {
-                    return money($state, $record->currency->code);
-                }),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->colors([
@@ -51,12 +48,21 @@ class OrderResource extends Resource
                             return $mapper->mapForDisplay($state);
                         })
                     ->searchable(),
+                Tables\Columns\TextColumn::make('total_amount')->formatStateUsing(function (string $state, $record) {
+                    return money($state, $record->currency->code);
+                }),
                 Tables\Columns\TextColumn::make('total_amount_after_discount')->formatStateUsing(function (string $state, $record) {
                     return money($state, $record->currency->code);
                 }),
                 Tables\Columns\TextColumn::make('total_discount_amount')->formatStateUsing(function (string $state, $record) {
                     return money($state, $record->currency->code);
                 }),
+                Tables\Columns\TextColumn::make('payment_provider_id')
+                    ->formatStateUsing(function (string $state, $record) {
+                        return $record->paymentProvider->name;
+                    })
+                    ->label(__('Payment Provider'))
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('updated_at')->label(__('Updated At'))
                     ->dateTime(config('app.datetime_format'))
                     ->searchable()->sortable(),
@@ -89,6 +95,11 @@ class OrderResource extends Resource
                                         TextEntry::make('user.name')
                                             ->url(fn (Order $record) => EditUser::getUrl(['record' => $record->user]))
                                             ->label(__('User')),
+                                        TextEntry::make('payment_provider_id')
+                                            ->formatStateUsing(function (string $state, $record) {
+                                                return $record->paymentProvider->name;
+                                            })
+                                            ->label(__('Payment Provider')),
                                         TextEntry::make('total_amount')->formatStateUsing(function (string $state, $record) {
                                             return money($state, $record->currency->code);
                                         }),

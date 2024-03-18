@@ -108,6 +108,7 @@ class OneTimeProductResource extends Resource
     {
         return [
             RelationManagers\PricesRelationManager::class,
+            RelationManagers\PaymentProviderDataRelationManager::class
         ];
     }
 }

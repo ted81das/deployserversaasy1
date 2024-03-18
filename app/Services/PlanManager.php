@@ -24,6 +24,19 @@ class PlanManager
         return null;
     }
 
+    public function findByPaymentProviderProductId(PaymentProvider $paymentProvider, string $paymentProviderProductId): ?Plan
+    {
+        $result = PlanPaymentProviderData::where('payment_provider_id', $paymentProvider->id)
+            ->where('payment_provider_product_id', $paymentProviderProductId)
+            ->first();
+
+        if ($result) {
+            return Plan::find($result->plan_id);
+        }
+
+        return null;
+    }
+
     public function addPaymentProviderProductId(Plan $plan, PaymentProvider $paymentProvider, string $paymentProviderProductId): void
     {
         PlanPaymentProviderData::create([

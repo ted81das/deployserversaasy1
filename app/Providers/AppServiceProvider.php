@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\PaymentProviders\Paddle\PaddleProvider;
 use App\Services\PaymentProviders\PaymentManager;
 use App\Services\PaymentProviders\Stripe\StripeProvider;
+use App\Services\PaymentProviders\LemonSqueezy\LemonSqueezyProvider;
 use App\Services\SubscriptionManager;
 use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
@@ -27,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->tag([
             StripeProvider::class,
             PaddleProvider::class,
+            LemonSqueezyProvider::class,
         ], 'payment-providers');
 
         $this->app->bind(PaymentManager::class, function() {

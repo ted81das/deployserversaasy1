@@ -4,6 +4,7 @@ namespace App\Services\PaymentProviders\Paddle;
 
 use App\Constants\OrderStatus;
 use App\Constants\OrderStatusConstants;
+use App\Constants\PaymentProviderConstants;
 use App\Constants\SubscriptionStatus;
 use App\Constants\TransactionStatus;
 use App\Models\Currency;
@@ -37,7 +38,7 @@ class PaddleWebhookHandler
 
         $event = $request->all();
 
-        $paymentProvider = PaymentProvider::where('slug', 'paddle')->firstOrFail();
+        $paymentProvider = PaymentProvider::where('slug', PaymentProviderConstants::PADDLE_SLUG)->firstOrFail();
 
         $eventType = $event['event_type'];
         $eventData = $event['data'];
@@ -146,6 +147,7 @@ class PaddleWebhookHandler
                     // this is to prevent updating the order status from a final state to a non-final state due to a webhook event coming in late
                     $this->orderManager->updateOrder($order, [
                         'status' => $this->mapPaddleTransactionStatusToOrderStatus($paddleTransactionStatus),
+                        'payment_provider_id' => $paymentProvider->id,
                     ]);
                 }
             }
