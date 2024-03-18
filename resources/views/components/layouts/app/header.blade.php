@@ -19,8 +19,8 @@
             </button>
         </div>
         <x-nav>
-            <x-nav.item route="#">{{ __('Features') }}</x-nav.item>
-            <x-nav.item route="#">{{ __('How it works') }}</x-nav.item>
+            <x-nav.item route="#features">{{ __('Features') }}</x-nav.item>
+            <x-nav.item route="#tech-stack">{{ __('Tech Stack') }}</x-nav.item>
             <x-nav.item route="#plans">{{ __('Pricing') }}</x-nav.item>
             <x-nav.item route="#faq">{{ __('FAQ') }}</x-nav.item>
             <x-nav.item route="blog">{{ __('Blog') }}</x-nav.item>
