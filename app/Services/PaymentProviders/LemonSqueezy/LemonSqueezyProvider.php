@@ -186,40 +186,20 @@ class LemonSqueezyProvider implements PaymentProviderInterface
 
         try {
 
-            $stripeProductId = $this->findOrCreateStripeSubscriptionProduct($newPlan, $paymentProvider);
-            $stripePriceId = $this->findOrCreateStripeSubscriptionProductPrice($newPlan, $paymentProvider, $stripeProductId);
+            $variantId = $this->planManager->getPaymentProviderProductId($newPlan, $paymentProvider);
 
-            $stripe = $this->getClient();
+            if ($variantId === null) {
+                Log::error('Failed to find variant ID for plan while changing subscription plan: (did you forget to add it to the plan?) ' . $newPlan->id);
+                throw new \Exception('Failed to find variant ID for plan while changing subscription plan');
+            }
 
             $planPrice = $this->calculationManager->getPlanPrice($newPlan);
 
-            $subscriptionItems = $stripe->subscriptionItems->all([
-                'subscription' => $subscription->payment_provider_subscription_id,
-            ]);
+            $response = $this->client->updateSubscription($subscription->payment_provider_subscription_id, $variantId, $withProration);
 
-            // remove old items from subscription and add new ones
-            $itemsToDelete = [];
-            foreach ($subscriptionItems as $subscriptionItem) {
-                $itemsToDelete[] = [
-                    'id' => $subscriptionItem->id,
-                    'deleted' => true,
-                ];
+            if (!$response->successful()) {
+                throw new \Exception('Failed to update lemon-squeezy subscription');
             }
-
-            $subscriptionUpdateObject = [
-                'items' => array_merge($itemsToDelete, [
-                    [
-                        'price' => $stripePriceId,
-                        'quantity' => 1,
-                    ],
-                ]),
-            ];
-
-            if (!$withProration) {
-                $subscriptionUpdateObject['proration_behavior'] = 'none';
-            }
-
-            $stripe->subscriptions->update($subscription->payment_provider_subscription_id, $subscriptionUpdateObject);
 
             $this->subscriptionManager->updateSubscription($subscription, [
                 'plan_id' => $newPlan->id,
@@ -243,9 +223,11 @@ class LemonSqueezyProvider implements PaymentProviderInterface
         $paymentProvider = $this->assertProviderIsActive();
 
         try {
-            $stripe = $this->getClient();
+            $response = $this->client->cancelSubscription($subscription->payment_provider_subscription_id);
 
-            $stripe->subscriptions->update($subscription->payment_provider_subscription_id, ['cancel_at_period_end' => true]);
+            if (!$response->successful()) {
+                throw new \Exception('Failed to cancel lemon-squeezy subscription');
+            }
 
         } catch (ApiErrorException $e) {
             Log::error($e->getMessage());
@@ -261,9 +243,11 @@ class LemonSqueezyProvider implements PaymentProviderInterface
         $paymentProvider = $this->assertProviderIsActive();
 
         try {
-            $stripe = $this->getClient();
+            $response = $this->client->discardSubscriptionCancellation($subscription->payment_provider_subscription_id);
 
-            $stripe->subscriptions->update($subscription->payment_provider_subscription_id, ['cancel_at_period_end' => false]);
+            if (!$response->successful()) {
+                throw new \Exception('Failed to discard lemon-squeezy subscription cancellation');
+            }
 
         } catch (ApiErrorException $e) {
             Log::error($e->getMessage());
@@ -279,57 +263,26 @@ class LemonSqueezyProvider implements PaymentProviderInterface
         $paymentProvider = $this->assertProviderIsActive();
 
         try {
-            $stripe = $this->getClient();
+            $response = $this->client->getSubscription($subscription->payment_provider_subscription_id);
 
-            $portalConfigId = Cache::rememberForever('stripe.portal_configuration_id', function () use ($stripe) {
-                $portal = $stripe->billingPortal->configurations->create([
-                    'business_profile' => [
-                        'headline' => __('Manage your subscription and payment details.'),
-                    ],
-                    'features' => [
-                        'invoice_history' => ['enabled' => true],
-                        'payment_method_update' => ['enabled' => true],
-                        'customer_update' => ['enabled' => false],
-                    ],
-                ]);
+            if (!$response->successful()) {
+                throw new \Exception('Failed to get lemon-squeezy subscription');
+            }
 
-                return $portal->id;
-            });
+            $url = $response->json()['data']['attributes']['urls']['update_payment_method'] ?? '/';
 
-            $portal = $stripe->billingPortal->sessions->create([
-                'customer' => $subscription->user->stripeData()->firstOrFail()->stripe_customer_id,
-                'return_url' => SubscriptionResource::getUrl(),
-            ]);
+            return $url;
 
-        } catch (ApiErrorException $e) {
+        } catch (\Exception $e) {
             Log::error($e->getMessage());
 
             return '/';
         }
-
-        return $portal->url;
     }
 
     public function addDiscountToSubscription(Subscription $subscription, Discount $discount): bool
     {
-        $paymentProvider = $this->assertProviderIsActive();
-
-        try {
-            $stripe = $this->getClient();
-
-            $stripeDiscountId = $this->findOrCreateStripeDiscount($discount, $paymentProvider, $subscription->currency()->firstOrFail()->code);
-
-            $stripe->subscriptions->update($subscription->payment_provider_subscription_id, [
-                'coupon' => $stripeDiscountId,
-            ]);
-
-        } catch (ApiErrorException $e) {
-            Log::error($e->getMessage());
-
-            return false;
-        }
-
-        return true;
+        throw new \Exception('It is not possible to add a discount to a lemon-squeezy subscription');
     }
 
     public function getSlug(): string

@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services;
+use App\Constants\PaymentProviderConstants;
 use App\Constants\SubscriptionStatus;
 use App\Events\Subscription\InvoicePaymentFailed;
 use App\Events\Subscription\Subscribed;
@@ -237,7 +238,8 @@ class SubscriptionManager
         return ($subscription->status === SubscriptionStatus::ACTIVE->value ||
             $subscription->status === SubscriptionStatus::PAST_DUE->value)
             && $subscription->price > 0
-            && $subscription->discounts()->count() === 0;  // only one discount per subscription for now
+            && $subscription->discounts()->count() === 0  // only one discount per subscription for now
+            && $subscription->paymentProvider->slug !== PaymentProviderConstants::LEMON_SQUEEZY_SLUG; // LemonSqueezy does not support discounts for active subscriptions
     }
 
     public function cancelSubscription(

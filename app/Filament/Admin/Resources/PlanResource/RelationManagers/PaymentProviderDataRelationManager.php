@@ -3,8 +3,11 @@
 namespace App\Filament\Admin\Resources\PlanResource\RelationManagers;
 
 use App\Constants\PaymentProviderConstants;
+use App\Models\PaymentProvider;
+use App\Services\PaymentProviders\LemonSqueezy\LemonSqueezyProductValidator;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -33,6 +36,7 @@ class PaymentProviderDataRelationManager extends RelationManager
                             ->toArray()
                     )
                     ->default(\App\Models\PaymentProvider::where('slug', PaymentProviderConstants::LEMON_SQUEEZY_SLUG)?->first()?->id ?? null)
+                    ->live()
                     ->unique(modifyRuleUsing: function ($rule, \Filament\Forms\Get $get, RelationManager $livewire) {
                         return $rule->where('plan_id', $livewire->ownerRecord->id)->ignore($get('id'));
                     })
@@ -42,7 +46,49 @@ class PaymentProviderDataRelationManager extends RelationManager
                     ->label('Payment Provider Product/Variant ID')
                     ->helperText('For Lemon Squeezy, this should be equal to the variant ID.')
                     ->required()
-                    ->maxLength(255)
+                    ->maxLength(255),
+                Forms\Components\Actions::make([
+                    Forms\Components\Actions\Action::make('submit')
+                        ->label(__('Validate Product (Lemon Squeezy)'))
+                        ->color('success')
+                        ->outlined()
+                        ->disabled(fn ($get) => $get('payment_provider_id') != PaymentProvider::where('slug', PaymentProviderConstants::LEMON_SQUEEZY_SLUG)?->first()?->id)
+                        ->action(function (LemonSqueezyProductValidator $validator, $get) {
+                            if ($get('payment_provider_id') != PaymentProvider::where('slug', PaymentProviderConstants::LEMON_SQUEEZY_SLUG)?->first()?->id) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title(__('Invalid Payment Provider'))
+                                    ->body(__('The selected payment provider is not Lemon Squeezy.'))
+                                    ->persistent()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $variantId = $get('payment_provider_product_id');
+
+                            try {
+                                $validator->validatePlan($variantId, $this->ownerRecord);
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title(__('Problem validating product'))
+                                    ->body(__($e->getMessage()))
+                                    ->persistent()
+                                    ->send();
+
+                                return;
+                            }
+
+
+                            Notification::make()
+                                ->success()
+                                ->title(__('Product found'))
+                                ->body(__('The product with the variant ID :variantId was found and is matching your plan product details.', ['variantId' => $variantId]))
+                                ->persistent()
+                                ->send();
+                        })
+                ]),
             ]);
     }
 

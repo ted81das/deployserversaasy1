@@ -90,19 +90,19 @@ class LemonSqueezyWebhookHandler
             }
 
             $currency = Currency::where('code', strtoupper($attributes['currency']))->firstOrFail();
-            $invoiceStatus = $attributes['status'];
+            $providerOrderStatus = $attributes['status'];
 
             $discount = $attributes['discount_total'] ?? 0;
             $tax = $attributes['tax'] ?? 0;
 
             $transaction = $this->transactionManager->getTransactionByPaymentProviderTxId($data['id']);
 
-            $mappedStatus = $this->mapOrderStatusToTransactionStatus($invoiceStatus);
+            $mappedStatus = $this->mapOrderStatusToTransactionStatus($providerOrderStatus);
 
             if ($transaction) {
                 $this->transactionManager->updateTransactionByPaymentProviderTxId(
                     $data['id'],
-                    $invoiceStatus,
+                    $providerOrderStatus,
                     $mappedStatus,
                 );
             } else {
@@ -115,12 +115,13 @@ class LemonSqueezyWebhookHandler
                     $currency,
                     $paymentProvider,
                     $data['id'],
-                    $invoiceStatus,
+                    $providerOrderStatus,
                     $mappedStatus,
                 );
             }
 
-            $orderStatus = $mappedStatus === TransactionStatus::SUCCESS ? OrderStatus::SUCCESS : OrderStatus::FAILED;
+            $orderStatus = ($mappedStatus === TransactionStatus::SUCCESS) ?
+                OrderStatus::SUCCESS : ($mappedStatus === TransactionStatus::REFUNDED ? OrderStatus::REFUNDED : OrderStatus::FAILED);
 
             $this->orderManager->updateOrder($order, [
                 'status' => $orderStatus,
@@ -184,7 +185,6 @@ class LemonSqueezyWebhookHandler
 
             if ($subscriptionUuid === null) {
                 try {
-
                     $subscription = $this->createSubscription($attributes, $paymentProvider, $data['id']);
                 } catch (SubscriptionCreationNotAllowedException) {
                     Log::error('Subscription creation not allowed', [
@@ -192,7 +192,7 @@ class LemonSqueezyWebhookHandler
                         'payment_provider_id' => $paymentProvider->id,
                     ]);
 
-                    throw new Exception('Subscription creation not allowed because you have an active subscription');
+                    throw new \Exception('Subscription creation not allowed because you have an active subscription');
                 }
 
             } else {
@@ -226,7 +226,8 @@ class LemonSqueezyWebhookHandler
             $subscriptionStatus = $this->mapLemonSqueezySubscriptionStatusToSubscriptionStatus($lemonSqueezySubscriptionStatus);
             $endsAt = Carbon::parse($attributes['renews_at'])->toDateTimeString();
             $trialEndsAt = $attributes['trial_ends_at'] !== null ? Carbon::parse($attributes['trial_ends_at'])->toDateTimeString() : null;
-            $cancelledAt = $attributes['ends_at'] ? Carbon::parse($attributes['ends_at'])->toDateTimeString() : null;
+            $cancelledAt = $attributes['ends_at'] !== null ? Carbon::parse($attributes['ends_at'])->toDateTimeString() : null;
+            $isCanceledAtTheEndOfCycle = $attributes['cancelled'] ?? false;
 
             $this->subscriptionManager->updateSubscription($subscription, [
                 'status' => $subscriptionStatus,
@@ -236,7 +237,9 @@ class LemonSqueezyWebhookHandler
                 'payment_provider_id' => $paymentProvider->id,
                 'trial_ends_at' => $trialEndsAt,
                 'cancelled_at' => $cancelledAt,
+                'is_canceled_at_end_of_cycle' => $isCanceledAtTheEndOfCycle,
             ]);
+
         } elseif ($eventName === 'subscription_payment_success' || $eventName === 'subscription_payment_failed') {
             $subscription = $this->subscriptionManager->findByPaymentProviderId($paymentProvider, $attributes['subscription_id']);
             $currency = Currency::where('code', strtoupper($attributes['currency']))->firstOrFail();
@@ -303,21 +306,21 @@ class LemonSqueezyWebhookHandler
         return $this->subscriptionManager->create($plan->slug, $user->id, $paymentProvider, $providerSubscriptionId);
     }
 
-    private function mapOrderStatusToTransactionStatus(string $invoiceStatus): TransactionStatus
+    private function mapOrderStatusToTransactionStatus(string $providerOrderStatus): TransactionStatus
     {
-        if ($invoiceStatus == 'paid') {
+        if ($providerOrderStatus == 'paid') {
             return TransactionStatus::SUCCESS;
         }
 
-        if ($invoiceStatus == 'refunded') {
+        if ($providerOrderStatus == 'refunded') {
             return TransactionStatus::REFUNDED;
         }
 
-        if ($invoiceStatus == 'pending') {
+        if ($providerOrderStatus == 'pending') {
             return TransactionStatus::PENDING;
         }
 
-        if ($invoiceStatus == 'failed') {
+        if ($providerOrderStatus == 'failed') {
             return TransactionStatus::FAILED;
         }
 
@@ -330,13 +333,12 @@ class LemonSqueezyWebhookHandler
             return SubscriptionStatus::ACTIVE;
         }
 
-        if ($providerSubscriptionStatus == 'past_due' || $providerSubscriptionStatus == 'unpaid') {
-            return SubscriptionStatus::PAST_DUE;
+        if ($providerSubscriptionStatus == 'cancelled') {  // lemon squeezy sets the subscription to cancelled immediately after the user cancels it, so we still need to keep the subscription active until the end of the billing period (ends_at)
+            return SubscriptionStatus::ACTIVE;
         }
 
-        if ($providerSubscriptionStatus == 'cancelled') {
-            return SubscriptionStatus::CANCELED;
-
+        if ($providerSubscriptionStatus == 'past_due' || $providerSubscriptionStatus == 'unpaid') {
+            return SubscriptionStatus::PAST_DUE;
         }
 
         if ($providerSubscriptionStatus == 'paused') {
@@ -347,7 +349,12 @@ class LemonSqueezyWebhookHandler
 
     }
 
-    private function isValidSignature(string $payload, string $signature) {
+    private function isValidSignature(string $payload, ?string $signature) {
+
+        if ($signature === null) {
+            return false;
+        }
+
         $hash = hash_hmac('sha256', $payload, config('services.lemon-squeezy.signing_secret'));
 
         return ! hash_equals($hash, $signature);

@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Client;
-use App\Models\Discount;
 use Carbon\Carbon;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -44,55 +43,37 @@ class LemonSqueezyClient
     }
 
 
-//    public function updateSubscription(string $paddleSubscriptionId, string $priceId, bool $withProration, bool $isTrialing = false): Response
-//    {
-//        $proration = $isTrialing ? 'do_not_bill' : ($withProration ? 'prorated_immediately' : 'full_immediately');
-//        $subscriptionObject = [
-//            'proration_billing_mode' => $proration,
-//            'items' => [
-//                [
-//                    'price_id' => $priceId,
-//                    'quantity' => 1,
-//                ],
-//            ],
-//        ];
-//
-//        return Http::withHeaders([
-//            'Authorization' => 'Bearer ' . config('services.paddle.vendor_auth_code'),
-//        ])->patch($this->getApiUrl('/subscriptions/' . $paddleSubscriptionId), $subscriptionObject);
-//    }
-//
-//    public function addDiscountToSubscription(string $paddleSubscriptionId, string $paddleDiscountId, string $effectiveFrom = 'next_billing_period')
-//    {
-//        $subscriptionObject = [
-//            'discount' => [
-//                'id' => $paddleDiscountId,
-//                'effective_from' => $effectiveFrom,
-//            ],
-//        ];
-//
-//        return Http::withHeaders([
-//            'Authorization' => 'Bearer ' . config('services.paddle.vendor_auth_code'),
-//        ])->patch($this->getApiUrl('/subscriptions/' . $paddleSubscriptionId), $subscriptionObject);
-//
-//    }
-//
-//    public function cancelSubscription(string $paddleSubscriptionId)
-//    {
-//        return Http::withHeaders([
-//            'Authorization' => 'Bearer ' . config('services.paddle.vendor_auth_code'),
-//        ])->post($this->getApiUrl('/subscriptions/' . $paddleSubscriptionId . '/cancel'), ['cancel_at_end' => true]);
-//    }
-//
-//    public function discardSubscriptionCancellation(string $paddleSubscriptionId)
-//    {
-//        return Http::withHeaders([
-//            'Authorization' => 'Bearer ' . config('services.paddle.vendor_auth_code'),
-//        ])->patch($this->getApiUrl('/subscriptions/' . $paddleSubscriptionId), [
-//            "scheduled_change" => null,
-//        ]);
-//    }
-//
+    public function updateSubscription(string $subscriptionId, string $newVariantId, bool $withProration): Response
+    {
+        $attributes = [
+            'variant_id' => $newVariantId,
+        ];
+
+        if (!$withProration) {
+            $attributes['disable_prorations'] = true;
+        }
+        return Http::withHeaders([
+            'Authorization' => 'Bearer ' . config('services.lemon-squeezy.api_key'),
+            'Accept' => 'application/vnd.api+json',
+            'Content-Type' => 'application/vnd.api+json',
+        ])->patch($this->getApiUrl('/v1/subscriptions/' . $subscriptionId), [
+            'data' => [
+                'type' => 'subscriptions',
+                'id' => $subscriptionId,
+                'attributes' => $attributes,
+            ],
+        ]);
+    }
+
+    public function getVariant(string $variantId): Response
+    {
+        return Http::withHeaders([
+            'Authorization' => 'Bearer ' . config('services.lemon-squeezy.api_key'),
+            'Accept' => 'application/vnd.api+json',
+            'Content-Type' => 'application/vnd.api+json',
+        ])->get($this->getApiUrl('/v1/variants/' . $variantId));
+    }
+
     public function createDiscount(
         string $name,
         string $couponCode,
@@ -148,17 +129,45 @@ class LemonSqueezyClient
             ],
         ]);
     }
-//
-//    public function getPaymentMethodUpdateTransaction(
-//        string $paddleSubscriptionId,
-//    ) {
-//        return Http::withHeaders([
-//            'Authorization' => 'Bearer ' . config('services.paddle.vendor_auth_code'),
-//        ])->get($this->getApiUrl('/subscriptions/' . $paddleSubscriptionId . '/update-payment-method-transaction'));
-//    }
+
+    public function getSubscription(string $subscriptionId): Response
+    {
+        return Http::withHeaders([
+            'Authorization' => 'Bearer ' . config('services.lemon-squeezy.api_key'),
+            'Accept' => 'application/vnd.api+json',
+            'Content-Type' => 'application/vnd.api+json',
+        ])->get($this->getApiUrl('/v1/subscriptions/' . $subscriptionId));
+    }
+
+    public function cancelSubscription(string $subscriptionId): Response
+    {
+        return Http::withHeaders([
+            'Authorization' => 'Bearer ' . config('services.lemon-squeezy.api_key'),
+            'Accept' => 'application/vnd.api+json',
+            'Content-Type' => 'application/vnd.api+json',
+        ])->delete($this->getApiUrl('/v1/subscriptions/' . $subscriptionId));
+    }
+
+    public function discardSubscriptionCancellation(string $subscriptionId): Response
+    {
+        return Http::withHeaders([
+            'Authorization' => 'Bearer ' . config('services.lemon-squeezy.api_key'),
+            'Accept' => 'application/vnd.api+json',
+            'Content-Type' => 'application/vnd.api+json',
+        ])->patch($this->getApiUrl('/v1/subscriptions/' . $subscriptionId), [
+            'data' => [
+                'type' => 'subscriptions',
+                'id' => $subscriptionId,
+                'attributes' => [
+                    'cancelled' => false,
+                ],
+            ],
+        ]);
+    }
 
     private function getApiUrl(string $endpoint): string
     {
         return 'https://api.lemonsqueezy.com' . $endpoint;
     }
+
 }
