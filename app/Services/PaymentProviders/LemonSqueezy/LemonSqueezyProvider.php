@@ -1,10 +1,12 @@
 <?php
 
-namespace App\Services\PaymentProviders\Stripe;
+namespace App\Services\PaymentProviders\LemonSqueezy;
+
 use App\Constants\DiscountConstants;
 use App\Constants\PaymentProviderConstants;
 use App\Filament\Dashboard\Resources\SubscriptionResource;
 use App\Models\Discount;
+use App\Client\LemonSqueezyClient;
 use App\Models\OneTimeProduct;
 use App\Models\Order;
 use App\Models\PaymentProvider;
@@ -24,10 +26,11 @@ use Illuminate\Support\Str;
 use Stripe\Exception\ApiErrorException;
 use Stripe\StripeClient;
 
-class StripeProvider implements PaymentProviderInterface
+class LemonSqueezyProvider implements PaymentProviderInterface
 {
 
     public function __construct(
+        private LemonSqueezyClient $client,
         private SubscriptionManager $subscriptionManager,
         private CalculationManager $calculationManager,
         private PlanManager $planManager,
@@ -44,65 +47,66 @@ class StripeProvider implements PaymentProviderInterface
         /** @var User $user */
         $user = auth()->user();
 
-        try {
+        $variantId = $this->planManager->getPaymentProviderProductId($plan, $paymentProvider);
 
-            $stripeCustomerId = $this->findOrCreateStripeCustomer($user);
-            $stripeProductId = $this->findOrCreateStripeSubscriptionProduct($plan, $paymentProvider);
-            $stripePriceId = $this->findOrCreateStripeSubscriptionProductPrice($plan, $paymentProvider, $stripeProductId);
-
-            $stripe = $this->getClient();
-
-            $trialDays = 0;
-            if ($plan->has_trial) {
-                $trialDays = $this->subscriptionManager->calculateSubscriptionTrialDays($plan);
-            }
-
-            $currencyCode = $subscription->currency()->firstOrFail()->code;
-
-            $sessionCreationObject = [
-                'customer' => $stripeCustomerId,
-                'success_url' => route('checkout.subscription.success'),
-                'cancel_url' => route('checkout.subscription', ['planSlug' => $plan->slug]),
-                'mode' => 'subscription',
-                'line_items' => [[
-                    'price' => $stripePriceId,
-                    'quantity' => 1,
-                ]],
-                'subscription_data' => [
-                    'metadata' => [
-                        'subscription_uuid' => $subscription->uuid,
-                    ],
-                ],
-            ];
-
-            if ($trialDays > 0) {
-                $sessionCreationObject['subscription_data']['trial_period_days'] = $trialDays;
-            }
-
-            if ($discount !== null) {
-                $stripeDiscountId = $this->findOrCreateStripeDiscount($discount, $paymentProvider, $currencyCode);
-
-                $sessionCreationObject['discounts'] = [
-                    [
-                        'coupon' => $stripeDiscountId,
-                    ],
-                ];
-            }
-
-            $session = $stripe->checkout->sessions->create($sessionCreationObject);
-
-        } catch (ApiErrorException $e) {
-            Log::error($e->getMessage());
-
-            throw $e;
+        if ($variantId === null) {
+            Log::error('Failed to find variant ID for plan: (did you forget to add it to the plan?) ' . $plan->id);
+            throw new \Exception('Failed to find variant ID for plan');
         }
 
-        return $session->url;
+        $price = $this->calculationManager->getPlanPrice($plan);
+
+        $object = [
+            'custom_price' => $price->price,
+            'product_options' => [
+                'description' => $plan->description ?? $plan->name,
+                'redirect_url' => route('checkout.subscription.success'),
+                'enabled_variants' => [
+                    $variantId,
+                ]
+            ],
+            'checkout_options' => [
+                'discount' => false,
+            ],
+            'checkout_data' => [
+                'email' => $user->email,
+                'name' => $user->name,
+                'custom' => [
+                    'subscription_uuid' => $subscription->uuid,
+                ],
+                'variant_quantities' => [
+                    [
+                        'variant_id' => $variantId,
+                        'quantity' => 1,
+                    ],
+                ],
+            ],
+        ];
+
+        if ($discount) {
+            $object['checkout_data']['discount_code'] = $this->findOrCreateLemonSqueezyDiscount($discount, $paymentProvider);
+        }
+
+        $response = $this->client->createCheckout($object, $variantId);
+
+        if (!$response->successful()) {
+            Log::error('Failed to create lemon-squeezy checkout: ' . $response->body());
+            throw new \Exception('Failed to create lemon-squeezy checkout');
+        }
+
+        $redirectLink = $response->json()['data']['attributes']['url'] ?? null;
+
+        if ($redirectLink === null) {
+            Log::error('Failed to create lemon-squeezy checkout: ' . $response->body());
+            throw new \Exception('Failed to create lemon-squeezy checkout');
+        }
+
+        return $redirectLink;
     }
 
     public function initProductCheckout(Order $order, Discount $discount = null): array
     {
-        // stripe does not need any initialization
+        // lemon squeezy does not need any initialization
 
         return [];
     }
@@ -111,54 +115,66 @@ class StripeProvider implements PaymentProviderInterface
     {
         $paymentProvider = $this->assertProviderIsActive();
 
-        try {
-            $stripe = $this->getClient();
+        $variantIds = [];
+        $variantQuantities = [];
+        /** @var User $user */
+        $user = auth()->user();
 
-            $stripeCustomerId = $this->findOrCreateStripeCustomer($order->user);
+        foreach ($order->items()->get() as $item) {
+            $product = $item->oneTimeProduct()->firstOrFail();
+            $variantId =$this->oneTimeProductManager->getPaymentProviderProductId($product, $paymentProvider);
 
-            $sessionCreationObject = [
-                'customer' => $stripeCustomerId,
-                'success_url' => route('checkout.product.success'),
-                'cancel_url' => route('checkout.product'),
-                'mode' => 'payment',
-                'line_items' => [],
-                'payment_intent_data' => [
-                    'metadata' => [
-                        'order_uuid' => $order->uuid,
-                    ],
-                ],
+            if ($variantId === null) {
+                Log::error('Failed to find variant ID for product: (did you forget to add it to the product?) ' . $product->id);
+                throw new \Exception('Failed to find variant ID for product');
+            }
+
+            $variantQuantities[] = [
+                'variant_id' => $variantId,
+                'quantity' => $item->quantity,
             ];
 
-            foreach ($order->items()->get() as $item) {
-                $product = $item->oneTimeProduct()->firstOrFail();
-                $stripeProductId = $this->findOrCreateStripeOneTimeProduct($product, $paymentProvider);
-                $stripePriceId = $this->findOrCreateStripeOneTimeProductPrice($product, $paymentProvider, $stripeProductId);
-
-                $sessionCreationObject['line_items'][] = [
-                    'price' => $stripePriceId,
-                    'quantity' => $item->quantity,
-                ];
-            }
-
-            if ($discount !== null) {  // rethink about that when adding support for cart checkout (multiple products checkout) as this discount will be applied to the whole cart (to all products)
-                $stripeDiscountId = $this->findOrCreateStripeDiscount($discount, $paymentProvider, $order->currency()->firstOrFail()->code);
-
-                $sessionCreationObject['discounts'] = [
-                    [
-                        'coupon' => $stripeDiscountId,
-                    ],
-                ];
-            }
-
-            $session = $stripe->checkout->sessions->create($sessionCreationObject);
-
-        } catch (ApiErrorException $e) {
-            Log::error($e->getMessage());
-
-            throw $e;
+            $variantIds[] = $variantId;
         }
 
-        return $session->url;
+        $object = [
+            'custom_price' => $order->total_amount,
+            'product_options' => [
+                'redirect_url' => route('checkout.subscription.success'),
+                'enabled_variants' => $variantIds,
+            ],
+            'checkout_options' => [
+                'discount' => false,
+            ],
+            'checkout_data' => [
+                'email' => $user->email,
+                'name' => $user->name,
+                'custom' => [
+                    'order_uuid' => $order->uuid,
+                ],
+                'variant_quantities' => $variantQuantities,
+            ],
+        ];
+
+        if ($discount) {
+            $object['checkout_data']['discount_code'] = $this->findOrCreateLemonSqueezyDiscount($discount, $paymentProvider);
+        }
+
+        $response = $this->client->createCheckout($object, $variantId);
+
+        if (!$response->successful()) {
+            Log::error('Failed to create lemon-squeezy checkout: ' . $response->body());
+            throw new \Exception('Failed to create lemon-squeezy checkout');
+        }
+
+        $redirectLink = $response->json()['data']['attributes']['url'] ?? null;
+
+        if ($redirectLink === null) {
+            Log::error('Failed to create lemon-squeezy checkout: ' . $response->body());
+            throw new \Exception('Failed to create lemon-squeezy checkout');
+        }
+
+        return $redirectLink;
     }
 
     public function changePlan(
@@ -170,40 +186,20 @@ class StripeProvider implements PaymentProviderInterface
 
         try {
 
-            $stripeProductId = $this->findOrCreateStripeSubscriptionProduct($newPlan, $paymentProvider);
-            $stripePriceId = $this->findOrCreateStripeSubscriptionProductPrice($newPlan, $paymentProvider, $stripeProductId);
+            $variantId = $this->planManager->getPaymentProviderProductId($newPlan, $paymentProvider);
 
-            $stripe = $this->getClient();
+            if ($variantId === null) {
+                Log::error('Failed to find variant ID for plan while changing subscription plan: (did you forget to add it to the plan?) ' . $newPlan->id);
+                throw new \Exception('Failed to find variant ID for plan while changing subscription plan');
+            }
 
             $planPrice = $this->calculationManager->getPlanPrice($newPlan);
 
-            $subscriptionItems = $stripe->subscriptionItems->all([
-                'subscription' => $subscription->payment_provider_subscription_id,
-            ]);
+            $response = $this->client->updateSubscription($subscription->payment_provider_subscription_id, $variantId, $withProration);
 
-            // remove old items from subscription and add new ones
-            $itemsToDelete = [];
-            foreach ($subscriptionItems as $subscriptionItem) {
-                $itemsToDelete[] = [
-                    'id' => $subscriptionItem->id,
-                    'deleted' => true,
-                ];
+            if (!$response->successful()) {
+                throw new \Exception('Failed to update lemon-squeezy subscription');
             }
-
-            $subscriptionUpdateObject = [
-                'items' => array_merge($itemsToDelete, [
-                    [
-                        'price' => $stripePriceId,
-                        'quantity' => 1,
-                    ],
-                ]),
-            ];
-
-            if (!$withProration) {
-                $subscriptionUpdateObject['proration_behavior'] = 'none';
-            }
-
-            $stripe->subscriptions->update($subscription->payment_provider_subscription_id, $subscriptionUpdateObject);
 
             $this->subscriptionManager->updateSubscription($subscription, [
                 'plan_id' => $newPlan->id,
@@ -227,9 +223,11 @@ class StripeProvider implements PaymentProviderInterface
         $paymentProvider = $this->assertProviderIsActive();
 
         try {
-            $stripe = $this->getClient();
+            $response = $this->client->cancelSubscription($subscription->payment_provider_subscription_id);
 
-            $stripe->subscriptions->update($subscription->payment_provider_subscription_id, ['cancel_at_period_end' => true]);
+            if (!$response->successful()) {
+                throw new \Exception('Failed to cancel lemon-squeezy subscription');
+            }
 
         } catch (ApiErrorException $e) {
             Log::error($e->getMessage());
@@ -245,9 +243,11 @@ class StripeProvider implements PaymentProviderInterface
         $paymentProvider = $this->assertProviderIsActive();
 
         try {
-            $stripe = $this->getClient();
+            $response = $this->client->discardSubscriptionCancellation($subscription->payment_provider_subscription_id);
 
-            $stripe->subscriptions->update($subscription->payment_provider_subscription_id, ['cancel_at_period_end' => false]);
+            if (!$response->successful()) {
+                throw new \Exception('Failed to discard lemon-squeezy subscription cancellation');
+            }
 
         } catch (ApiErrorException $e) {
             Log::error($e->getMessage());
@@ -263,62 +263,31 @@ class StripeProvider implements PaymentProviderInterface
         $paymentProvider = $this->assertProviderIsActive();
 
         try {
-            $stripe = $this->getClient();
+            $response = $this->client->getSubscription($subscription->payment_provider_subscription_id);
 
-            $portalConfigId = Cache::rememberForever('stripe.portal_configuration_id', function () use ($stripe) {
-                $portal = $stripe->billingPortal->configurations->create([
-                    'business_profile' => [
-                        'headline' => __('Manage your subscription and payment details.'),
-                    ],
-                    'features' => [
-                        'invoice_history' => ['enabled' => true],
-                        'payment_method_update' => ['enabled' => true],
-                        'customer_update' => ['enabled' => false],
-                    ],
-                ]);
+            if (!$response->successful()) {
+                throw new \Exception('Failed to get lemon-squeezy subscription');
+            }
 
-                return $portal->id;
-            });
+            $url = $response->json()['data']['attributes']['urls']['update_payment_method'] ?? '/';
 
-            $portal = $stripe->billingPortal->sessions->create([
-                'customer' => $subscription->user->stripeData()->firstOrFail()->stripe_customer_id,
-                'return_url' => SubscriptionResource::getUrl(),
-            ]);
+            return $url;
 
-        } catch (ApiErrorException $e) {
+        } catch (\Exception $e) {
             Log::error($e->getMessage());
 
             return '/';
         }
-
-        return $portal->url;
     }
 
     public function addDiscountToSubscription(Subscription $subscription, Discount $discount): bool
     {
-        $paymentProvider = $this->assertProviderIsActive();
-
-        try {
-            $stripe = $this->getClient();
-
-            $stripeDiscountId = $this->findOrCreateStripeDiscount($discount, $paymentProvider, $subscription->currency()->firstOrFail()->code);
-
-            $stripe->subscriptions->update($subscription->payment_provider_subscription_id, [
-                'coupon' => $stripeDiscountId,
-            ]);
-
-        } catch (ApiErrorException $e) {
-            Log::error($e->getMessage());
-
-            return false;
-        }
-
-        return true;
+        throw new \Exception('It is not possible to add a discount to a lemon-squeezy subscription');
     }
 
     public function getSlug(): string
     {
-        return PaymentProviderConstants::STRIPE_SLUG;
+        return PaymentProviderConstants::LEMON_SQUEEZY_SLUG;
     }
 
     public function initSubscriptionCheckout(Plan $plan, Subscription $subscription, Discount $discount = null): array
@@ -419,51 +388,50 @@ class StripeProvider implements PaymentProviderInterface
         return $stripeCustomerId;
     }
 
-    private function findOrCreateStripeDiscount(Discount $discount, PaymentProvider $paymentProvider, string $currencyCode): string
+    private function findOrCreateLemonSqueezyDiscount(Discount $discount, PaymentProvider $paymentProvider): string
     {
-        $stripeDiscountId = $this->discountManager->getPaymentProviderDiscountId($discount, $paymentProvider);
+        $discountId = $this->discountManager->getPaymentProviderDiscountId($discount, $paymentProvider);
 
-        if ($stripeDiscountId !== null) {
-            return $stripeDiscountId;
+        if ($discountId !== null) {
+            return $discountId;
         }
 
-        $stripe = $this->getClient();
+        $discountCode = $discount->codes()->first()->code ?? null;
+        $discountCode = $discountCode ?? '';
 
-        $couponObject = [
-            'name' => $discount->name,
-        ];
+        $code =  $discountCode . Str::random(16);
 
-        if ($discount->type == DiscountConstants::TYPE_FIXED) {
-            $couponObject['amount_off'] = $discount->amount;
-        } else {
-            $couponObject['percent_off'] = $discount->amount;
-        }
+        $code = strtoupper($code);
 
-        $couponObject['currency'] = $currencyCode;
+        $duration = 'once';
+        $durationInMonths = null;
 
         if ($discount->duration_in_months !== null) {
-            $couponObject['duration'] = 'repeating';
-            $couponObject['duration_in_months'] = $discount->duration_in_months;
+            $duration = 'repeating';
+            $durationInMonths = $discount->duration_in_months;
         } elseif ($discount->is_recurring) {
-            $couponObject['duration'] = 'forever';
-        } else {
-            $couponObject['duration'] = 'once';
+            $duration = 'forever';
         }
 
-        if ($discount->valid_until !== null) {
-            $carbon = Carbon::parse($discount->valid_until);
-            $couponObject['redeem_by'] = $carbon->timestamp;
-        }
-
-        $stripeCoupon = $stripe->coupons->create(
-            $couponObject
+        $response = $this->client->createDiscount(
+            $discount->name,
+            $code,
+            intval($discount->amount),
+            $discount->type === DiscountConstants::TYPE_FIXED ? 'fixed' : 'percent',
+            $discount->max_redemptions > 0 ? $discount->max_redemptions : null,
+            $duration,
+            $durationInMonths,
+            $discount->valid_until !== null ? Carbon::parse($discount->valid_until) : null,
         );
 
-        $stripeDiscountId = $stripeCoupon->id;
+        if (!$response->successful()) {
+            Log::error('Failed to create lemon-squeezy discount: ' . $response->body());
+            throw new \Exception('Failed to create lemon-squeezy discount');
+        }
 
-        $this->discountManager->addPaymentProviderDiscountId($discount, $paymentProvider, $stripeDiscountId);
+        $this->discountManager->addPaymentProviderDiscountId($discount, $paymentProvider, $code);
 
-        return $stripeDiscountId;
+        return $code;
     }
 
     private function findOrCreateStripeSubscriptionProductPrice(Plan $plan, PaymentProvider $paymentProvider, string $stripeProductId): string

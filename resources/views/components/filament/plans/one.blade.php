@@ -24,7 +24,7 @@
         </div>
     </div>
     <div class="w-full">
-        <a class="btn btn-block bg-primary dark:bg-primary text-white px-6 mt-6 border-0 hover:bg-primary/90"
+        <a class="btn btn-block bg-primary-500 dark:bg-primary text-white px-6 mt-6 border-0 hover:bg-primary-500/90"
            {{$subscription !== null && $subscription->plan_id === $plan->id ? 'disabled' : ''}}
            href="{{ route('subscription.change-plan', $plan->slug) }}">
             {{__('Buy')}} {{ $plan->product->name }}

@@ -5,6 +5,7 @@ namespace App\Services\PaymentProviders\Paddle;
 use App\Client\PaddleClient;
 use App\Constants\DiscountConstants;
 use App\Constants\PaddleConstants;
+use App\Constants\PaymentProviderConstants;
 use App\Filament\Dashboard\Resources\SubscriptionResource\Pages\PaymentProviders\Paddle\PaddleUpdatePaymentDetails;
 use App\Models\Currency;
 use App\Models\Discount;
@@ -215,7 +216,7 @@ class PaddleProvider implements PaymentProviderInterface
 
     public function getSlug(): string
     {
-        return 'paddle';
+        return PaymentProviderConstants::PADDLE_SLUG;
     }
 
     public function createSubscriptionCheckoutRedirectLink(Plan $plan, Subscription $subscription, Discount $discount = null): string

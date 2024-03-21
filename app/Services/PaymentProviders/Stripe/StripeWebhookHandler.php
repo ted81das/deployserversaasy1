@@ -3,6 +3,7 @@
 namespace App\Services\PaymentProviders\Stripe;
 
 use App\Constants\OrderStatus;
+use App\Constants\PaymentProviderConstants;
 use App\Constants\SubscriptionStatus;
 use App\Constants\TransactionStatus;
 use App\Models\Currency;
@@ -37,7 +38,7 @@ class StripeWebhookHandler
             ], 400);
         }
 
-        $paymentProvider = PaymentProvider::where('slug', 'stripe')->firstOrFail();
+        $paymentProvider = PaymentProvider::where('slug', PaymentProviderConstants::STRIPE_SLUG)->firstOrFail();
 
         // docs on events: https://stripe.com/docs/billing/testing?dashboard-or-api=api
 
@@ -180,8 +181,9 @@ class StripeWebhookHandler
                     $orderStatus = $event->type == 'payment_intent.succeeded' ? OrderStatus::SUCCESS : OrderStatus::FAILED;
 
                     $this->orderManager->updateOrder($order, [
-                        'status' => $orderStatus,
+                        'status' => $orderStatus->value,
                         'total_amount_after_discount' => $event->data->object->amount,
+                        'payment_provider_id' => $paymentProvider->id,
                     ]);
                 });
             }

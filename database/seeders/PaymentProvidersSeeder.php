@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Constants\PaymentProviderConstants;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -16,14 +16,21 @@ class PaymentProvidersSeeder extends Seeder
         DB::table('payment_providers')->upsert([
             [
                 'name' => 'Stripe',
-                'slug' => 'stripe',
+                'slug' => PaymentProviderConstants::STRIPE_SLUG,
                 'type' => 'multi',
                 'created_at' => now()->format('Y-m-d H:i:s'),
                 'updated_at' => now()->format('Y-m-d H:i:s')
             ],
             [
                 'name' => 'Paddle',
-                'slug' => 'paddle',
+                'slug' => PaymentProviderConstants::PADDLE_SLUG,
+                'type' => 'multi',
+                'created_at' => now()->format('Y-m-d H:i:s'),
+                'updated_at' => now()->format('Y-m-d H:i:s')
+            ],
+            [
+                'name' => 'Lemon Squeezy',
+                'slug' => PaymentProviderConstants::LEMON_SQUEEZY_SLUG,
                 'type' => 'multi',
                 'created_at' => now()->format('Y-m-d H:i:s'),
                 'updated_at' => now()->format('Y-m-d H:i:s')

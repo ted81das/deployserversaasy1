@@ -7,8 +7,10 @@ use App\Dto\CartDto;
 use App\Dto\TotalsDto;
 use App\Events\Order\Ordered;
 use App\Events\Order\OrderedRefunded;
+use App\Models\Currency;
 use App\Models\OneTimeProduct;
 use App\Models\Order;
+use App\Models\PaymentProvider;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -19,20 +21,64 @@ class OrderManager
         private CalculationManager $calculationManager,
     ) {}
 
-    public function create(User $user): Order
-    {
-        return Order::create([
+    public function create(
+        User $user,
+        ?PaymentProvider $paymentProvider = null,
+        ?int $totalAmount = null,
+        ?int $discountTotal = null,
+        ?int $totalAmountAfterDiscount = null,
+        ?Currency $currency = null,
+        ?array $orderItems = [],
+        $paymentProviderOrderId = null,
+    ): Order {
+        $orderAttributes = [
             'uuid' => (string) Str::uuid(),
             'user_id' => $user->id,
-            'status' => OrderStatus::NEW,
-            'total_amount' => 0,
-        ]);
+            'status' => OrderStatus::NEW->value,
+            'total_amount' => $totalAmount ?? 0,
+        ];
+
+        if ($paymentProvider) {
+            $orderAttributes['payment_provider_id'] = $paymentProvider->id;
+        }
+
+        if ($discountTotal) {
+            $orderAttributes['total_discount_amount'] = $discountTotal;
+        }
+
+        if ($totalAmountAfterDiscount) {
+            $orderAttributes['total_amount_after_discount'] = $totalAmountAfterDiscount;
+        }
+
+        if ($currency) {
+            $orderAttributes['currency_id'] = $currency->id;
+        }
+
+        if ($paymentProviderOrderId) {
+            $orderAttributes['payment_provider_order_id'] = $paymentProviderOrderId;
+        }
+
+        $order = Order::create($orderAttributes);
+
+        if ($orderItems) {
+            $order->items()->createMany($orderItems);
+        }
+
+        return $order;
     }
 
     public function findByUuidOrFail(string $uuid): Order
     {
         return Order::where('uuid', $uuid)->firstOrFail();
     }
+
+    public function findByPaymentProviderOrderId(PaymentProvider $paymentProvider, string $paymentProviderOrderId): ?Order
+    {
+        return Order::where('payment_provider_id', $paymentProvider->id)
+            ->where('payment_provider_order_id', $paymentProviderOrderId)
+            ->first();
+    }
+
 
     public function updateOrder(
         Order $order,
@@ -52,7 +98,7 @@ class OrderManager
     }
 
     private function handleDispatchingEvents(
-        string $oldStatus,
+        ?string $oldStatus,
         string|OrderStatus $newStatus,
         Order $order
     ): void {

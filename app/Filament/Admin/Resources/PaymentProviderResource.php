@@ -78,6 +78,7 @@ class PaymentProviderResource extends Resource
             'edit' => Pages\EditPaymentProvider::route('/{record}/edit'),
             'stripe-settings' => Pages\StripeSettings::route('/stripe-settings'),
             'paddle-settings' => Pages\PaddleSettings::route('/paddle-settings'),
+            'lemon-squeezy-settings' => Pages\LemonSqueezySettings::route('/lemon-squeezy-settings'),
         ];
     }
 

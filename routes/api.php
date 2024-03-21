@@ -22,3 +22,8 @@ Route::post('/payments-providers/paddle/webhook', [
     App\Http\Controllers\PaymentProviders\PaddleController::class,
     'handleWebhook',
 ])->name('payments-providers.paddle.webhook');
+
+Route::post('/payments-providers/lemon-squeezy/webhook', [
+    App\Http\Controllers\PaymentProviders\LemonSqueezyController::class,
+    'handleWebhook',
+])->name('payments-providers.lemon-squeezy.webhook');

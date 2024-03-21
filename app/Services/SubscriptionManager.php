@@ -1,11 +1,13 @@
 <?php
 
 namespace App\Services;
+use App\Constants\PaymentProviderConstants;
 use App\Constants\SubscriptionStatus;
 use App\Events\Subscription\InvoicePaymentFailed;
 use App\Events\Subscription\Subscribed;
 use App\Events\Subscription\SubscriptionCancelled;
 use App\Exceptions\SubscriptionCreationNotAllowedException;
+use App\Models\PaymentProvider;
 use App\Models\Plan;
 use App\Models\Product;
 use App\Models\Subscription;
@@ -23,7 +25,7 @@ class SubscriptionManager
     ) {
 
     }
-    public function create(string $planSlug, int $userId): Subscription
+    public function create(string $planSlug, int $userId, ?PaymentProvider $paymentProvider = null, ?string $paymentProviderSubscriptionId = null): Subscription
     {
         $plan = Plan::where('slug', $planSlug)->where('is_active', true)->firstOrFail();
 
@@ -34,12 +36,12 @@ class SubscriptionManager
         }
 
         $newSubscription = null;
-        DB::transaction(function () use ($plan, $userId, &$newSubscription) {
+        DB::transaction(function () use ($plan, $userId, &$newSubscription, $paymentProvider, $paymentProviderSubscriptionId) {
             $this->deleteAllNewSubscriptions($userId);
 
             $planPrice = $this->calculationManager->getPlanPrice($plan);
 
-            $newSubscription = Subscription::create([
+            $subscriptionAttributes = [
                 'uuid' => (string) Str::uuid(),
                 'user_id' => $userId,
                 'plan_id' => $plan->id,
@@ -48,7 +50,17 @@ class SubscriptionManager
                 'status' => SubscriptionStatus::NEW->value,
                 'interval_id' => $plan->interval_id,
                 'interval_count' => $plan->interval_count,
-            ]);
+            ];
+
+            if ($paymentProvider) {
+                $subscriptionAttributes['payment_provider_id'] = $paymentProvider->id;
+            }
+
+            if ($paymentProviderSubscriptionId) {
+                $subscriptionAttributes['payment_provider_subscription_id'] = $paymentProviderSubscriptionId;
+            }
+
+            $newSubscription = Subscription::create($subscriptionAttributes);
         });
 
         return $newSubscription;
@@ -112,6 +124,13 @@ class SubscriptionManager
     public function findByUuidOrFail(string $uuid): Subscription
     {
         return Subscription::where('uuid', $uuid)->firstOrFail();
+    }
+
+    public function findByPaymentProviderId(PaymentProvider $paymentProvider, string $paymentProviderSubscriptionId): ?Subscription
+    {
+        return Subscription::where('payment_provider_id', $paymentProvider->id)
+            ->where('payment_provider_subscription_id', $paymentProviderSubscriptionId)
+            ->first();
     }
 
     public function updateSubscription(
@@ -219,7 +238,8 @@ class SubscriptionManager
         return ($subscription->status === SubscriptionStatus::ACTIVE->value ||
             $subscription->status === SubscriptionStatus::PAST_DUE->value)
             && $subscription->price > 0
-            && $subscription->discounts()->count() === 0;  // only one discount per subscription for now
+            && $subscription->discounts()->count() === 0  // only one discount per subscription for now
+            && $subscription->paymentProvider->slug !== PaymentProviderConstants::LEMON_SQUEEZY_SLUG; // LemonSqueezy does not support discounts for active subscriptions
     }
 
     public function cancelSubscription(

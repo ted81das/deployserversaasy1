@@ -17,6 +17,8 @@ class Order extends Model
         'total_amount',
         'total_amount_after_discount',
         'total_discount_amount',
+        'payment_provider_order_id',
+        'payment_provider_id',
     ];
 
     public function user()
@@ -48,5 +50,10 @@ class Order extends Model
     public function transactions()
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function paymentProvider()
+    {
+        return $this->belongsTo(PaymentProvider::class);
     }
 }
