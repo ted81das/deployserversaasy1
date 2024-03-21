@@ -398,6 +398,8 @@ class LemonSqueezyProvider implements PaymentProviderInterface
 
         $discountCode = $discount->codes()->first()->code ?? null;
         $discountCode = $discountCode ?? '';
+        // remove any non-alphanumeric characters
+        $discountCode = preg_replace('/[^A-Za-z0-9]/', '', $discountCode);
 
         $code =  $discountCode . Str::random(16);
 
