@@ -38,6 +38,7 @@
         "deployer/deployer": "^7.3",
         "doctrine/dbal": "^3.6",
         "fakerphp/faker": "^1.9.1",
+        "kkomelin/laravel-translatable-string-exporter": "^1.22",
         "laravel/pint": "^1.0",
         "laravel/sail": "^1.18",
         "laravel/telescope": "^5.0",
