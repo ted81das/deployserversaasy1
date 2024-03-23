@@ -21,7 +21,7 @@ class BlogManager
     {
         return BlogPost::where('id', '!=', $post->id)
             ->where('is_published', true)
-            ->orderBy('created_at', 'desc')
+            ->orderBy('published_at', 'desc')
             ->limit($limit)
             ->get();
     }
@@ -35,7 +35,7 @@ class BlogManager
     public function getAllPostsQuery()
     {
         return BlogPost::where('is_published', true)
-            ->orderBy('created_at', 'desc');
+            ->orderBy('published_at', 'desc');
 
     }
 }

@@ -72,6 +72,9 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('email')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime(config('app.datetime_format')),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->sortable()
+                    ->dateTime(config('app.datetime_format')),
             ])
             ->filters([
                 //
@@ -81,7 +84,7 @@ class UserResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
-            ]);
+            ])->defaultSort('created_at', 'desc');
     }
 
     public static function getRelations(): array

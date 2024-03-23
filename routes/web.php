@@ -1,8 +1,5 @@
 <?php
 
-use App\Http\Controllers\Admin\RoleController as AdminRoleController;
-use App\Http\Controllers\Admin\Settings\OAuthSettingsController;
-use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\OAuthController;
 use App\Http\Controllers\PaymentProviders\PaddleController as PaddleController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;

@@ -140,7 +140,7 @@ class LemonSqueezyProvider implements PaymentProviderInterface
         $object = [
             'custom_price' => $order->total_amount,
             'product_options' => [
-                'redirect_url' => route('checkout.subscription.success'),
+                'redirect_url' => route('checkout.product.success'),
                 'enabled_variants' => $variantIds,
             ],
             'checkout_options' => [

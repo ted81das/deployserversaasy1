@@ -22,7 +22,7 @@ class GenerateSitemap extends Command implements Isolatable
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Generate a sitemap.xml file and add it to robots.txt';
 
     /**
      * Execute the console command.

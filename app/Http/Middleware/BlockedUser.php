@@ -18,7 +18,7 @@ class BlockedUser
         if ($request->user() && $request->user()->is_blocked) {
             auth()->logout();
 
-            return redirect()->route('login')->with('error', 'Your account has been blocked.');
+            return redirect()->route('login')->with('error', __('Your account has been blocked.'));
         }
 
         return $next($request);
