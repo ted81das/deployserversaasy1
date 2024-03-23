@@ -1,7 +1,7 @@
 <x-layouts.app>
     <div class="text-center pt-4 pb-0 md:pt-16 md:mb-10">
         <x-heading.h1 class="font-semibold">
-            {{ __('From our blog') }}
+            {{ $category->name }}
         </x-heading.h1>
         <p class="pt-4">
             {{ __('Check out our latest news and updates.') }}

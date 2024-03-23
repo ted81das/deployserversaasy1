@@ -13,4 +13,9 @@ class BlogPostCategory extends Model
         'name',
         'slug',
     ];
+
+    public function posts()
+    {
+        return $this->hasMany(BlogPost::class);
+    }
 }

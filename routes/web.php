@@ -108,6 +108,11 @@ Route::get('/blog', [
     'all',
 ])->name('blog')->middleware('sitemapped');
 
+Route::get('/blog/category/{slug}', [
+    App\Http\Controllers\BlogController::class,
+    'category',
+])->name('blog.category');
+
 Route::get('/terms-of-service', function () {
     return view('pages.terms-of-service');
 })->name('terms-of-service')->middleware('sitemapped');

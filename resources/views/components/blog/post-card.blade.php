@@ -4,6 +4,8 @@
         <a href="{{route('blog.view', $post->slug)}}">
             <img src="{{$post->getFirstMediaUrl('blog-images')}}" alt="{{$post->title}}" class="h-52 object-cover w-full">
         </a>
+    @else
+        <div class="h-52 bg-gradient-to-r from-primary-300 to-primary-700"></div>
     @endif
     <div class="flex flex-col flex-wrap gap-1 mb-6 flex-grow align-items-stretch p-4 mt-1">
         <a href="{{route('blog.view', $post->slug)}}" class="text-primary-900">
@@ -18,6 +20,11 @@
             —
             {{ $post->author->getPublicName() }}
         </div>
+        @if ($post->blogPostCategory()->exists())
+            <div class="text-neutral-400 rounded-lg px-2 py-1 border border-neutral-300 max-w-fit text-xs mt-3 hover:bg-neutral-100">
+                <a href="{{route('blog.category', ['slug' => $post->blogPostCategory->slug])}}">{{ $post->blogPostCategory->name }}</a>
+            </div>
+        @endif
     </div>
 
     <div class="flex justify-end content-end pb-4 pr-4 text-xs font-light">

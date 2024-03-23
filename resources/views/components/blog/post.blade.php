@@ -9,6 +9,11 @@
             @endif
             —
             {{ $post->author->getPublicName() }}
+            @if ($post->blogPostCategory()->exists())
+                <span class="text-neutral-400 rounded-lg px-2 py-1 border border-neutral-300 max-w-fit text-xs ms-3 hover:bg-neutral-100">
+                    <a href="{{route('blog.category', ['slug' => $post->blogPostCategory->slug])}}">{{ $post->blogPostCategory->name }}</a>
+                </span>
+            @endif
         </div>
     </div>
 

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\BlogPostCategory;
 use App\Services\BlogManager;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Console\Isolatable;
@@ -56,6 +57,15 @@ class GenerateSitemap extends Command implements Isolatable
                 $routes[] = route('blog.view', $post->slug);
             }
         });
+
+        // add all blog categories to the sitemap (that have posts)
+        $categories = BlogPostCategory::whereHas('posts', function ($query) {
+            $query->where('is_published', true);
+        })->get();
+
+        foreach ($categories as $category) {
+            $routes[] = route('blog.category', $category->slug);
+        }
 
         $sitemap = Sitemap::create();
 

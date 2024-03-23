@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\BlogPost;
+use App\Models\BlogPostCategory;
 
 class BlogManager
 {
@@ -29,6 +30,13 @@ class BlogManager
     public function getAllPosts(int $limit = 31)
     {
         return $this->getAllPostsQuery()
+            ->paginate($limit);
+    }
+
+    public function getAllPostsForCategory(BlogPostCategory $category, int $limit = 31)
+    {
+        return $this->getAllPostsQuery()
+            ->where('blog_post_category_id', $category->id)
             ->paginate($limit);
     }
 
