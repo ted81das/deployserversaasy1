@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Filament;
 
-class GitLabSettings extends OauthProviderSettings
+class GitlabSettings extends OauthProviderSettings
 {
     protected string $slug = 'gitlab';
 }

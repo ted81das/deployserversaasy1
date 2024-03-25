@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Filament;
 
-class LinkedInSettings extends OauthProviderSettings
+class LinkedinSettings extends OauthProviderSettings
 {
     protected string $slug = 'linkedin';
 }
