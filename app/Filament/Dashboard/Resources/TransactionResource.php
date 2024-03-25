@@ -42,7 +42,7 @@ class TransactionResource extends Resource
                     ->getStateUsing(fn (Transaction $record) => $record->subscription_id !== null ? ($record->subscription->plan?->name ?? '-') : ($record->order_id !== null ? __('View Order') : '-'))
                     ->url(fn (Transaction $record) => $record->subscription_id !== null  ? ViewSubscription::getUrl(['record' => $record->subscription ]) : ($record->order_id !== null ? ViewOrder::getUrl(['record' => $record->order]) : '-')),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label(_('Date'))
+                    ->label(__('Date'))
                     ->dateTime(),
             ])
             ->filters([
@@ -114,7 +114,7 @@ class TransactionResource extends Resource
 
     public static function getModelLabel(): string
     {
-        return _('Payments');
+        return __('Payments');
     }
 
     public static function isDiscovered(): bool

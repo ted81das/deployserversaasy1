@@ -125,7 +125,7 @@ class OrderResource extends Resource
                                         TextEntry::make('created_at')->dateTime(config('app.datetime_format')),
                                         TextEntry::make('updated_at')->dateTime(config('app.datetime_format')),
                                     ])->columns(3),
-                                Section::make(_('Order Items'))
+                                Section::make(__('Order Items'))
                                     ->description(__('View details about order items.'))
                                     ->schema(
                                         function ($record) {

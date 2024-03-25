@@ -250,7 +250,7 @@ class SubscriptionResource extends Resource
 
 
                                     ]),
-                                Section::make(_('Discount Details'))
+                                Section::make(__('Discount Details'))
                                     ->hidden(fn (Subscription $record): bool => $record->discounts->isEmpty() ||
                                         ($record->discounts[0]->valid_until !== null && $record->discounts[0]->valid_until < now())
                                     )
