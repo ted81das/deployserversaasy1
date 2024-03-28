@@ -740,5 +740,16 @@
         </x-accordion>
     </div>
 
+    <div class="text-center mt-16" id="plans">
+        <x-heading.h6 class="text-primary-500">
+            {{ __('Pricing') }}
+        </x-heading.h6>
+        <x-heading.h2 class="text-primary-900">
+            {{ __('Flexible Plans') }}
+        </x-heading.h2>
+    </div>
+
+    <x-plans.all calculate-saving-rates="true" preselected-interval="year"></x-plans.all>
+
 
 </x-layouts.app>
