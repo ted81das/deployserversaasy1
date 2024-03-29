@@ -6,10 +6,14 @@ use App\Models\Currency;
 use App\Services\MetricsManager;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Carbon;
 
 class MonthlyRecurringRevenueChart extends ChartWidget
 {
+    use InteractsWithPageFilters;
+
     protected static ?int $sort = 1;
 
     protected static ?string $pollingInterval = null;
@@ -22,7 +26,15 @@ class MonthlyRecurringRevenueChart extends ChartWidget
 
     protected function getData(): array
     {
-        $data = $this->metricsManager->calculateMRRChart();
+        $startDate = $this->filters['start_date'];
+        $endDate = $this->filters['end_date'];
+        $period = $this->filters['period'];
+
+        // parse the dates to Carbon instances
+        $startDate = $startDate ? Carbon::parse($startDate) : null;
+        $endDate = $endDate ? Carbon::parse($endDate) : null;
+
+        $data = $this->metricsManager->calculateMRRChart($period, $startDate, $endDate);
         return [
             'datasets' => [
                 [
@@ -60,7 +72,7 @@ class MonthlyRecurringRevenueChart extends ChartWidget
             scales: {
                 y: {
                     ticks: {
-                        callback: (value) => '$symbol' + value,
+                        callback: (value) => '$symbol' + value.toFixed(2),
                     },
                 },
             },

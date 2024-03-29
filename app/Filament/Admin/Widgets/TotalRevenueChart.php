@@ -10,11 +10,12 @@ use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Carbon;
 
-class AverageRevenuePerUserChart extends ChartWidget
+class TotalRevenueChart extends ChartWidget
 {
     use InteractsWithPageFilters;
 
-    protected static ?int $sort = 3;
+    protected static ?int $sort = 1;
+
     protected static ?string $pollingInterval = null;
     private MetricsManager $metricsManager;
 
@@ -33,17 +34,15 @@ class AverageRevenuePerUserChart extends ChartWidget
         $startDate = $startDate ? Carbon::parse($startDate) : null;
         $endDate = $endDate ? Carbon::parse($endDate) : null;
 
-        $data = $this->metricsManager->calculateAverageRevenuePerUserChart($period, $startDate, $endDate);
-
-        $convertToFloat = array_map(function ($value) {
-            return (float) $value;
-        }, $data);
+        $data = $this->metricsManager->calculateDailyRevenueChart($period, $startDate, $endDate);
 
         return [
+
             'datasets' => [
                 [
-                    'label' => 'ARPU',
-                    'data' => $convertToFloat,
+                    'label' => 'Total Revenue',
+                    'data' => array_values($data),
+
                 ],
             ],
             'labels' => array_keys($data),
@@ -57,12 +56,12 @@ class AverageRevenuePerUserChart extends ChartWidget
 
     public function getHeading(): string | Htmlable | null
     {
-        return __('Average revenue per user (ARPU) overview');
+        return __('Total Revenue overview');
     }
 
     public function getDescription(): string|Htmlable|null
     {
-        return __('ARPU takes into account all users, including those who churned or never subscribed.');
+        return __('Total Revenue is the total revenue generated.');
     }
 
     protected function getOptions(): RawJs

@@ -5,10 +5,14 @@ namespace App\Filament\Admin\Widgets;
 use App\Services\MetricsManager;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Carbon;
 
 class ChurnChart extends ChartWidget
 {
+    use InteractsWithPageFilters;
+
     protected static ?int $sort = 2;
     private MetricsManager $metricsManager;
     protected static ?string $pollingInterval = null;
@@ -20,7 +24,15 @@ class ChurnChart extends ChartWidget
 
     protected function getData(): array
     {
-        $data = $this->metricsManager->calculateChurnRateChart();
+        $startDate = $this->filters['start_date'];
+        $endDate = $this->filters['end_date'];
+        $period = $this->filters['period'];
+
+        // parse the dates to Carbon instances
+        $startDate = $startDate ? Carbon::parse($startDate) : null;
+        $endDate = $endDate ? Carbon::parse($endDate) : null;
+
+        $data = $this->metricsManager->calculateSubscriptionChurnRateChart($period, $startDate, $endDate);
         return [
             'datasets' => [
                 [
@@ -44,7 +56,7 @@ class ChurnChart extends ChartWidget
 
     public function getDescription(): string|Htmlable|null
     {
-        return __('Churn rate is the percentage of users who cancel their subscription each month.');
+        return __('Churn rate is the % of users who cancel their subscription each month.');
     }
 
     protected function getOptions(): RawJs

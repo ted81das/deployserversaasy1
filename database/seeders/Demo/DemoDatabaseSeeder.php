@@ -12,6 +12,7 @@ use App\Models\OneTimeProduct;
 use App\Models\Plan;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\MetricsManager;
 use Carbon\Carbon;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\Seeder;
@@ -19,6 +20,12 @@ use Illuminate\Support\Str;
 
 class DemoDatabaseSeeder extends Seeder
 {
+    public function __construct(
+        private MetricsManager $metricsManager
+    ) {
+
+    }
+
     private array $blogPostTitles = [
         "The Art of Responsive Web Design: A Comprehensive Guide",
         "Exploring the Power of Machine Learning in Everyday Life",
@@ -86,6 +93,7 @@ class DemoDatabaseSeeder extends Seeder
         $this->seedDemoData();
         $this->addDiscounts();
         $this->addBlogPosts($adminUser);
+        $this->addMetrics();
 
         // enable google oauth
         OauthLoginProvider::where('provider_name', 'google')->update(['enabled' => true]);
@@ -251,7 +259,7 @@ class DemoDatabaseSeeder extends Seeder
 
         for ($i = 0; $i < $numberOfUsers; $i++) {
 
-            $numberOfIntervalsBack = $plan->interval == 'month' ? rand(10, 20) : rand(1, 4);
+            $numberOfIntervalsBack = $plan->interval == 'month' ? rand(5, 10) : rand(1, 4);
             $createdDate = now()->sub($plan->interval->date_identifier, $numberOfIntervalsBack);
 
             $user = User::factory()->create(
@@ -266,7 +274,7 @@ class DemoDatabaseSeeder extends Seeder
             $subscription = $user->subscriptions()->create([
                 'plan_id' => $plan->id,
                 'trial_ends_at' => null,
-                'ends_at' => $status == SubscriptionStatus::ACTIVE ? Carbon::now()->add(1, $plan->interval->date_identifier): Carbon::now()->sub(1, $plan->interval->date_identifier),
+                'ends_at' => $status == SubscriptionStatus::ACTIVE ? Carbon::now()->add(1, $plan->interval->date_identifier): (new Carbon($createdDate))->add(1, $plan->interval->date_identifier),
                 'price' => $plan->prices()->first()->price,
                 'currency_id' => $plan->prices()->first()->currency_id,
                 'user_id' => $user->id,
@@ -345,6 +353,23 @@ class DemoDatabaseSeeder extends Seeder
 
             $blog->addMediaFromUrl($this->images[rand(0, count($this->images) - 1)])
                 ->toMediaCollection('blog-images');
+        }
+    }
+
+    private function addMetrics()
+    {
+        $firstUserCreatedDate = User::orderBy('created_at', 'asc')->first()->created_at;
+        $lastUserCreatedDate = User::orderBy('created_at', 'desc')->first()->created_at;
+
+        $startDate = $firstUserCreatedDate->copy()->startOfDay();
+        $endDate = $lastUserCreatedDate->copy()->endOfDay();
+
+        // loop through each day and calculate metrics
+
+        while ($startDate->lte($endDate)) {
+            Carbon::setTestNow($startDate);
+            $this->metricsManager->beat();
+            $startDate->addDay();
         }
     }
 
