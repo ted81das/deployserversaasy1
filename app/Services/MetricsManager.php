@@ -65,7 +65,13 @@ class MetricsManager
                 $dateGroupFormat = 'Y';
                 break;
             default:
-                return $data;
+                // format key to show date
+                $result = [];
+                foreach ($data as $key => $value) {
+                    $result[Carbon::parse($key)->format(config('app.date_format'))] = $value;
+                }
+
+                return $result;
         }
 
         $result = [];
@@ -211,6 +217,15 @@ class MetricsManager
         $date = $date ?? Carbon::yesterday()->endOfDay();
         // find or create the metric
         $metric = Metrics::firstOrCreate(['name' => $metricName]);
+
+        // if there is a metric for that day already, update it
+        $metricData = MetricData::where('metric_id', $metric->id)->whereDate('created_at', $date)->first();
+        if ($metricData) {
+            $metricData->value = $value;
+            $metricData->save();
+
+            return;
+        }
 
         $metricData = new MetricData();
         $metricData->metric_id = $metric->id;
@@ -367,14 +382,6 @@ class MetricsManager
             ->where('created_at', '<=', $date)
             ->count();
     }
-
-    public function totalTrials()
-    {
-        return Subscription::where('trial_ends_at', '>', Carbon::now())
-            ->where('status', SubscriptionStatus::ACTIVE->value)
-            ->count();
-    }
-
 
     public function getTotalCustomerConversion()
     {

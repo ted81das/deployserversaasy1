@@ -93,6 +93,7 @@ class DemoDatabaseSeeder extends Seeder
         $this->seedDemoData();
         $this->addDiscounts();
         $this->addBlogPosts($adminUser);
+        $this->addSomeUsers();
         $this->addMetrics();
 
         // enable google oauth
@@ -373,5 +374,16 @@ class DemoDatabaseSeeder extends Seeder
         }
     }
 
+    private function addSomeUsers()
+    {
+        $numberOfUsers = rand(100, 150);
+
+        for ($i = 0; $i < $numberOfUsers; $i++) {
+            $date = now()->subDays(rand(1, 1000));
+            $user = User::factory()->create();
+            $user->created_at = $date;
+            $user->save();
+        }
+    }
 
 }
