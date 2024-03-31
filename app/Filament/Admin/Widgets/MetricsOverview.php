@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Widgets;
 use App\Services\MetricsManager;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Carbon;
 
 class MetricsOverview extends BaseWidget
 {
@@ -19,22 +20,26 @@ class MetricsOverview extends BaseWidget
     }
     protected function getStats(): array
     {
-        $mrr = $this->metricsManager->calculateMRR();
+        $currentMrr = $this->metricsManager->calculateMRR(now());
+        $previewMrr = $this->metricsManager->calculateMRR(Carbon::yesterday());
         $mrrDescription = '';
         $mrrIcon = '';
+        $color = 'success';
 
-        if (isset($mrr['previous']) ) {
-            $mrrDescription = $mrr['previous'] > $mrr['current'] ? __('decrease') : __('increase');
-            $mrrDescription = money($mrr['diff'], config('app.default_currency')) . ' ' . $mrrDescription;
-            $mrrIcon = $mrr['previous'] > $mrr['current'] ? 'heroicon-m-arrow-down' : 'heroicon-m-arrow-up';
+        if ($previewMrr) {
+            $mrrDescription = $previewMrr > $currentMrr ? __('decrease') : __('increase');
+            $mrrDescription = money(abs($currentMrr - $previewMrr), config('app.default_currency')) . ' ' . $mrrDescription;
+            $mrrIcon = $previewMrr > $currentMrr ? 'heroicon-m-arrow-down' : 'heroicon-m-arrow-up';
+            $color = $previewMrr > $currentMrr ? 'danger' : 'success';
         }
 
         return [
             Stat::make(
                 __('MRR'),
-                money($mrr['current'], config('app.default_currency'))
+                money($currentMrr, config('app.default_currency'))
             )->description($mrrDescription)
                 ->descriptionIcon($mrrIcon)
+                ->color($color)
                 ->chart([7, 2, 10, 3, 15, 4, 17])  // just for decoration :)
             ,
             Stat::make(
@@ -46,7 +51,7 @@ class MetricsOverview extends BaseWidget
                 $this->metricsManager->getTotalRevenue()
             ),
             Stat::make(
-                __('Total user conversion'),
+                __('Total user subscription conversion'),
                 $this->metricsManager->getTotalCustomerConversion()
             )->description(__('subscribed / total users')),
             Stat::make(
@@ -58,8 +63,6 @@ class MetricsOverview extends BaseWidget
                 __('Total Users'),
                 $this->metricsManager->getTotalUsers()
             ),
-
-
         ];
     }
 }

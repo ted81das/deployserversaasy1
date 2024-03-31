@@ -2,7 +2,6 @@
 
 namespace App\Filament\Admin\Widgets;
 
-use App\Models\Currency;
 use App\Services\MetricsManager;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
@@ -10,13 +9,13 @@ use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Carbon;
 
-class AverageRevenuePerUserChart extends ChartWidget
+class AverageUserSubscriptionConversionChart extends ChartWidget
 {
     use InteractsWithPageFilters;
 
-    protected static ?int $sort = 3;
-    protected static ?string $pollingInterval = null;
+    protected static ?int $sort = 2;
     private MetricsManager $metricsManager;
+    protected static ?string $pollingInterval = null;
 
     public function boot(MetricsManager $metricsManager): void
     {
@@ -33,17 +32,12 @@ class AverageRevenuePerUserChart extends ChartWidget
         $startDate = $startDate ? Carbon::parse($startDate) : null;
         $endDate = $endDate ? Carbon::parse($endDate) : null;
 
-        $data = $this->metricsManager->calculateAverageRevenuePerUserChart($period, $startDate, $endDate);
-
-        $convertToFloat = array_map(function ($value) {
-            return (float) $value;
-        }, $data);
-
+        $data = $this->metricsManager->calculateAverageUserSubscriptionConversionChart($period, $startDate, $endDate);
         return [
             'datasets' => [
                 [
-                    'label' => 'ARPU',
-                    'data' => $convertToFloat,
+                    'label' => 'Average User Subscription Conversion',
+                    'data' => array_values($data),
                 ],
             ],
             'labels' => array_keys($data),
@@ -57,26 +51,22 @@ class AverageRevenuePerUserChart extends ChartWidget
 
     public function getHeading(): string | Htmlable | null
     {
-        return __('Average revenue per user (ARPU) overview');
+        return __('Average User Subscription Conversion');
     }
 
     public function getDescription(): string|Htmlable|null
     {
-        return __('ARPU takes into account all users, including those who churned or never subscribed.');
+        return __('Average User Subscription Conversion is the % of users who subscribed to a plan to the total users.');
     }
 
     protected function getOptions(): RawJs
     {
-        $currentCurrency = config('app.default_currency');
-        $currency = Currency::where('code', $currentCurrency)->first();
-        $symbol = $currency->symbol;
-
         return RawJs::make(<<<JS
         {
             scales: {
                 y: {
                     ticks: {
-                        callback: (value) => '$symbol' + value.toFixed(2),
+                        callback: (value) => value + '%',
                     },
                 },
             },

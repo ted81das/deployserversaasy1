@@ -2,120 +2,307 @@
 
 namespace App\Services;
 
+use App\Constants\MetricConstants;
 use App\Constants\SubscriptionStatus;
 use App\Constants\TransactionStatus;
+use App\Models\Currency;
 use App\Models\Interval;
+use App\Models\MetricData;
+use App\Models\Metrics;
 use App\Models\Subscription;
 use App\Models\Transaction;
 use App\Models\User;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class MetricsManager
 {
-    public function calculateAverageRevenuePerUserChart()
+    public function beat()
     {
-        $transactions = DB::table('transactions')
-            ->select([DB::raw($this->getDateFormattingForDriver('created_at')), DB::raw('SUM(amount) as total_revenue')])
-            ->groupBy('month')
-            ->get();
+        $this->storeMetricData(MetricConstants::TOTAL_USER_COUNT, $this->getTotalUsers());
 
-        $users = DB::table('users')
-            ->select([DB::raw($this->getDateFormattingForDriver('created_at')), DB::raw('COUNT(*) as total_users')])
-            ->groupBy('month')
-            ->get();
+        $this->storeMetricData(MetricConstants::MRR, $this->calculateMRR());
 
-        $allMonths = [];
-        $transactionsByDateMap = [];
-        foreach ($transactions as $transaction) {
-            $transactionsByDateMap[$transaction->month] = $transaction;
-            $allMonths[$transaction->month] = $transaction->month;
-        }
+        $this->storeMetricData(MetricConstants::DAILY_TOTAL_REVENUE, $this->calculateDailyRevenue());
 
-        $usersByDateMap = [];
-        foreach ($users as $user) {
-            $usersByDateMap[$user->month] = $user;
-            $allMonths[$user->month] = $user->month;
-        }
+        $this->storeMetricData(MetricConstants::ARPU, $this->calculateAverageRevenuePerUser());
 
-        $arpuData = [];
+        $this->storeMetricData(MetricConstants::ACTIVE_SUBSCRIPTION_COUNT, $this->getActiveSubscriptions());
 
-        sort($allMonths);
+        $this->storeMetricData(MetricConstants::USER_SUBSCRIPTION_CONVERSION_RATE, $this->calculateUserSubscriptionConversionRate());
 
-        $totalRevenueUpToMonth = 0;
-        $totalUsersUpToMonth = 0;
-        $monthToTotalRevenueMap = [];
-        $monthToTotalUsersMap = [];
-        foreach ($allMonths as $month) {
-            if (isset($transactionsByDateMap[$month])) {
-                $totalRevenueUpToMonth += $transactionsByDateMap[$month]->total_revenue;
-            }
-
-            if (isset($usersByDateMap[$month])) {
-                $totalUsersUpToMonth += $usersByDateMap[$month]->total_users;
-            }
-            // only format the amount without adding the currency symbol
-            if ($totalUsersUpToMonth > 0) {
-                $arpuData[$month] = money(intval(round($totalRevenueUpToMonth / $totalUsersUpToMonth)), config('app.default_currency'))->formatByDecimal();
-            }
-
-            $monthToTotalRevenueMap[$month] = $totalRevenueUpToMonth;
-            $monthToTotalUsersMap[$month] = $totalUsersUpToMonth;
-        }
-
-        if (count($arpuData) == 0) {
-            return $arpuData;
-        }
-
-        // fill in gap months
-        // fill gaps in $monthToTotalRevenueMap
-
-        $startMonth = $allMonths[0];
-        $endMonth = $allMonths[count($allMonths) - 1];
-        $currentMonth = $startMonth;
-
-        while ($currentMonth != $endMonth) {
-            if (!isset($monthToTotalRevenueMap[$currentMonth])) {
-                $previousMonth = date('Y-m', strtotime($currentMonth . ' -1 month'));
-                $monthToTotalRevenueMap[$currentMonth] = $monthToTotalRevenueMap[$previousMonth];
-            }
-
-            $currentMonth = date('Y-m', strtotime($currentMonth . ' +1 month'));
-        }
-
-        // fill gaps in $monthToTotalUsersMap
-        $currentMonth = $startMonth;
-        while ($currentMonth != $endMonth) {
-            if (!isset($monthToTotalUsersMap[$currentMonth])) {
-                $previousMonth = date('Y-m', strtotime($currentMonth . ' -1 month'));
-                $monthToTotalUsersMap[$currentMonth] = $monthToTotalUsersMap[$previousMonth];
-            }
-
-            $currentMonth = date('Y-m', strtotime($currentMonth . ' +1 month'));
-        }
-
-        // fill gaps in $arpuData
-
-        $startMonth = $allMonths[0];
-        $endMonth = $allMonths[count($allMonths) - 1];
-        $currentMonth = $startMonth;
-
-        while ($currentMonth != $endMonth) {
-            if (!isset($arpuData[$currentMonth])) {
-                $previousMonth = date('Y-m', strtotime($currentMonth . ' -1 month'));
-                $arpuData[$currentMonth] = money(intval(round($monthToTotalRevenueMap[$previousMonth] / $monthToTotalUsersMap[$previousMonth])), config('app.default_currency'))->formatByDecimal();
-            }
-
-            $currentMonth = date('Y-m', strtotime($currentMonth . ' +1 month'));
-        }
-
-        ksort($arpuData);
-
-        return $arpuData;
+        $this->storeMetricData(MetricConstants::SUBSCRIPTION_CHURN, $this->calculateSubscriptionChurnRate());
     }
 
-    public function calculateMRRChart()
+    public function calculateUserSubscriptionConversionRate(?Carbon $date = null)
     {
+        $date = $date ?? Carbon::yesterday()->endOfDay();
+
+        $userCount = $this->getTotalUsers($date);
+        $usersWhoHaveSubscription = User::whereHas('subscriptions')
+            ->where('created_at', '<=', $date)
+            ->count();
+
+        $result = $userCount > 0 ? ($usersWhoHaveSubscription) / $userCount * 100 : 0;
+
+        return number_format($result, 2);
+    }
+
+    private function adjustToPeriod(
+        array $data,
+        string $period = 'week',
+        string $aggregate = 'average',
+        ?callable $formatValueUsing = null
+    ) {
+        switch ($period) {
+            case 'week':
+                $dateGroupFormat = '#W Y';
+                break;
+            case 'month':
+                $dateGroupFormat = 'F Y';
+                break;
+            case 'year':
+                $dateGroupFormat = 'Y';
+                break;
+            default:
+                // format key to show date
+                $result = [];
+                foreach ($data as $key => $value) {
+                    $result[Carbon::parse($key)->format(config('app.date_format'))] = $value;
+                }
+
+                return $result;
+        }
+
+        $result = [];
+
+        $chunks = [];
+
+        foreach ($data as $key => $item) {
+            $month = Carbon::parse($key)->format($dateGroupFormat);
+            if (!isset($chunks[$month])) {
+                $chunks[$month] = [];
+            }
+
+            $chunks[$month][] = $item;
+        }
+
+        foreach ($chunks as $month => $chunk) {
+            $result[$month] =
+                $this->formatValueIfRequired(
+                    $this->aggregateData($chunk, $aggregate),
+                    $formatValueUsing
+                );
+        }
+
+        return $result;
+    }
+
+    private function formatValueIfRequired($value, ?callable $formatValueUsing = null)
+    {
+        if ($formatValueUsing !== null) {
+            return $formatValueUsing($value);
+        }
+
+        return $value;
+    }
+
+    private function aggregateData(array $data, string $aggregate = 'average')
+    {
+        if ($aggregate === 'sum') {
+            return array_sum($data);
+        } else if ($aggregate === 'last_value') {
+            return end($data);
+        } else if ($aggregate === 'max') {
+            return max($data);
+        }
+
+        return array_sum($data) / count($data);  // average
+    }
+
+    public function calculateDailyRevenue(?Carbon $date = null)
+    {
+        $date = $date ?? Carbon::yesterday()->endOfDay();
+
+        $currency = Currency::where('code', config('app.default_currency'))->firstOrFail();
+
+        $yesterdaysTotalRevenue = Transaction::where('status', TransactionStatus::SUCCESS->value)
+            ->whereDate('created_at', $date)
+            ->sum('amount');
+
+        return money(intval($yesterdaysTotalRevenue), $currency->code)->formatByDecimal();
+    }
+
+    public function calculateDailyRevenueChart(string $period = 'month', ?Carbon $startDate = null, ?Carbon $endDate = null)
+    {
+        $revenueData = $this->getMetricChartData(MetricConstants::DAILY_TOTAL_REVENUE, $startDate, $endDate);
+
+        $today = now();
+        $todaysRevenue = $this->calculateDailyRevenue($today);
+
+        $revenueData[$today->toString()] = $todaysRevenue;
+
+        return $this->adjustToPeriod($revenueData, $period, 'sum');
+    }
+
+    public function calculateAverageRevenuePerUserChart(string $period = 'month', ?Carbon $startDate = null, ?Carbon $endDate = null)
+    {
+        $now = Carbon::now();
+        $todaysARPU = $this->calculateAverageRevenuePerUser($now);
+
+        $arpuData = $this->getMetricChartData(MetricConstants::ARPU, $startDate, $endDate);
+
+        $arpuData[$now->toString()] = $todaysARPU;
+
+        return $this->adjustToPeriod($arpuData, $period, 'average');
+    }
+
+    public function calculateAverageRevenuePerUser(?Carbon $date = null)
+    {
+        $date = $date ?? Carbon::yesterday()->endOfDay();
+
+        $userCount = $this->getTotalUsers($date);
+
+        $currency = Currency::where('code', config('app.default_currency'))->firstOrFail();
+
+        $totalTransactionAmounts = Transaction::where('status', TransactionStatus::SUCCESS->value)
+            ->where('created_at', '<=', $date)
+            ->sum('amount');
+
+        $totalTransactionAmounts = money(intval($totalTransactionAmounts), $currency->code)->formatByDecimal();
+        $this->storeMetricData(MetricConstants::TOTAL_REVENUE_AMOUNT, $totalTransactionAmounts);
+
+        $result =  $userCount > 0 ? $totalTransactionAmounts / $userCount : 0;
+
+        return number_format($result, 2);
+    }
+
+    public function calculateSubscriptionChurnRate(?Carbon $date = null)
+    {
+        $date = $date ?? Carbon::yesterday()->endOfDay();
+        $aMonthAgo = new Carbon($date);
+        $aMonthAgo->subMonth();
+
+        // get number of active subscriptions 1 month ago
+        $metric = Metrics::where('name', MetricConstants::ACTIVE_SUBSCRIPTION_COUNT)->first();
+
+        if (!$metric) {
+            return 0;
+        }
+
+        $activeSubscriptionsResult = MetricData::where('metric_id', $metric->id)
+            ->where('created_at', '<', $aMonthAgo)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$activeSubscriptionsResult) {
+            return 0;
+        }
+
+        $activeSubscriptions = $activeSubscriptionsResult->value;
+
+        // get the subscriptions that where created 1 month ago or before that have been canceled or inactive and their ends_at date is in the past month
+        $lostSubscriptions = Subscription::whereIn('status', [SubscriptionStatus::CANCELED->value, SubscriptionStatus::INACTIVE->value])
+            ->where('ends_at', '>=', $aMonthAgo)
+            ->where('ends_at', '<', $date)
+            ->where('created_at', '<', $aMonthAgo)
+            ->count();
+
+        return $activeSubscriptions > 0 ? $lostSubscriptions / $activeSubscriptions * 100 : 0;
+
+    }
+
+    private function storeMetricData(string $metricName, float $value, $date = null)
+    {
+        $date = $date ?? Carbon::yesterday()->endOfDay();
+        // find or create the metric
+        $metric = Metrics::firstOrCreate(['name' => $metricName]);
+
+        // if there is a metric for that day already, update it
+        $metricData = MetricData::where('metric_id', $metric->id)->whereDate('created_at', $date)->first();
+        if ($metricData) {
+            $metricData->value = $value;
+            $metricData->save();
+
+            return;
+        }
+
+        $metricData = new MetricData();
+        $metricData->metric_id = $metric->id;
+        $metricData->value = $value;
+        $metricData->created_at = $date;
+        $metricData->save();
+    }
+
+    private function getMetricChartData(string $metricName, ?Carbon $startDate = null, ?Carbon $endDate = null)
+    {
+        $metric = Metrics::where('name', $metricName)->first();
+
+        if ($metric) {
+            $query = MetricData::where('metric_id', $metric->id)
+                ->orderBy('created_at', 'asc');
+
+            if ($startDate) {
+                $query->where('created_at', '>=', $startDate);
+            }
+
+            if ($endDate) {
+                $query->where('created_at', '<=', $endDate);
+            }
+
+            $metricData = $query->get();
+            $results = [];
+
+            foreach ($metricData as $data) {
+                $results[$data->created_at] = $data->value;
+            }
+
+            return $results;
+        }
+
+        return [];
+    }
+
+    public function calculateAverageUserSubscriptionConversionChart(string $period = 'month', ?Carbon $startDate = null, ?Carbon $endDate = null)
+    {
+        $now = Carbon::now();
+        $todaysConversionRate = $this->calculateUserSubscriptionConversionRate($now);
+
+        $conversionData = $this->getMetricChartData(MetricConstants::USER_SUBSCRIPTION_CONVERSION_RATE, $startDate, $endDate);
+
+        $conversionData[$now->toString()] = $todaysConversionRate;
+
+        return $this->adjustToPeriod($conversionData, $period, 'average');
+    }
+
+    public function calculateSubscriptionChurnRateChart(string $period = 'month', ?Carbon $startDate = null, ?Carbon $endDate = null)
+    {
+        $now = Carbon::now();
+        $todaysChurnRate = $this->calculateSubscriptionChurnRate($now);
+
+        $churnData = $this->getMetricChartData(MetricConstants::SUBSCRIPTION_CHURN, $startDate, $endDate);
+
+        $churnData[$now->toString()] = $todaysChurnRate;
+
+        return $this->adjustToPeriod($churnData, $period, 'max');
+    }
+
+    public function calculateMRRChart(string $period = 'month', ?Carbon $startDate = null, ?Carbon $endDate = null)
+    {
+        $now = Carbon::now();
+        $mrrNow = $this->calculateMRR($now);
+
+        $results =  $this->getMetricChartData(MetricConstants::MRR, $startDate, $endDate);
+
+        $results[$now->toString()] = $mrrNow;
+
+        return $this->adjustToPeriod($results, $period, 'last_value');
+    }
+
+    public function calculateMRR(?Carbon $date = null)
+    {
+        $date = $date ?? Carbon::yesterday()->endOfDay();
+
         $intervals = Interval::all();
 
         $intervalMap = [];
@@ -138,7 +325,6 @@ class MetricsManager
 
         $results = DB::table('subscriptions')
             ->select([
-                DB::raw($this->getDateFormattingForDriver('created_at')),
                 DB::raw('
                 SUM(CASE
                     ' . implode("\n", $cases) . '
@@ -147,159 +333,32 @@ class MetricsManager
             ')
             ])
             ->where('status', SubscriptionStatus::ACTIVE->value)
-            ->where(function ($query) {
+            ->where('ends_at' , '>=', $date)
+            ->where('created_at', '<=', $date)
+            ->where(function ($query) use ($date) {
                 $query->whereNull('trial_ends_at')
-                    ->orWhere('trial_ends_at', '<', Carbon::now());
+                    ->orWhereDate('trial_ends_at', '<', $date);
             })
-            ->groupBy('month')
             ->get();
 
-        $allMonths = [];
-        $mrrByDateMap = [];
-        foreach ($results as $result) {
-            $mrrByDateMap[$result->month] = $result;
-            $allMonths[$result->month] = $result->month;
+        $currency = Currency::where('code', config('app.default_currency'))->firstOrFail();
+
+        if ($results->first() === null) {
+            return 0;
         }
 
-        sort($allMonths);
+        $mrr =  $results->first()->monthly_revenue;
 
-        $currentMrr = 0;
-        $mrrData = [];
-        foreach ($allMonths as $month) {
-            if (isset($mrrByDateMap[$month])) {
-                $currentMrr += $mrrByDateMap[$month]->monthly_revenue;
-            }
-
-            $mrrData[$month] =  money(intval(round($currentMrr)), config('app.default_currency'))->formatByDecimal();
-        }
-
-        if (count($mrrData) == 0) {
-            return $mrrData;
-        }
-
-        // fill in gap months
-        $startMonth = $allMonths[0];
-        $endMonth = $allMonths[count($allMonths) - 1];
-        $currentMonth = $startMonth;
-
-        // format is Y-m
-
-        while ($currentMonth != $endMonth) {
-            if (!isset($mrrData[$currentMonth])) {
-                $previousMonth = date('Y-m', strtotime($currentMonth . ' -1 month'));
-                $mrrData[$currentMonth] = $mrrData[$previousMonth];
-            }
-
-            $currentMonth = date('Y-m', strtotime($currentMonth . ' +1 month'));
-
-
-        }
-
-        ksort($mrrData);
-
-        return $mrrData;
-    }
-    public function calculateChurnRateChart()
-    {
-        # subscriptions that end each month
-        $endsEachMonthResults = DB::table('subscriptions')
-            ->select([
-                DB::raw($this->getDateFormattingForDriver('ends_at')),
-                DB::raw('count(*) as total_ended')
-            ])
-            ->where('status', '!=', SubscriptionStatus::ACTIVE->value)
-            ->whereNotNull('ends_at')
-            ->where('ends_at', '<', Carbon::now()->addMonth()->startOfMonth())
-            ->groupBy('month')
-            ->get();
-
-        $datesMap = [];
-
-        $endsEachMonthMap = [];
-        foreach ($endsEachMonthResults as $result) {
-            $endsEachMonthMap[$result->month] = $result;
-            $datesMap[$result->month] = $result->month;
-        }
-
-        # subscriptions that start each month
-        $startsEachMonthResults = DB::table('subscriptions')
-            ->select([
-                DB::raw($this->getDateFormattingForDriver('created_at')),
-                DB::raw('count(*) as total_started')
-            ])
-            ->where('status', SubscriptionStatus::ACTIVE->value)
-            ->where(function ($query) {
-                $query->whereNull('trial_ends_at')
-                    ->orWhere('trial_ends_at', '<', Carbon::now());
-            })
-            ->groupBy('month')
-            ->get();
-
-        $startsEachMonthMap = [];
-
-        foreach ($startsEachMonthResults as $result) {
-            $startsEachMonthMap[$result->month] = $result;
-            $datesMap[$result->month] = $result->month;
-        }
-
-        sort($datesMap);
-
-        // Churn = "(Lost Customers ÷ Total Customers at the Start of Time Period) x 100."
-        $churnData = [];
-        $totalSubscriptions = 0;
-        foreach ($datesMap as $date) {
-            $churnData[$date] = $totalSubscriptions > 0 ? ($endsEachMonthMap[$date]->total_ended ?? 0) / $totalSubscriptions * 100 : 0;
-
-            if (isset($startsEachMonthMap[$date])) {
-                $totalSubscriptions += $startsEachMonthMap[$date]->total_started;
-            }
-        }
-
-        if (count($churnData) == 0) {
-            return $churnData;
-        }
-
-        // fill in gap months
-
-        $startMonth = $datesMap[0];
-        $endMonth = $datesMap[count($datesMap) - 1];
-        $currentMonth = $startMonth;
-
-        while ($currentMonth != $endMonth) {
-            if (!isset($churnData[$currentMonth])) {
-                $previousMonth = date('Y-m', strtotime($currentMonth . ' -1 month'));
-                $churnData[$currentMonth] = 0;
-            }
-
-            $currentMonth = date('Y-m', strtotime($currentMonth . ' +1 month'));
-        }
-
-        ksort($churnData);
-
-        return $churnData;
+        return money(intval(round($mrr)), $currency->code)->formatByDecimal();
     }
 
-    public function calculateMRR()
+
+    public function getTotalUsers(?Carbon $date = null)
     {
-        $mrrs = array_values($this->calculateMRRChart());
+        $date = $date ?? Carbon::yesterday()->endOfDay();
 
-        $previous = null;
-        $diff = 0;
-        if (count($mrrs) > 1) {
-            $previous = $mrrs[count($mrrs) - 2];
-            $diff = abs(end($mrrs) - $previous);
-        }
-
-        return [
-            'current' => end($mrrs) ?? 0,
-            'previous' => $previous,
-            'diff' => $diff,
-        ];
-    }
-
-    public function getTotalUsers()
-    {
-        return User::all()->count();
+        return User::where('created_at', '<=', $date)
+            ->count();
     }
 
     public function getTotalTransactions()
@@ -312,20 +371,17 @@ class MetricsManager
         return money(Transaction::where('status', TransactionStatus::SUCCESS->value)->sum('amount'), config('app.default_currency'));
     }
 
-    public function getActiveSubscriptions()
+    public function getActiveSubscriptions(?Carbon $date = null)
     {
+        $date = $date ?? Carbon::yesterday()->endOfDay();
+        $startOfTheDay = new Carbon($date);
+        $startOfTheDay->startOfDay();
+
         return Subscription::where('status', SubscriptionStatus::ACTIVE->value)
-            ->where('ends_at', '>', Carbon::now())
+            ->where('ends_at', '>=', $startOfTheDay)
+            ->where('created_at', '<=', $date)
             ->count();
     }
-
-    public function totalTrials()
-    {
-        return Subscription::where('trial_ends_at', '>', Carbon::now())
-            ->where('status', SubscriptionStatus::ACTIVE->value)
-            ->count();
-    }
-
 
     public function getTotalCustomerConversion()
     {
@@ -333,18 +389,5 @@ class MetricsManager
         $totalUsers = User::all()->count();
 
         return number_format(($totalUsers > 0 ? $totalSubscriptions / $totalUsers * 100 : 0), 2) . '%';
-    }
-
-    private function getDateFormattingForDriver(string $field)
-    {
-        $driver = config('database.default');
-        if ($driver == 'pgsql') {
-            return "TO_CHAR($field, 'YYYY-MM') as month";
-        } else if ($driver == 'sqlite') {
-            return "strftime('%Y-%m', $field) as month";
-        }
-
-        // mysql
-        return "DATE_FORMAT($field, '%Y-%m') as month";
     }
 }
