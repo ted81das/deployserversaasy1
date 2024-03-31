@@ -24,13 +24,16 @@ class MetricsOverview extends BaseWidget
         $previewMrr = $this->metricsManager->calculateMRR(Carbon::yesterday());
         $mrrDescription = '';
         $mrrIcon = '';
-        $color = 'success';
+        $color = 'gray';
 
         if ($previewMrr) {
-            $mrrDescription = $previewMrr > $currentMrr ? __('decrease') : __('increase');
-            $mrrDescription = money(abs($currentMrr - $previewMrr), config('app.default_currency')) . ' ' . $mrrDescription;
-            $mrrIcon = $previewMrr > $currentMrr ? 'heroicon-m-arrow-down' : 'heroicon-m-arrow-up';
-            $color = $previewMrr > $currentMrr ? 'danger' : 'success';
+            $mrrDescription = $previewMrr == $currentMrr ? '' : ($previewMrr > $currentMrr ? __('decrease') : __('increase'));
+
+            if (strlen($mrrDescription) > 0) {
+                $mrrDescription = money(abs($currentMrr - $previewMrr), config('app.default_currency')) . ' ' . $mrrDescription;
+                $mrrIcon = $previewMrr > $currentMrr ? 'heroicon-m-arrow-down' : 'heroicon-m-arrow-up';
+                $color = $previewMrr > $currentMrr ? 'danger' : 'success';
+            }
         }
 
         return [
