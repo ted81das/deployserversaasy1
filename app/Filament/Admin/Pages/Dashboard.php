@@ -25,7 +25,7 @@ class Dashboard extends \Filament\Pages\Dashboard
                     })
                     ->label(__('Start Date')),
                 DatePicker::make('end_date')
-                    ->default(date(now()))
+                    ->default(date(now()->toDateString()))
                     ->afterStateHydrated(function (DatePicker $component, ?string $state) {
                         if (!$state) {
                             $component->state(now()->toDateString());
