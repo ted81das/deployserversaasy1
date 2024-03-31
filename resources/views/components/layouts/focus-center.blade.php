@@ -7,7 +7,6 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    @include('components.layouts.partials.head')
 </head>
 <body class="text-primary-900">
     <div id="app">
@@ -29,6 +28,7 @@
         </div>
 
         @stack('tail')
+        @include('components.layouts.partials.head')
     </div>
 </body>
 </html>
