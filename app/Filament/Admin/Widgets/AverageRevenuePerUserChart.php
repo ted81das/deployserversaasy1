@@ -16,12 +16,6 @@ class AverageRevenuePerUserChart extends ChartWidget
 
     protected static ?int $sort = 3;
     protected static ?string $pollingInterval = null;
-    private MetricsManager $metricsManager;
-
-    public function boot(MetricsManager $metricsManager): void
-    {
-        $this->metricsManager = $metricsManager;
-    }
 
     protected function getData(): array
     {
@@ -33,7 +27,9 @@ class AverageRevenuePerUserChart extends ChartWidget
         $startDate = $startDate ? Carbon::parse($startDate) : null;
         $endDate = $endDate ? Carbon::parse($endDate) : null;
 
-        $data = $this->metricsManager->calculateAverageRevenuePerUserChart($period, $startDate, $endDate);
+        $metricsManager = resolve(MetricsManager::class);
+
+        $data = $metricsManager->calculateAverageRevenuePerUserChart($period, $startDate, $endDate);
 
         $convertToFloat = array_map(function ($value) {
             return (float) $value;

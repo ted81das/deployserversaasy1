@@ -12,16 +12,12 @@ class MetricsOverview extends BaseWidget
     protected static ?int $sort = 0;
     protected static ?string $pollingInterval = null;
 
-    private MetricsManager $metricsManager;
-
-    public function boot(MetricsManager $metricsManager): void
-    {
-        $this->metricsManager = $metricsManager;
-    }
     protected function getStats(): array
     {
-        $currentMrr = $this->metricsManager->calculateMRR(now());
-        $previewMrr = $this->metricsManager->calculateMRR(Carbon::yesterday());
+        $metricsManager = resolve(MetricsManager::class);
+
+        $currentMrr = $metricsManager->calculateMRR(now());
+        $previewMrr = $metricsManager->calculateMRR(Carbon::yesterday());
         $mrrDescription = '';
         $mrrIcon = '';
         $color = 'gray';
@@ -47,24 +43,24 @@ class MetricsOverview extends BaseWidget
             ,
             Stat::make(
                 __('Active Subscriptions'),
-                $this->metricsManager->getActiveSubscriptions()
+                $metricsManager->getActiveSubscriptions()
             ),
             Stat::make(
                 __('Total revenue'),
-                $this->metricsManager->getTotalRevenue()
+                $metricsManager->getTotalRevenue()
             ),
             Stat::make(
                 __('Total user subscription conversion'),
-                $this->metricsManager->getTotalCustomerConversion()
+                $metricsManager->getTotalCustomerConversion()
             )->description(__('subscribed / total users')),
             Stat::make(
                 __('Total Transactions'),
-                $this->metricsManager->getTotalTransactions()
+                $metricsManager->getTotalTransactions()
             ),
 
             Stat::make(
                 __('Total Users'),
-                $this->metricsManager->getTotalUsers()
+                $metricsManager->getTotalUsers()
             ),
         ];
     }

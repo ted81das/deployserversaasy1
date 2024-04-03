@@ -14,13 +14,7 @@ class ChurnChart extends ChartWidget
     use InteractsWithPageFilters;
 
     protected static ?int $sort = 2;
-    private MetricsManager $metricsManager;
     protected static ?string $pollingInterval = null;
-
-    public function boot(MetricsManager $metricsManager): void
-    {
-        $this->metricsManager = $metricsManager;
-    }
 
     protected function getData(): array
     {
@@ -32,7 +26,9 @@ class ChurnChart extends ChartWidget
         $startDate = $startDate ? Carbon::parse($startDate) : null;
         $endDate = $endDate ? Carbon::parse($endDate) : null;
 
-        $data = $this->metricsManager->calculateSubscriptionChurnRateChart($period, $startDate, $endDate);
+        $metricsManager = resolve(MetricsManager::class);
+
+        $data = $metricsManager->calculateSubscriptionChurnRateChart($period, $startDate, $endDate);
         return [
             'datasets' => [
                 [

@@ -17,12 +17,6 @@ class TotalRevenueChart extends ChartWidget
     protected static ?int $sort = 1;
 
     protected static ?string $pollingInterval = null;
-    private MetricsManager $metricsManager;
-
-    public function boot(MetricsManager $metricsManager): void
-    {
-        $this->metricsManager = $metricsManager;
-    }
 
     protected function getData(): array
     {
@@ -34,7 +28,9 @@ class TotalRevenueChart extends ChartWidget
         $startDate = $startDate ? Carbon::parse($startDate) : null;
         $endDate = $endDate ? Carbon::parse($endDate) : null;
 
-        $data = $this->metricsManager->calculateDailyRevenueChart($period, $startDate, $endDate);
+        $metricsManager = resolve(MetricsManager::class);
+
+        $data = $metricsManager->calculateDailyRevenueChart($period, $startDate, $endDate);
 
         return [
 
