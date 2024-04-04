@@ -184,6 +184,8 @@ return [
         'dark' => 'images/logo-dark.png',
     ],
 
+    'roadmap_enabled' => true,
+
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers

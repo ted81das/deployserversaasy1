@@ -64,5 +64,6 @@ class ConfigConstants
         'mail.mailers.smtp.port',
         'mail.mailers.smtp.username',
         'mail.mailers.smtp.password',
+        'app.roadmap_enabled',
     ];
 }

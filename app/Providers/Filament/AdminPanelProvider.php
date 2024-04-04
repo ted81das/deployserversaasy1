@@ -74,6 +74,10 @@ class AdminPanelProvider extends PanelProvider
                     ->label('Blog')
                     ->icon('heroicon-s-newspaper')
                     ->collapsed(),
+                NavigationGroup::make()
+                    ->label('Roadmap')
+                    ->icon('heroicon-s-bug-ant')
+                    ->collapsed(),
             ])
             ->plugins([
                 BreezyCore::make()

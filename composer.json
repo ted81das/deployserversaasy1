@@ -8,7 +8,7 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^8.1",
+        "php": "^8.2",
         "aws/aws-sdk-php": "^3.293",
         "blade-ui-kit/blade-icons": "^1.5",
         "cknow/laravel-money": "^8.0",
@@ -25,6 +25,7 @@
         "laravel/tinker": "^2.8",
         "laravel/ui": "^4.2",
         "livewire/livewire": "^3.2",
+        "mews/purifier": "^3.4",
         "mpociot/versionable": "^4.4",
         "spatie/laravel-flash": "^1.9",
         "spatie/laravel-permission": "^6.0",

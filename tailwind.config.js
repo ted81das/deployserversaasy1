@@ -18,6 +18,7 @@ export default {
     darkMode: 'class',
     theme: {
         fontSize: {
+            xxs: '0.65rem',
             xs: '0.75rem',
             sm: '0.9rem',
             base: '1rem',

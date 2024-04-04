@@ -62,6 +62,11 @@ class RolesAndPermissionsSeeder extends Seeder
         Permission::findOrCreate('delete blog post categories');
         Permission::findOrCreate('view blog post categories');
 
+        Permission::findOrCreate('create roadmap items');
+        Permission::findOrCreate('update roadmap items');
+        Permission::findOrCreate('delete roadmap items');
+        Permission::findOrCreate('view roadmap items');
+
         Permission::findOrCreate('view transactions');
 
         Permission::findOrCreate('update settings');

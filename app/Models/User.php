@@ -53,6 +53,16 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'password' => 'hashed',
     ];
 
+    public function roadmapItems()
+    {
+        return $this->hasMany(RoadmapItem::class);
+    }
+
+    public function roadmapItemUpvotes()
+    {
+        return $this->belongsToMany(RoadmapItem::class, 'roadmap_item_user_upvotes');
+    }
+
     public function userParameters(): HasMany
     {
         return $this->hasMany(UserParameter::class);
