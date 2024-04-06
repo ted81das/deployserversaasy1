@@ -1,6 +1,6 @@
 <div class="px-4">
     <p class="pb-4">
-        {{__('To integrate Bitbucket with your application, you need to do the following steps:')}}
+        {{ __('To integrate Bitbucket with your application, you need to do the following steps:') }}
     </p>
     <ol class="list-decimal ">
         <li class="pb-4">
@@ -14,7 +14,7 @@
         </li>
         <li class="pb-4">
             In the Callback URL field, paste the generated URL from the Redirect URI field in Hub.
-            <code class="bg-gray-100 px-4 py-2 block my-4 overflow-x-scroll">
+            <code class="bg-gray-100 px-4 py-2 block my-4 overflow-x-scroll dark:bg-gray-800 dark:text-gray-200">
                 {{ config('app.url') . config('services.bitbucket.redirect') }}
             </code>
         </li>
