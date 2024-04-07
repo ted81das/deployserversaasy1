@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -29,6 +30,15 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->colors([
                 'primary' => Color::Amber,
+            ])
+            ->userMenuItems([
+                MenuItem::make()
+                    ->label(__('User Dashboard'))
+                    ->visible(
+                        fn() => true
+                    )
+                    ->url(fn() => route('filament.dashboard.pages.dashboard'))
+                    ->icon('heroicon-s-face-smile')
             ])
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\\Filament\\Admin\\Resources')
             ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\\Filament\\Admin\\Pages')
@@ -73,6 +83,10 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make()
                     ->label('Blog')
                     ->icon('heroicon-s-newspaper')
+                    ->collapsed(),
+                NavigationGroup::make()
+                    ->label('Roadmap')
+                    ->icon('heroicon-s-bug-ant')
                     ->collapsed(),
             ])
             ->plugins([

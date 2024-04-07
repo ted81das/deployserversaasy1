@@ -148,3 +148,21 @@ Route::get('/checkout/product/success', [
     App\Http\Controllers\ProductCheckoutController::class,
     'productCheckoutSuccess',
 ])->name('checkout.product.success')->middleware('auth');
+
+
+// roadmap
+
+Route::get('/roadmap/suggest', [
+    App\Http\Controllers\RoadmapController::class,
+    'suggest',
+])->name('roadmap.suggest')->middleware('auth');
+
+Route::get('/roadmap', [
+    App\Http\Controllers\RoadmapController::class,
+    'index',
+])->name('roadmap');
+
+Route::get('/roadmap/i/{itemSlug}', [
+    App\Http\Controllers\RoadmapController::class,
+    'viewItem',
+    ])->name('roadmap.viewItem');

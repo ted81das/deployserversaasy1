@@ -2,6 +2,8 @@
 
 namespace Database\Seeders\Demo;
 
+use App\Constants\RoadmapItemStatus;
+use App\Constants\RoadmapItemType;
 use App\Constants\SubscriptionStatus;
 use App\Models\BlogPost;
 use App\Models\Currency;
@@ -9,6 +11,7 @@ use App\Models\Discount;
 use App\Models\Interval;
 use App\Models\OauthLoginProvider;
 use App\Models\OneTimeProduct;
+use App\Models\PaymentProvider;
 use App\Models\Plan;
 use App\Models\Product;
 use App\Models\User;
@@ -95,6 +98,7 @@ class DemoDatabaseSeeder extends Seeder
         $this->addBlogPosts($adminUser);
         $this->addSomeUsers();
         $this->addMetrics();
+        $this->addSomeRoadmapItems();
 
         // enable google oauth
         OauthLoginProvider::where('provider_name', 'google')->update(['enabled' => true]);
@@ -156,6 +160,8 @@ class DemoDatabaseSeeder extends Seeder
     {
         $numberOfOrders = rand(15, 25);
 
+        $paymentProviders = PaymentProvider::all();
+
         for ($i = 0; $i < $numberOfOrders; $i++) {
             $user = User::factory()->create();
 
@@ -166,6 +172,8 @@ class DemoDatabaseSeeder extends Seeder
                 'total_amount' => $product->prices()->first()->price,
                 'total_amount_after_discount' => $product->prices()->first()->price,
                 'created_at' => now()->sub(rand(1, 10), 'days'),
+                // random payment provider
+                'payment_provider_id' => $paymentProviders[rand(0, count($paymentProviders) - 1)]->id,
             ]);
 
             $order->items()->create([
@@ -257,6 +265,7 @@ class DemoDatabaseSeeder extends Seeder
     private function addPlanSubscriptions(Plan $plan): void
     {
         $numberOfUsers = rand(15, 25);
+        $paymentProviders = PaymentProvider::all();
 
         for ($i = 0; $i < $numberOfUsers; $i++) {
 
@@ -272,6 +281,8 @@ class DemoDatabaseSeeder extends Seeder
 
             $status = rand(0, 1) === 1 ? SubscriptionStatus::ACTIVE : SubscriptionStatus::CANCELED;
 
+            $paymentProviderId = $paymentProviders[rand(0, count($paymentProviders) - 1)]->id;
+
             $subscription = $user->subscriptions()->create([
                 'plan_id' => $plan->id,
                 'trial_ends_at' => null,
@@ -281,7 +292,7 @@ class DemoDatabaseSeeder extends Seeder
                 'user_id' => $user->id,
                 'uuid' => Str::uuid(),
                 'status' => rand(0, 1) === 1 ? SubscriptionStatus::ACTIVE : SubscriptionStatus::CANCELED,
-                'payment_provider_id' => 1,
+                'payment_provider_id' => $paymentProviderId,
                 'interval_id' => $plan->interval->id,
                 'interval_count' => $plan->interval_count,
                 'created_at' => $createdDate,
@@ -295,7 +306,7 @@ class DemoDatabaseSeeder extends Seeder
                     'subscription_id' => $subscription->id,
                     'amount' => $plan->prices()->first()->price,
                     'currency_id' => $plan->prices()->first()->currency_id,
-                    'payment_provider_id' => 1,
+                    'payment_provider_id' => $paymentProviderId,
                     'payment_provider_transaction_id' => Str::uuid(),
                     'payment_provider_status' => 'paid',
                     'status' => 'success',
@@ -386,4 +397,31 @@ class DemoDatabaseSeeder extends Seeder
         }
     }
 
+    private function addSomeRoadmapItems()
+    {
+        $numberOfItems = rand(5, 10);
+
+        for ($i = 0; $i < $numberOfItems; $i++) {
+            // get a random user from database
+            $user = User::inRandomOrder()->first();
+
+            $item = $user->roadmapItems()->create([
+                'title' => 'Roadmap Item ' . $i,
+                'slug' => 'roadmap-item-' . $i,
+                'type' => RoadmapItemType::FEATURE->value,
+                'description' => $this->loremIpsum,
+                'upvotes' => rand(1, 10),
+                'status' => RoadmapItemStatus::APPROVED->value,
+                'created_at' => now()->subDays(rand(1, 1000)),
+            ]);
+
+            $item->upvotes()->attach($user->id, [
+                'ip_address' =>
+                    rand(0, 255) . '.' .
+                    rand(0, 255) . '.' .
+                    rand(0, 255) . '.' .
+                    rand(0, 255),
+            ]);
+        }
+    }
 }

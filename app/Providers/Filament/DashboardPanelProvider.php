@@ -6,6 +6,7 @@ use App\Livewire\Filament\MyProfilePersonalInfo;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -29,6 +30,15 @@ class DashboardPanelProvider extends PanelProvider
             ->path('dashboard')
             ->colors([
                 'primary' => Color::Teal,
+            ])
+            ->userMenuItems([
+                MenuItem::make()
+                    ->label(__('Admin Panel'))
+                    ->visible(
+                        fn() => true
+                    )
+                ->url(fn() => route('filament.admin.pages.dashboard'))
+                ->icon('heroicon-s-cog-8-tooth')
             ])
             ->discoverResources(in: app_path('Filament/Dashboard/Resources'), for: 'App\\Filament\\Dashboard\\Resources')
             ->discoverPages(in: app_path('Filament/Dashboard/Pages'), for: 'App\\Filament\\Dashboard\\Pages')

@@ -59,6 +59,7 @@ class GeneralSettings extends Component implements HasForms
             'social_links_youtube' => $this->configManager->get('app.social_links.youtube') ?? '',
             'social_links_github' => $this->configManager->get('app.social_links.github') ?? '',
             'social_links_discord' => $this->configManager->get('app.social_links.discord') ?? '',
+            'roadmap_enabled' => $this->configManager->get('app.roadmap_enabled', true),
         ]);
     }
 
@@ -186,6 +187,14 @@ class GeneralSettings extends Component implements HasForms
                                 ->helperText(__('If enabled, customers will be able to see their transactions on the dashboard.'))
                                 ->required(),
                         ]),
+                    Tabs\Tab::make(__('Roadmap'))
+                        ->icon('heroicon-o-bug-ant')
+                        ->schema([
+                            Toggle::make('roadmap_enabled')
+                                ->label(__('Roadmap Enabled'))
+                                ->helperText(__('If enabled, the roadmap will be visible to the public.'))
+                                ->required(),
+                        ]),
                     Tabs\Tab::make(__('Social Links'))
                         ->icon('heroicon-o-heart')
                         ->schema([
@@ -203,7 +212,7 @@ class GeneralSettings extends Component implements HasForms
                                 ->label(__('GitHub')),
                             TextInput::make('social_links_discord')
                                 ->label(__('Discord')),
-                        ])
+                        ]),
                 ])
                 ->persistTabInQueryString('settings-tab')
             ])
@@ -236,6 +245,7 @@ class GeneralSettings extends Component implements HasForms
         $this->configManager->set('app.social_links.youtube', $data['social_links_youtube']);
         $this->configManager->set('app.social_links.github', $data['social_links_github']);
         $this->configManager->set('app.social_links.discord', $data['social_links_discord']);
+        $this->configManager->set('app.roadmap_enabled', $data['roadmap_enabled']);
 
 
         Notification::make()

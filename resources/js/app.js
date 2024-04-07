@@ -9,33 +9,8 @@ window.Alpine = Alpine
 
 
 document.addEventListener('DOMContentLoaded', function () {
-    // select all elements with data-collapse-toggle="navbar-cta"
-    const navbarCta = document.querySelectorAll('[data-collapse-toggle="navbar-cta"]');
-
-    // loop through all elements with data-collapse-toggle="navbar-cta"
-    navbarCta.forEach((navbarCtaEl) => {
-        // add click event listener
-        navbarCtaEl.addEventListener('click', handleHamburgerMenuClick);
-    });
-
     assignTabSliderEvents();
-
 });
-
-
-function handleHamburgerMenuClick() {
-    // select element with data-collapse-toggle="navbar-cta"
-    const navbarCta = document.querySelector('[data-collapse-toggle="navbar-cta"]');
-
-    // set the target element that will be collapsed or expanded (eg. navbar menu)
-    const targetEl = document.getElementById('navbar-cta');
-
-    // toggle the aria-expanded attribute
-    navbarCta.setAttribute('aria-expanded', targetEl.classList.contains('hidden') ? 'true' : 'false');
-
-    // toggle the hidden class
-    targetEl.classList.toggle('hidden');
-}
 
 
 function assignTabSliderEvents() {
