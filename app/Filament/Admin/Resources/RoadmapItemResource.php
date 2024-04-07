@@ -73,13 +73,13 @@ class RoadmapItemResource extends Resource
                         ->label(__('Upvotes'))
                         ->required()
                         ->numeric()
-                        ->default(0),
+                        ->default(1),
                     Forms\Components\Select::make('user_id')
                         ->label(__('User'))
                         ->lazy()
                         ->searchable()
                         ->options(fn () => \App\Models\User::pluck('name', 'id'))
-                        ->default(fn () => auth()->id())
+                        ->default(fn () => auth()->user()->id)
                         ->required(),
                     ]),
             ]);
