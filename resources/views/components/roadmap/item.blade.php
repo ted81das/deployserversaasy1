@@ -4,7 +4,7 @@
 
     <div class="flex flex-col gap-1">
         <h3 class="!text-lg !font-semibold">
-            <a class="text-primary-900 hover:text-primary-500 break-all" rel="ugc" href="{{route('roadmap.viewItem', ['itemSlug' => $item->slug])}}">
+            <a class="text-primary-900 hover:text-primary-500 break-all line-clamp-1" rel="ugc" href="{{route('roadmap.viewItem', ['itemSlug' => $item->slug])}}">
                 {{ $item->title }}
             </a>
         </h3>

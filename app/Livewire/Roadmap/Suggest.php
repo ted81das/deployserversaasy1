@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\Roadmap;
 
 use App\Livewire\Forms\RoadmapItemForm;
 use App\Services\RoadmapManager;
 use Livewire\Component;
 
-class SuggestRoadmapItem extends Component
+class Suggest extends Component
 {
     public RoadmapItemForm $form;
     private RoadmapManager $roadmapManager;
@@ -32,7 +32,7 @@ class SuggestRoadmapItem extends Component
 
     public function render()
     {
-        return view('livewire.suggest-roadmap-item');
+        return view('livewire.roadmap.suggest');
     }
 
 }

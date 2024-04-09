@@ -54,9 +54,11 @@ class RoadmapManager
     {
         $currentUser = auth()->user();
 
+        $slug = Str::slug(Str::limit($title, 100)) . '-' . Str::random(6);
+
         $roadMapItem = RoadmapItem::create([
             'title' => $title,
-            'slug' => Str::slug($title) . '-' . Str::random(6),
+            'slug' => $slug,
             'description' => $this->cleanupDescription($description),
             'type' => RoadmapItemType::from($type)->value,
             'user_id' => auth()->id(),
