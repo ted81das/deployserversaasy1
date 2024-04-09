@@ -11,7 +11,7 @@
         </div>
 
         <div class="max-w-2xl mx-auto">
-            <livewire:suggest-roadmap-item/>
+            <livewire:roadmap.suggest/>
         </div>
     </div>
 
