@@ -74,12 +74,17 @@ class RoadmapManager
         return $roadMapItem;
     }
 
-    private function cleanupDescription(string $string)
+    private function cleanupDescription(string $description)
     {
-        $string = clean($string, [
+        $description = clean($description, [
             'HTML.Allowed' => ''
         ]);
 
+        return $description;
+    }
+
+    public function prepareForDisplay(string $string)
+    {
         // turn urls into <a> tags with rel="noopener noreferrer nofollow ugc" for SEO
         $string = preg_replace(
             '/(https?:\/\/[^\s]+)/',
