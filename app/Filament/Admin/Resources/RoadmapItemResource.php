@@ -48,7 +48,7 @@ class RoadmapItemResource extends Resource
 
                             return $state;
                         })
-                        ->maxLength(36),
+                        ->maxLength(255),
 
                     Forms\Components\Textarea::make('description')
                         ->rows(5)
