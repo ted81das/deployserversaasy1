@@ -1,4 +1,4 @@
-<x-layouts.app container="false">
+<x-layouts.app>
     <x-slot name="title">
         {{ __('SaaSykit - Laravel SaaS Starter Kit') }}
     </x-slot>
