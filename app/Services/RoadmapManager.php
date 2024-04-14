@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services;
+
 use App\Constants\RoadmapItemStatus;
 use App\Constants\RoadmapItemType;
 use App\Models\RoadmapItem;
@@ -17,9 +18,9 @@ class RoadmapManager
                     RoadmapItemStatus::APPROVED,
                     RoadmapItemStatus::IN_PROGRESS,
                     RoadmapItemStatus::COMPLETED,
-                    RoadmapItemStatus::CANCELLED
+                    RoadmapItemStatus::CANCELLED,
                 ])->orWhere(function ($query) {
-                    if (!auth()->check()) {
+                    if (! auth()->check()) {
                         return;
                     }
 
@@ -38,13 +39,13 @@ class RoadmapManager
             RoadmapItemStatus::IN_PROGRESS,
             RoadmapItemStatus::COMPLETED,
         ])->orWhere(function ($query) {
-            if (!auth()->check()) {
+            if (! auth()->check()) {
                 return;
             }
 
             $query->where('status', RoadmapItemStatus::PENDING_APPROVAL)
                 ->where('user_id', auth()->id());
-        })->orderBy('status', 'asc')
+        })
             ->orderBy('upvotes', 'desc')
             ->orderBy('title', 'asc')
             ->paginate($limit);
@@ -54,7 +55,7 @@ class RoadmapManager
     {
         $currentUser = auth()->user();
 
-        $slug = Str::slug(Str::limit($title, 100)) . '-' . Str::random(6);
+        $slug = Str::slug(Str::limit($title, 100)).'-'.Str::random(6);
 
         $roadMapItem = RoadmapItem::create([
             'title' => $title,
@@ -68,7 +69,7 @@ class RoadmapManager
 
         // add upvote for the user who created the item
         $roadMapItem->upvotes()->attach($currentUser->id, [
-            'ip_address' => request()->ip()
+            'ip_address' => request()->ip(),
         ]);
 
         return $roadMapItem;
@@ -77,7 +78,7 @@ class RoadmapManager
     private function cleanupDescription(string $description)
     {
         $description = clean($description, [
-            'HTML.Allowed' => ''
+            'HTML.Allowed' => '',
         ]);
 
         return $description;
@@ -107,7 +108,7 @@ class RoadmapManager
 
     public function upvote(int $id)
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return;
         }
 
@@ -123,21 +124,21 @@ class RoadmapManager
             $item->increment('upvotes');
 
             $item->upvotes()->attach(auth()->id(), [
-                'ip_address' => request()->ip()
+                'ip_address' => request()->ip(),
             ]);
         });
     }
 
     public function removeUpvote(int $id)
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return;
         }
 
         $item = RoadmapItem::where('id', $id)->firstOrFail();
 
         // if user has not upvoted, do nothing
-        if (!$item->upvotes()->where('user_id', auth()->id())->exists()) {
+        if (! $item->upvotes()->where('user_id', auth()->id())->exists()) {
             return;
         }
 
@@ -150,11 +151,10 @@ class RoadmapManager
 
     public function hasUserUpvoted(RoadmapItem $item)
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return false;
         }
 
         return $item->upvotes()->where('user_id', auth()->id())->exists();
     }
-
 }
