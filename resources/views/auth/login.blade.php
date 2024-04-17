@@ -24,6 +24,23 @@
                         </span>
                     @enderror
 
+                    @if (config('app.recaptcha_enabled'))
+                        <div class="my-4">
+                            {!! htmlFormSnippet() !!}
+                        </div>
+
+                        @error('g-recaptcha-response')
+                            <span class="text-xs text-red-500" role="alert">
+                                {{ $message }}
+                            </span>
+                        @enderror
+
+                        @push('tail')
+                            {!! htmlScriptTagJsApi() !!}
+                        @endpush
+
+                    @endif
+
                     <div class="my-3 flex flex-wrap gap-2 justify-between text-sm">
                         <div class="flex gap-2">
                             <input class="checkbox checkbox-sm" type="checkbox" name="remember"

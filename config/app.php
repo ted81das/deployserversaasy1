@@ -186,6 +186,8 @@ return [
 
     'roadmap_enabled' => true,
 
+    'recaptcha_enabled' => false,
+
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers

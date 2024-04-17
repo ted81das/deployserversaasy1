@@ -16,7 +16,7 @@ class ConfigManager
 
     public function set(string $key, $value): void
     {
-        if (!in_array($key, ConfigConstants::OVERRIDABLE_CONFIGS)) {
+        if (! in_array($key, ConfigConstants::OVERRIDABLE_CONFIGS)) {
             throw new \Exception("Config key $key is not overridable");
         }
 
@@ -27,7 +27,7 @@ class ConfigManager
         config([$key => $value]);
     }
 
-    public function get(string $key, string $default = null): ?string
+    public function get(string $key, ?string $default = null): ?string
     {
         try {
             return Config::get($key) ?? config($key) ?? $default;
