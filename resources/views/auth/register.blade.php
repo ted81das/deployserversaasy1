@@ -42,6 +42,21 @@
                         </span>
                     @enderror
 
+                    @if (config('app.recaptcha_enabled'))
+                        <div class="my-4">
+                            {!! htmlFormSnippet() !!}
+                        </div>
+
+                        @error('g-recaptcha-response')
+                        <span class="text-xs text-red-500" role="alert">
+                                {{ $message }}
+                            </span>
+                        @enderror
+
+                        @push('tail')
+                            {!! htmlScriptTagJsApi() !!}
+                        @endpush
+                    @endif
 
                     <x-button-link.primary class="inline-block !w-full my-2" elementType="button" type="submit">
                         {{ __('Register') }}

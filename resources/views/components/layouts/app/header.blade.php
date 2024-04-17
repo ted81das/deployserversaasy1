@@ -26,5 +26,5 @@
                 <x-button-link.secondary elementType="a" href="#plans">{{ __('Get started') }}</x-button-link.secondary>
             @endauth
         </div>
-</div>
+    </div>
 </nav>

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\OauthLoginProvider;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
@@ -24,12 +23,12 @@ class LoginController extends Controller
 
     use AuthenticatesUsers;
 
-//    /**
-//     * Where to redirect users after login.
-//     *
-//     * @var string
-//     */
-//    protected $redirectTo = RouteServiceProvider::HOME;
+    //    /**
+    //     * Where to redirect users after login.
+    //     *
+    //     * @var string
+    //     */
+    //    protected $redirectTo = RouteServiceProvider::HOME;
 
     /**
      * Create a new controller instance.
@@ -64,5 +63,19 @@ class LoginController extends Controller
                 'email' => 'Your account has been blocked. Please contact support.',
             ]);
         }
+    }
+
+    protected function validateLogin(Request $request)
+    {
+        $rules = [
+            $this->username() => 'required|string',
+            'password' => 'required|string',
+        ];
+
+        if (config('app.recaptcha_enabled')) {
+            $rules[recaptchaFieldName()] = recaptchaRuleName();
+        }
+
+        $request->validate($rules);
     }
 }

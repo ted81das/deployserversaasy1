@@ -14,6 +14,7 @@ use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
+use Illuminate\Support\HtmlString;
 use Livewire\Component;
 
 class GeneralSettings extends Component implements HasForms
@@ -60,6 +61,9 @@ class GeneralSettings extends Component implements HasForms
             'social_links_github' => $this->configManager->get('app.social_links.github') ?? '',
             'social_links_discord' => $this->configManager->get('app.social_links.discord') ?? '',
             'roadmap_enabled' => $this->configManager->get('app.roadmap_enabled', true),
+            'recaptcha_enabled' => $this->configManager->get('app.recaptcha_enabled', false),
+            'recaptcha_api_site_key' => $this->configManager->get('recaptcha.api_site_key', ''),
+            'recaptcha_api_secret_key' => $this->configManager->get('recaptcha.api_secret_key', ''),
         ]);
     }
 
@@ -112,7 +116,7 @@ class GeneralSettings extends Component implements HasForms
                                     },
                                 ])
                                 ->required(),
-                    ]),
+                        ]),
                     Tabs\Tab::make(__('Payment'))
                         ->icon('heroicon-o-credit-card')
                         ->schema([
@@ -121,7 +125,7 @@ class GeneralSettings extends Component implements HasForms
                                 ->options(function () {
                                     $currencies = [];
                                     foreach (Currency::all() as $currency) {
-                                        $currencies[$currency->code] = $currency->name . ' (' . $currency->code . ')';
+                                        $currencies[$currency->code] = $currency->name.' ('.$currency->code.')';
                                     }
 
                                     return $currencies;
@@ -131,8 +135,8 @@ class GeneralSettings extends Component implements HasForms
                                 ->searchable(),
                             Toggle::make('payment_proration_enabled')
                                 ->label(__('Payment Proration Enabled'))
-                                ->helperText(__('If enabled, when a customer upgrades or downgrades their subscription, the amount they have already paid will be prorated and credited towards their new plan.'))
-                            ]),
+                                ->helperText(__('If enabled, when a customer upgrades or downgrades their subscription, the amount they have already paid will be prorated and credited towards their new plan.')),
+                        ]),
                     Tabs\Tab::make(__('Email'))
                         ->icon('heroicon-o-envelope')
                         ->schema([
@@ -140,7 +144,7 @@ class GeneralSettings extends Component implements HasForms
                                 ->label(__('Default Email Provider'))
                                 ->options(function () {
                                     $providers = [
-                                        'smtp' => 'SMTP'
+                                        'smtp' => 'SMTP',
                                     ];
 
                                     foreach (EmailProvider::all() as $provider) {
@@ -169,7 +173,7 @@ class GeneralSettings extends Component implements HasForms
                                 ->label(__('Google Tracking ID')),
                             Textarea::make('posthog_html_snippet')
                                 ->helperText(__('Paste your Posthog HTML snippet here.'))
-                                ->label(__('Posthog HTML Snippet'))
+                                ->label(__('Posthog HTML Snippet')),
                         ]),
                     Tabs\Tab::make(__('Customer Dashboard'))
                         ->icon('heroicon-o-squares-2x2')
@@ -195,6 +199,18 @@ class GeneralSettings extends Component implements HasForms
                                 ->helperText(__('If enabled, the roadmap will be visible to the public.'))
                                 ->required(),
                         ]),
+                    Tabs\Tab::make(__('Recaptcha'))
+                        ->icon('heroicon-o-shield-check')
+                        ->schema([
+                            Toggle::make('recaptcha_enabled')
+                                ->label(__('Recaptcha Enabled'))
+                                ->helperText(new HtmlString(__('If enabled, recaptcha will be used on the registration & login forms. For more info on how to configure Recaptcha, see the <a class="text-primary-500" href=":url" target="_blank">documentation</a>.', ['url' => 'https://saasykit.com/docs/recaptcha'])))
+                                ->required(),
+                            TextInput::make('recaptcha_api_site_key')
+                                ->label(__('Recaptcha Site Key')),
+                            TextInput::make('recaptcha_api_secret_key')
+                                ->label(__('Recaptcha Secret Key')),
+                        ]),
                     Tabs\Tab::make(__('Social Links'))
                         ->icon('heroicon-o-heart')
                         ->schema([
@@ -214,7 +230,7 @@ class GeneralSettings extends Component implements HasForms
                                 ->label(__('Discord')),
                         ]),
                 ])
-                ->persistTabInQueryString('settings-tab')
+                    ->persistTabInQueryString('settings-tab'),
             ])
             ->statePath('data');
     }
@@ -246,7 +262,9 @@ class GeneralSettings extends Component implements HasForms
         $this->configManager->set('app.social_links.github', $data['social_links_github']);
         $this->configManager->set('app.social_links.discord', $data['social_links_discord']);
         $this->configManager->set('app.roadmap_enabled', $data['roadmap_enabled']);
-
+        $this->configManager->set('app.recaptcha_enabled', $data['recaptcha_enabled']);
+        $this->configManager->set('recaptcha.api_site_key', $data['recaptcha_api_site_key']);
+        $this->configManager->set('recaptcha.api_secret_key', $data['recaptcha_api_secret_key']);
 
         Notification::make()
             ->title(__('Settings Saved'))
