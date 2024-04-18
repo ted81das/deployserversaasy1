@@ -35,10 +35,10 @@ class DashboardPanelProvider extends PanelProvider
                 MenuItem::make()
                     ->label(__('Admin Panel'))
                     ->visible(
-                        fn() => true
+                        fn () => auth()->user()->isAdmin()
                     )
-                ->url(fn() => route('filament.admin.pages.dashboard'))
-                ->icon('heroicon-s-cog-8-tooth')
+                    ->url(fn () => route('filament.admin.pages.dashboard'))
+                    ->icon('heroicon-s-cog-8-tooth'),
             ])
             ->discoverResources(in: app_path('Filament/Dashboard/Resources'), for: 'App\\Filament\\Dashboard\\Resources')
             ->discoverPages(in: app_path('Filament/Dashboard/Pages'), for: 'App\\Filament\\Dashboard\\Pages')
@@ -74,9 +74,9 @@ class DashboardPanelProvider extends PanelProvider
                         hasAvatars: false, // Enables the avatar upload form component (default = false)
                         slug: 'my-profile' // Sets the slug for the profile page (default = 'my-profile')
                     )
-                ->myProfileComponents([
-                    'personal_info' => MyProfilePersonalInfo::class,
-                ])
+                    ->myProfileComponents([
+                        'personal_info' => MyProfilePersonalInfo::class,
+                    ]),
             ]);
     }
 }
