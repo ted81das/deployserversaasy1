@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Resources;
 
 use App\Constants\DiscountConstants;
 use App\Constants\SubscriptionStatus;
+use App\Filament\Admin\Resources\UserResource\Pages\EditUser;
 use App\Mapper\SubscriptionStatusMapper;
 use App\Models\Subscription;
 use Filament\Forms;
@@ -21,7 +22,7 @@ class SubscriptionResource extends Resource
 {
     protected static ?string $model = Subscription::class;
 
-//    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    //    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $navigationGroup = 'Revenue';
 
@@ -51,7 +52,7 @@ class SubscriptionResource extends Resource
                                         ->options(
                                             \App\Models\Currency::all()->sortBy('name')
                                                 ->mapWithKeys(function ($currency) {
-                                                    return [$currency->id => $currency->name . ' (' . $currency->symbol . ')'];
+                                                    return [$currency->id => $currency->name.' ('.$currency->symbol.')'];
                                                 })
                                                 ->toArray()
                                         )
@@ -78,7 +79,7 @@ class SubscriptionResource extends Resource
                 Tables\Columns\TextColumn::make('user.name')->label(__('User'))->searchable(),
                 Tables\Columns\TextColumn::make('plan.name')->label(__('Plan'))->searchable(),
                 Tables\Columns\TextColumn::make('price')->formatStateUsing(function (string $state, $record) {
-                    return money($state, $record->currency->code) . ' / ' . $record->interval->name;
+                    return money($state, $record->currency->code).' / '.$record->interval->name;
                 }),
                 Tables\Columns\TextColumn::make('payment_provider_id')
                     ->formatStateUsing(function (string $state, $record) {
@@ -89,7 +90,7 @@ class SubscriptionResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->colors([
-                        SubscriptionStatus::ACTIVE->value => 'success',
+                        'success' => SubscriptionStatus::ACTIVE->value,
                     ])
                     ->formatStateUsing(
                         function (string $state, $record, SubscriptionStatusMapper $mapper) {
@@ -155,7 +156,7 @@ class SubscriptionResource extends Resource
      */
     public static function subscriptionHistoryComponents($record): array
     {
-        if (!empty(static::$cachedSubscriptionHistoryComponents)) {
+        if (! empty(static::$cachedSubscriptionHistoryComponents)) {
             return static::$cachedSubscriptionHistoryComponents;
         }
 
@@ -167,24 +168,24 @@ class SubscriptionResource extends Resource
             $plan = $versionModel->plan;
 
             static::$cachedSubscriptionHistoryComponents[] = Section::make([
-                TextEntry::make('plan_name_' . $i)
+                TextEntry::make('plan_name_'.$i)
                     ->label(__('Plan'))
                     ->getStateUsing(fn () => $plan->name),
 
-                TextEntry::make('status_' . $i)
+                TextEntry::make('status_'.$i)
                     ->label(__('Status'))
                     ->badge()
                     ->getStateUsing(fn () => $versionModel->status),
 
-                TextEntry::make('changed_by_' . $i)
+                TextEntry::make('changed_by_'.$i)
                     ->label(__('Changed By'))
                     ->getStateUsing(fn () => $user->name),
 
-                TextEntry::make('ends_at_' . $i)
+                TextEntry::make('ends_at_'.$i)
                     ->label(__('Ends At'))
                     ->getStateUsing(fn () => date(config('app.datetime_format'), strtotime($versionModel->ends_at))),
 
-                TextEntry::make('payment_provider_status_' . $i)
+                TextEntry::make('payment_provider_status_'.$i)
                     ->label(__('Payment Provider Status'))
                     ->badge()
                     ->getStateUsing(fn () => $versionModel->payment_provider_status ?? '-'),
@@ -218,16 +219,20 @@ class SubscriptionResource extends Resource
                                             ]),
                                         TextEntry::make('plan.name'),
                                         TextEntry::make('price')->formatStateUsing(function (string $state, $record) {
-                                            return money($state, $record->currency->code) . ' / ' . $record->interval->name;
+                                            return money($state, $record->currency->code).' / '.$record->interval->name;
                                         }),
                                         TextEntry::make('payment_provider_id')
                                             ->formatStateUsing(function (string $state, $record) {
                                                 return $record->paymentProvider->name;
                                             })
                                             ->label(__('Payment Provider')),
-                                        TextEntry::make('ends_at')->dateTime(config('app.datetime_format'))->label(__('Next Renewal'))->visible(fn (Subscription $record): bool => !$record->is_canceled_at_end_of_cycle ),
-                                        TextEntry::make('trial_ends_at')->dateTime(config('app.datetime_format'))->label(__('Trial Ends At'))->visible(fn (Subscription $record): bool => $record->trial_ends_at !== null ),
+                                        TextEntry::make('ends_at')->dateTime(config('app.datetime_format'))->label(__('Next Renewal'))->visible(fn (Subscription $record): bool => ! $record->is_canceled_at_end_of_cycle),
+                                        TextEntry::make('trial_ends_at')->dateTime(config('app.datetime_format'))->label(__('Trial Ends At'))->visible(fn (Subscription $record): bool => $record->trial_ends_at !== null),
                                         TextEntry::make('status')
+                                            ->badge()
+                                            ->colors([
+                                                'success' => SubscriptionStatus::ACTIVE->value,
+                                            ])
                                             ->formatStateUsing(fn (string $state, SubscriptionStatusMapper $mapper): string => $mapper->mapForDisplay($state)),
                                         TextEntry::make('is_canceled_at_end_of_cycle')
                                             ->label(__('Renews automatically'))
@@ -246,9 +251,9 @@ class SubscriptionResource extends Resource
                                         TextEntry::make('cancellation_additional_info')
                                             ->label(__('Cancellation Additional Info'))
                                             ->visible(fn (Subscription $record): bool => $record->cancellation_additional_info !== null),
-
-
-
+                                        TextEntry::make('user.name')
+                                            ->url(fn (Subscription $record) => EditUser::getUrl(['record' => $record->user]))
+                                            ->label(__('User')),
                                     ]),
                                 Section::make(__('Discount Details'))
                                     ->hidden(fn (Subscription $record): bool => $record->discounts->isEmpty() ||
@@ -258,7 +263,7 @@ class SubscriptionResource extends Resource
                                     ->schema([
                                         TextEntry::make('discounts.amount')->formatStateUsing(function (string $state, $record) {
                                             if ($record->discounts[0]->type === DiscountConstants::TYPE_PERCENTAGE) {
-                                                return $state . '%';
+                                                return $state.'%';
                                             }
 
                                             return money($state, $record->discounts[0]->code);
@@ -274,7 +279,7 @@ class SubscriptionResource extends Resource
                                     // Filament schema is called multiple times for some reason, so we need to cache the components to avoid performance issues.
                                     return static::subscriptionHistoryComponents($record);
                                 },
-                            )
+                            ),
                     ]),
 
             ]);

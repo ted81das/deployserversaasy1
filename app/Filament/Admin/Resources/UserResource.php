@@ -2,6 +2,8 @@
 
 namespace App\Filament\Admin\Resources;
 
+use App\Filament\Admin\Resources\UserResource\RelationManagers\OrdersRelationManager;
+use App\Filament\Admin\Resources\UserResource\RelationManagers\SubscriptionsRelationManager;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -17,7 +19,7 @@ class UserResource extends Resource
 
     protected static ?string $navigationGroup = 'User Management';
 
-//    protected static ?string $navigationIcon = 'heroicon-o-users';
+    //    protected static ?string $navigationIcon = 'heroicon-o-users';
 
     protected static ?int $navigationSort = 1;
 
@@ -26,40 +28,40 @@ class UserResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make()->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
+                    Forms\Components\TextInput::make('name')
+                        ->required()
+                        ->maxLength(255),
                     Forms\Components\TextInput::make('public_name')
                         ->required()
                         ->nullable()
                         ->helperText('This is the name that will be displayed publicly (for example in blog posts).')
                         ->maxLength(255),
-                Forms\Components\TextInput::make('email')
-                    ->email()
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('password')
-                    ->password()
-                    ->dehydrateStateUsing(fn ($state) => Hash::make($state))
-                    ->dehydrated(fn ($state) => filled($state))
-                    ->required(fn (string $context): bool => $context === 'create')
-                    ->helperText(fn (string $context): string => ($context !== 'create') ? __('Leave blank to keep the current password.'): '')
-                    ->maxLength(255),
-                Forms\Components\Select::make('roles')
-                    ->multiple()
-                    ->relationship('roles', 'name')
-                    ->preload(),
-                Forms\Components\Checkbox::make('is_admin')
-                    ->label('Is Admin?')
-                    ->helperText('If checked, this user will be able to access the admin panel. There has to be at least 1 admin user, so if this field is disabled, you will have to create another admin user first before you can disable this one.')
-                    // there has to be at least 1 admin user
-                    ->disabled(fn (User $user): bool => $user->is_admin && User::where('is_admin', true)->count() === 1)
-                    ->default(false),
-                Forms\Components\Checkbox::make('is_blocked')
-                    ->label('Is Blocked?')
-                    ->disabled(fn (User $user, string $context): bool => $user->is_admin == true || $context === 'create')
-                    ->helperText('If checked, this user will not be able to log in or use any services provided.')
-                    ->default(false),
+                    Forms\Components\TextInput::make('email')
+                        ->email()
+                        ->required()
+                        ->maxLength(255),
+                    Forms\Components\TextInput::make('password')
+                        ->password()
+                        ->dehydrateStateUsing(fn ($state) => Hash::make($state))
+                        ->dehydrated(fn ($state) => filled($state))
+                        ->required(fn (string $context): bool => $context === 'create')
+                        ->helperText(fn (string $context): string => ($context !== 'create') ? __('Leave blank to keep the current password.') : '')
+                        ->maxLength(255),
+                    Forms\Components\Select::make('roles')
+                        ->multiple()
+                        ->relationship('roles', 'name')
+                        ->preload(),
+                    Forms\Components\Checkbox::make('is_admin')
+                        ->label('Is Admin?')
+                        ->helperText('If checked, this user will be able to access the admin panel. There has to be at least 1 admin user, so if this field is disabled, you will have to create another admin user first before you can disable this one.')
+                        // there has to be at least 1 admin user
+                        ->disabled(fn (User $user): bool => $user->is_admin && User::where('is_admin', true)->count() === 1)
+                        ->default(false),
+                    Forms\Components\Checkbox::make('is_blocked')
+                        ->label('Is Blocked?')
+                        ->disabled(fn (User $user, string $context): bool => $user->is_admin == true || $context === 'create')
+                        ->helperText('If checked, this user will not be able to log in or use any services provided.')
+                        ->default(false),
                 ]),
             ]);
     }
@@ -90,7 +92,8 @@ class UserResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            OrdersRelationManager::class,
+            SubscriptionsRelationManager::class,
         ];
     }
 
