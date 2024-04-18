@@ -5,14 +5,15 @@ namespace App\Filament\Admin\Resources;
 use App\Constants\DiscountConstants;
 use App\Constants\OrderStatus;
 use App\Filament\Admin\Resources\OrderResource\Pages;
-use App\Filament\Admin\Resources\OrderResource\RelationManagers;
 use App\Filament\Admin\Resources\UserResource\Pages\EditUser;
 use App\Mapper\OrderStatusMapper;
 use App\Models\Order;
+use Filament\Forms\Components\Builder;
 use Filament\Forms\Form;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
+use Filament\Resources\Components\Tab;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -21,7 +22,7 @@ class OrderResource extends Resource
 {
     protected static ?string $model = Order::class;
 
-//    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    //    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $navigationGroup = 'Revenue';
 
@@ -41,7 +42,7 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->colors([
-                        OrderStatus::SUCCESS->value => 'success',
+                        'success' => OrderStatus::SUCCESS->value,
                     ])
                     ->formatStateUsing(
                         function (string $state, $record, OrderStatusMapper $mapper) {
@@ -65,7 +66,7 @@ class OrderResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('updated_at')->label(__('Updated At'))
                     ->dateTime(config('app.datetime_format'))
-                    ->searchable()->sortable()
+                    ->searchable()->sortable(),
             ])
             ->defaultSort('updated_at', 'desc')
             ->filters([
@@ -111,17 +112,23 @@ class OrderResource extends Resource
                                             return money($state, $record->currency->code);
                                         }),
                                         TextEntry::make('status')
-                                            ->formatStateUsing(fn (string $state, OrderStatusMapper $mapper): string => $mapper->mapForDisplay($state))
-                                            ->badge(),
+                                            ->badge()
+                                            ->colors([
+                                                'success' => OrderStatus::SUCCESS->value,
+                                            ])
+                                            ->formatStateUsing(
+                                                function (string $state, $record, OrderStatusMapper $mapper) {
+                                                    return $mapper->mapForDisplay($state);
+                                                }),
                                         TextEntry::make('discounts.amount')
                                             ->hidden(fn (Order $record): bool => $record->discounts()->count() === 0)
                                             ->formatStateUsing(function (string $state, $record) {
-                                            if ($record->discounts[0]->type === DiscountConstants::TYPE_PERCENTAGE) {
-                                                return $state . '%';
-                                            }
+                                                if ($record->discounts[0]->type === DiscountConstants::TYPE_PERCENTAGE) {
+                                                    return $state.'%';
+                                                }
 
-                                            return money($state, $record->discounts[0]->code);
-                                        })->label(__('Discount Amount')),
+                                                return money($state, $record->discounts[0]->code);
+                                            })->label(__('Discount Amount')),
                                         TextEntry::make('created_at')->dateTime(config('app.datetime_format')),
                                         TextEntry::make('updated_at')->dateTime(config('app.datetime_format')),
                                     ])->columns(3),
@@ -150,10 +157,10 @@ class OrderResource extends Resource
                 return $item->oneTimeProduct->name;
             })
                 ->schema([
-                    TextEntry::make('items.quantity_' . $i)->getStateUsing(fn () => $item->quantity)->label(__('Quantity')),
-                    TextEntry::make('items.price_per_unit_' . $i)->getStateUsing(fn () => money($item->price_per_unit, $order->currency->code))->label(__('Price Per Unit')),
-                    TextEntry::make('items.price_per_unit_after_discount_' . $i)->getStateUsing(fn () => money($item->price_per_unit_after_discount, $order->currency->code)) ->label(__('Price Per Unit After Discount')),
-                    TextEntry::make('items.discount_per_unit_' . $i)->getStateUsing(fn () => money($item->discount_per_unit, $order->currency->code))->label(__('Discount Per Unit')),
+                    TextEntry::make('items.quantity_'.$i)->getStateUsing(fn () => $item->quantity)->label(__('Quantity')),
+                    TextEntry::make('items.price_per_unit_'.$i)->getStateUsing(fn () => money($item->price_per_unit, $order->currency->code))->label(__('Price Per Unit')),
+                    TextEntry::make('items.price_per_unit_after_discount_'.$i)->getStateUsing(fn () => money($item->price_per_unit_after_discount, $order->currency->code))->label(__('Price Per Unit After Discount')),
+                    TextEntry::make('items.discount_per_unit_'.$i)->getStateUsing(fn () => money($item->discount_per_unit, $order->currency->code))->label(__('Discount Per Unit')),
                 ])
                 ->columns(4);
 

@@ -26,7 +26,7 @@ class TransactionResource extends Resource
 
     protected static ?string $navigationGroup = 'Revenue';
 
-//    protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
+    //    protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
 
     public static function form(Form $form): Form
     {
@@ -47,8 +47,8 @@ class TransactionResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->colors([
-                        TransactionStatus::SUCCESS->value => 'success',
-                        TransactionStatus::FAILED->value => 'danger',
+                        'success' => TransactionStatus::SUCCESS->value,
+                        'danger' => TransactionStatus::FAILED->value,
                     ])
                     ->formatStateUsing(function (string $state, $record, TransactionStatusMapper $mapper) {
                         return $mapper->mapForDisplay($state);
@@ -60,8 +60,8 @@ class TransactionResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('owner')
                     ->label(__('Owner'))
-                    ->getStateUsing(fn (Transaction $record) => $record->subscription_id !== null ? ($record->subscription->plan?->name ?? '-') : ($record->order_id !== null ? __('Order Nr. ') . $record->order_id : '-'))
-                    ->url(fn (Transaction $record) => $record->subscription_id !== null  ? ViewSubscription::getUrl(['record' => $record->subscription ]) : ($record->order_id !== null ? ViewOrder::getUrl(['record' => $record->order]) : '-')),
+                    ->getStateUsing(fn (Transaction $record) => $record->subscription_id !== null ? ($record->subscription->plan?->name ?? '-') : ($record->order_id !== null ? __('Order Nr. ').$record->order_id : '-'))
+                    ->url(fn (Transaction $record) => $record->subscription_id !== null ? ViewSubscription::getUrl(['record' => $record->subscription]) : ($record->order_id !== null ? ViewOrder::getUrl(['record' => $record->order]) : '-')),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label(__('Updated At'))
                     ->dateTime(config('app.datetime_format'))
@@ -99,7 +99,6 @@ class TransactionResource extends Resource
         return false;
     }
 
-
     public static function canDeleteAny(): bool
     {
         return false;
@@ -126,11 +125,11 @@ class TransactionResource extends Resource
                                     ->formatStateUsing(function (string $state, $record) {
                                         return $record->subscription->plan?->name ?? '-';
                                     })
-                                    ->url(fn (Transaction $record) => $record->subscription ? ViewSubscription::getUrl(['record' => $record->subscription ]) : '-')->badge(),
+                                    ->url(fn (Transaction $record) => $record->subscription ? ViewSubscription::getUrl(['record' => $record->subscription]) : '-')->badge(),
                                 TextEntry::make('status')
                                     ->colors([
-                                        TransactionStatus::SUCCESS->value => 'success',
-                                        TransactionStatus::FAILED->value => 'danger',
+                                        'success' => TransactionStatus::SUCCESS->value,
+                                        'danger' => TransactionStatus::FAILED->value,
                                     ])
                                     ->formatStateUsing(function (string $state, $record, TransactionStatusMapper $mapper) {
                                         return $mapper->mapForDisplay($state);
@@ -159,15 +158,14 @@ class TransactionResource extends Resource
                             ->columns([
                                 'xl' => 2,
                                 '2xl' => 2,
-                            ])
-                        ,
+                            ]),
                         \Filament\Infolists\Components\Tabs\Tab::make(__('Changes'))
                             ->icon('heroicon-m-arrow-uturn-down')
                             ->schema(function ($record) {
                                 // Filament schema is called multiple times for some reason, so we need to cache the components to avoid performance issues.
                                 return static::subscriptionHistoryComponents($record);
-                            })
-                    ])
+                            }),
+                    ]),
 
             ]);
     }
@@ -181,7 +179,7 @@ class TransactionResource extends Resource
 
     public static function subscriptionHistoryComponents($record): array
     {
-        if (!empty(static::$cachedTransactionHistoryComponents)) {
+        if (! empty(static::$cachedTransactionHistoryComponents)) {
             return static::$cachedTransactionHistoryComponents;
         }
 
@@ -190,17 +188,17 @@ class TransactionResource extends Resource
             $versionModel = $version->getModel();
 
             static::$cachedTransactionHistoryComponents[] = Section::make([
-                TextEntry::make('status_' . $i)
+                TextEntry::make('status_'.$i)
                     ->label(__('Status'))
                     ->badge()
                     ->getStateUsing(fn () => $versionModel->status),
 
-                TextEntry::make('provider_status_' . $i)
+                TextEntry::make('provider_status_'.$i)
                     ->label(__('Payment Provider Status'))
                     ->badge()
                     ->getStateUsing(fn () => $versionModel->payment_provider_status),
 
-                TextEntry::make('amount_' . $i)
+                TextEntry::make('amount_'.$i)
                     ->label(__('Amount'))
                     ->getStateUsing(function () use ($versionModel) {
                         return money($versionModel->amount, $versionModel->currency->code);
@@ -215,5 +213,4 @@ class TransactionResource extends Resource
 
         return static::$cachedTransactionHistoryComponents;
     }
-
 }

@@ -12,13 +12,12 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules\Unique;
 
 class PlanResource extends Resource
 {
     protected static ?string $model = Plan::class;
 
-//    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    //    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $navigationGroup = 'Product Management';
 
@@ -28,66 +27,66 @@ class PlanResource extends Resource
     {
         return $form
             ->schema([
-                    Forms\Components\Section::make([
-                        Forms\Components\TextInput::make('name')
-                            ->required()
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('slug')
-                            ->nullable()
-                            ->dehydrateStateUsing(function ($state, \Filament\Forms\Get $get) {
-                                if (empty($state)) {
-                                    $product = Product::find($get('product_id'));
-                                    $interval = Interval::find($get('interval_id'));
-                                    $intervalCount = $get('interval_count');
-                                    $intervalCountPart = $intervalCount > 1 ? '-' . $intervalCount : '';
-                                    $intervalPart = $interval ? $intervalCountPart . '-' . $interval->adverb : '';
+                Forms\Components\Section::make([
+                    Forms\Components\TextInput::make('name')
+                        ->required()
+                        ->maxLength(255),
+                    Forms\Components\TextInput::make('slug')
+                        ->nullable()
+                        ->dehydrateStateUsing(function ($state, \Filament\Forms\Get $get) {
+                            if (empty($state)) {
+                                $product = Product::find($get('product_id'));
+                                $interval = Interval::find($get('interval_id'));
+                                $intervalCount = $get('interval_count');
+                                $intervalCountPart = $intervalCount > 1 ? '-'.$intervalCount : '';
+                                $intervalPart = $interval ? $intervalCountPart.'-'.$interval->adverb : '';
 
-                                    // add a random string if there is a plan with the same slug
-                                    $state = Str::slug($product->name . $intervalPart);
-                                    if (Plan::where('slug', $state)->exists()) {
-                                        $state .= '-' . Str::random(5);
-                                    }
-
-                                    return Str::slug($state);
+                                // add a random string if there is a plan with the same slug
+                                $state = Str::slug($product->name.$intervalPart);
+                                if (Plan::where('slug', $state)->exists()) {
+                                    $state .= '-'.Str::random(5);
                                 }
 
-                                return $state;
-                            })
-                            ->helperText(__('Leave empty to generate slug automatically from product name & interval.'))
-                            ->maxLength(255)
-                            ->rules(['alpha_dash'])
-                            ->unique(ignoreRecord: true)
-                            ->disabledOn('edit'),
-                        Forms\Components\Select::make('product_id')
-                            // only products with is_default = false can be selected
-                            ->relationship('product', 'name', modifyQueryUsing: fn (Builder $query) => $query->where('is_default', false))
+                                return Str::slug($state);
+                            }
+
+                            return $state;
+                        })
+                        ->helperText(__('Leave empty to generate slug automatically from product name & interval.'))
+                        ->maxLength(255)
+                        ->rules(['alpha_dash'])
+                        ->unique(ignoreRecord: true)
+                        ->disabledOn('edit'),
+                    Forms\Components\Select::make('product_id')
+                        // only products with is_default = false can be selected
+                        ->relationship('product', 'name', modifyQueryUsing: fn (Builder $query) => $query->where('is_default', false))
+                        ->required()
+                        ->preload(),
+                    Forms\Components\Grid::make(2)->schema([
+                        Forms\Components\TextInput::make('interval_count')
+                            ->required()
+                            ->integer()
+                            ->minValue(1)
+                            ->default(1)
+                            ->helperText(__('The number of intervals (weeks, months, etc) between each billing cycle.')),
+                        Forms\Components\Select::make('interval_id')
+                            ->relationship('interval', 'name')
+                            ->helperText(__('The interval (week, month, etc) between each billing cycle.'))
                             ->required()
                             ->preload(),
-                        Forms\Components\Grid::make( 2)->schema([
-                            Forms\Components\TextInput::make('interval_count')
-                                ->required()
-                                ->integer()
-                                ->minValue(1)
-                                ->default(1)
-                                ->helperText(__('The number of intervals (weeks, months, etc) between each billing cycle.')),
-                            Forms\Components\Select::make('interval_id')
-                                ->relationship('interval', 'name')
-                                ->helperText(__('The interval (week, month, etc) between each billing cycle.'))
-                                ->required()
-                                ->preload(),
-                        ])->hidden(
+                    ])->hidden(
+                        fn (\Filament\Forms\Get $get): bool => $get('is_default') === true
+                    ),
+                    Forms\Components\Toggle::make('has_trial')
+                        ->reactive()
+                        ->requiredWith('trial_interval_id')
+                        ->afterStateUpdated(
+                            fn ($state, callable $set) => $state ? $set('trial_interval_id', null) : $set('trial_interval_id', 'hidden')
+                        )
+                        ->hidden(
                             fn (\Filament\Forms\Get $get): bool => $get('is_default') === true
                         ),
-                        Forms\Components\Toggle::make('has_trial')
-                            ->reactive()
-                            ->requiredWith('trial_interval_id')
-                            ->afterStateUpdated(
-                                fn ($state, callable $set) => $state ? $set('trial_interval_id', null) : $set('trial_interval_id', 'hidden')
-                            )
-                            ->hidden(
-                                fn (\Filament\Forms\Get $get): bool => $get('is_default') === true
-                            ),
-                        Forms\Components\Grid::make( 2)->schema([
+                    Forms\Components\Grid::make(2)->schema([
                         Forms\Components\TextInput::make('trial_interval_count')
                             ->required()
                             ->integer()
@@ -108,13 +107,13 @@ class PlanResource extends Resource
                             ->hidden(
                                 fn (\Filament\Forms\Get $get): bool => $get('has_trial') === false
                             ),
-                        ])->hidden(
-                            fn (\Filament\Forms\Get $get): bool => $get('is_default') === true
-                        ),
-                        Forms\Components\Toggle::make('is_active')
-                            ->default(true)
-                            ->required(),
-                        Forms\Components\RichEditor::make('description'),
+                    ])->hidden(
+                        fn (\Filament\Forms\Get $get): bool => $get('is_default') === true
+                    ),
+                    Forms\Components\Toggle::make('is_active')
+                        ->default(true)
+                        ->required(),
+                    Forms\Components\RichEditor::make('description'),
                 ]),
             ]);
     }
@@ -130,11 +129,11 @@ class PlanResource extends Resource
                 Tables\Columns\TextColumn::make('product.name')
                     ->label(__('Product')),
                 Tables\Columns\TextColumn::make('interval')->formatStateUsing(function (string $state, $record) {
-                    return $record->interval_count . ' ' . $record->interval->name;
+                    return $record->interval_count.' '.$record->interval->name;
                 })->label(__('Interval')),
                 Tables\Columns\TextColumn::make('has_trial')->formatStateUsing(function (string $state, $record) {
                     if ($record->has_trial) {
-                        return $record->trial_interval_count . ' ' . $record->trialInterval->name;
+                        return $record->trial_interval_count.' '.$record->trialInterval->name;
                     }
 
                     return '-';
