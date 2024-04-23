@@ -6,7 +6,6 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -34,7 +33,7 @@ Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $requ
     $request->fulfill();
 
     $user = $request->user();
-    if ($user->hasVerifiedEmail())  {
+    if ($user->hasVerifiedEmail()) {
         return redirect()->route('registration.thank-you');
     }
 
@@ -50,7 +49,6 @@ Route::post('/email/verification-notification', function (\Illuminate\Http\Reque
 Route::get('/registration/thank-you', function () {
     return view('auth.thank-you');
 })->middleware('auth')->name('registration.thank-you');
-
 
 Route::get('/auth/{provider}/redirect', [OAuthController::class, 'redirect'])
     ->where('provider', 'google|github|facebook|twitter-oauth-2|linkedin|bitbucket|gitlab')
@@ -121,7 +119,6 @@ Route::get('/privacy-policy', function () {
     return view('pages.privacy-policy');
 })->name('privacy-policy')->middleware('sitemapped');
 
-
 // Product checkout routes
 
 Route::get('/buy/product/{productSlug}/{quantity?}', [
@@ -149,7 +146,6 @@ Route::get('/checkout/product/success', [
     'productCheckoutSuccess',
 ])->name('checkout.product.success')->middleware('auth');
 
-
 // roadmap
 
 Route::get('/roadmap/suggest', [
@@ -165,4 +161,4 @@ Route::get('/roadmap', [
 Route::get('/roadmap/i/{itemSlug}', [
     App\Http\Controllers\RoadmapController::class,
     'viewItem',
-    ])->name('roadmap.viewItem');
+])->name('roadmap.viewItem');
