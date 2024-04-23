@@ -32,7 +32,7 @@ class OrdersRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->colors([
-                        OrderStatus::SUCCESS->value => 'success',
+                        'success' => OrderStatus::SUCCESS->value,
                     ])
                     ->formatStateUsing(
                         function (string $state, $record, OrderStatusMapper $mapper) {

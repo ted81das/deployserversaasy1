@@ -40,7 +40,7 @@ class SubscriptionsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->colors([
-                        SubscriptionStatus::ACTIVE->value => 'success',
+                        'success' => SubscriptionStatus::ACTIVE->value,
                     ])
                     ->formatStateUsing(
                         function (string $state, $record, SubscriptionStatusMapper $mapper) {
