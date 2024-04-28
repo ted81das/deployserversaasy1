@@ -16,7 +16,7 @@ class RoleResource extends Resource
 
     protected static ?string $navigationGroup = 'User Management';
 
-//    protected static ?string $navigationIcon = 'heroicon-o-lock-closed';
+    //    protected static ?string $navigationIcon = 'heroicon-o-lock-closed';
 
     protected static ?int $navigationSort = 2;
 
@@ -25,18 +25,18 @@ class RoleResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make()->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required()
-                    ->helperText('The name of the role.')
-                    ->disabled(fn (?Model $record) => $record && $record->name === 'admin')
-                    ->maxLength(255),
-                Forms\Components\Select::make('permissions')
-                    ->relationship('permissions', 'name')
-                    ->multiple()
-                    ->preload()
-                    ->helperText('Choose the permissions for this role.')
-                    ->disabled(fn (?Model $record) => $record && $record->name === 'admin')
-                    ->placeholder(__('Select permissions...')),
+                    Forms\Components\TextInput::make('name')
+                        ->required()
+                        ->helperText('The name of the role.')
+                        ->disabled(fn (?Model $record) => $record && $record->name === 'admin')
+                        ->maxLength(255),
+                    Forms\Components\Select::make('permissions')
+                        ->disabled(fn (?Model $record) => $record && $record->name === 'admin')
+                        ->relationship('permissions', 'name')
+                        ->multiple()
+                        ->preload()
+                        ->helperText('Choose the permissions for this role.')
+                        ->placeholder(__('Select permissions...')),
                 ]),
             ]);
     }
@@ -49,7 +49,7 @@ class RoleResource extends Resource
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime(config('app.datetime_format'))->sortable(),
                 Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime(config('app.datetime_format'))->sortable()
+                    ->dateTime(config('app.datetime_format'))->sortable(),
             ])
             ->filters([
 
