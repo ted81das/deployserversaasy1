@@ -5,21 +5,19 @@ namespace App\Http\Controllers;
 use App\Constants\SessionConstants;
 use App\Dto\CartDto;
 use App\Dto\CartItemDto;
-use App\Services\CheckoutManager;
+use App\Services\CalculationManager;
 use App\Services\DiscountManager;
 use App\Services\OneTimeProductManager;
 use App\Services\PaymentProviders\PaymentManager;
-use App\Services\PaymentProviders\PaymentProviderInterface;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class ProductCheckoutController extends Controller
 {
     public function __construct(
-        private CheckoutManager    $checkoutManager,
-        private PaymentManager     $paymentManager,
-        private DiscountManager    $discountManager,
+        private PaymentManager $paymentManager,
+        private DiscountManager $discountManager,
         private OneTimeProductManager $productManager,
+        private CalculationManager $calculationManager,
     ) {
 
     }
@@ -32,54 +30,20 @@ class ProductCheckoutController extends Controller
             return redirect()->route('home');
         }
 
-        list($order, $totals) = $this->checkoutManager->initProductCheckout($cartDto);
+        $product = $this->productManager->getOneTimeProductById($cartDto->items[0]->productId);
 
-        $cartDto->orderId = $order->id;
+        $totals = $this->calculationManager->calculateCartTotals($cartDto, auth()->user());
+
         $this->saveCartDto($cartDto);
-
-        $discount = null;
-        if ($cartDto->discountCode !== null) {
-            $discount = $this->discountManager->getActiveDiscountByCode($cartDto->discountCode);
-        }
-
-        if ($request->isMethod('post')) {
-
-            $paymentProvider = $this->paymentManager->getPaymentProviderBySlug(
-                $request->get('payment-provider')
-            );
-
-            $link = $paymentProvider->createProductCheckoutRedirectLink(
-                $order,
-                $discount,
-            );
-
-            return redirect()->away($link);
-        }
 
         $paymentProviders = $this->paymentManager->getActivePaymentProviders();
 
-        $initializedPaymentProviders = [];
-        $providerInitData = [];
-        /** @var PaymentProviderInterface $paymentProvider */
-        foreach ($paymentProviders as $paymentProvider) {
-            try {
-                $providerInitData[$paymentProvider->getSlug()] = $paymentProvider->initProductCheckout($order, $discount);
-                $initializedPaymentProviders[] = $paymentProvider;
-            } catch (\Exception $e) {
-                Log::error($e->getMessage(), [
-                    'exception' => $e,
-                ]);
-            }
-        }
-
         return view('checkout.product', [
-            'paymentProviders' => $initializedPaymentProviders,
-            'providerInitData' => $providerInitData,
-            'order' => $order,
+            'product' => $product,
+            'paymentProviders' => $paymentProviders,
             'totals' => $totals,
             'cartDto' => $cartDto,
             'successUrl' => route('checkout.product.success'),
-            'user' => auth()->user(),
         ]);
     }
 
@@ -93,7 +57,7 @@ class ProductCheckoutController extends Controller
             abort(404);
         }
 
-        if (!$product->is_active) {
+        if (! $product->is_active) {
             abort(404);
         }
 

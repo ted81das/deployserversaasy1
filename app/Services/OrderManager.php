@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Constants\OrderStatus;
 use App\Dto\CartDto;
-use App\Dto\TotalsDto;
 use App\Events\Order\Ordered;
 use App\Events\Order\OrderedRefunded;
 use App\Models\Currency;
@@ -19,7 +18,8 @@ class OrderManager
 {
     public function __construct(
         private CalculationManager $calculationManager,
-    ) {}
+    ) {
+    }
 
     public function create(
         User $user,
@@ -79,7 +79,6 @@ class OrderManager
             ->first();
     }
 
-
     public function updateOrder(
         Order $order,
         array $data
@@ -116,7 +115,7 @@ class OrderManager
         }
     }
 
-    public function refreshOrder(CartDto $cartDto, Order $order): TotalsDto
+    public function refreshOrder(CartDto $cartDto, Order $order)
     {
         $existingProductIds = $order->items->pluck('one_time_product_id')->toArray();
         $newProductIds = [];
@@ -134,9 +133,7 @@ class OrderManager
         $productsToUpdate = array_intersect($existingProductIds, $newProductIds);
         $productsToAdd = OneTimeProduct::whereIn('id', $productIdsToAdd)->get();
 
-        $totals = new TotalsDto();
-
-        DB::transaction(function () use ($order, $productIdsToRemove, $productsToAdd, $cartDto, &$totals, $cartProductToQuantity, $productsToUpdate) {
+        DB::transaction(function () use ($order, $productIdsToRemove, $productsToAdd, $cartDto, $cartProductToQuantity, $productsToUpdate) {
 
             foreach ($productIdsToRemove as $productId) {
                 $order->items()->where('one_time_product_id', $productId)->delete();
@@ -160,17 +157,16 @@ class OrderManager
 
             $order->refresh();
 
-            $totals = $this->calculationManager->calculateOrderTotals($order, auth()->user(), $cartDto->discountCode);
+            $this->calculationManager->calculateOrderTotals($order, auth()->user(), $cartDto->discountCode);
 
             $order->save();
         });
-
-        return $totals;
     }
 
-    public function findNewForUser(int $userId): ?Order
+    public function findNewByIdForUser(int $orderId, User $user): ?Order
     {
-        return Order::where('user_id', $userId)
+        return Order::where('id', $orderId)
+            ->where('user_id', $user->id)
             ->where('status', OrderStatus::NEW)
             ->first();
     }
@@ -179,7 +175,7 @@ class OrderManager
     {
         $product = OneTimeProduct::where('slug', $productSlug)->first();
 
-        if (!$product) {
+        if (! $product) {
             return false;
         }
 

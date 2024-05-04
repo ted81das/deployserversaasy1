@@ -1,9 +1,9 @@
 <?php
 
 namespace App\Services;
-use App\Dto\CartDto;
-use App\Dto\CheckoutDto;
 
+use App\Constants\OrderStatus;
+use App\Dto\CartDto;
 
 class CheckoutManager
 {
@@ -27,14 +27,21 @@ class CheckoutManager
     public function initProductCheckout(CartDto $cartDto)
     {
         $user = auth()->user();
-        $order = $this->orderManager->findNewForUser($user->id);
+
+        $order = null;
+        if ($cartDto->orderId !== null) {
+            $order = $this->orderManager->findNewByIdForUser($cartDto->orderId, $user);
+        }
 
         if ($order === null) {
             $order = $this->orderManager->create($user);
         }
 
-        $totals = $this->orderManager->refreshOrder($cartDto, $order);
+        $this->orderManager->refreshOrder($cartDto, $order);
 
-        return [$order, $totals];
+        $order->status = OrderStatus::PENDING->value;
+        $order->save();
+
+        return $order;
     }
 }

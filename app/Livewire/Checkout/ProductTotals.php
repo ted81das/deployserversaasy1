@@ -6,23 +6,29 @@ use App\Constants\SessionConstants;
 use App\Dto\CartDto;
 use App\Dto\TotalsDto;
 use App\Models\OneTimeProduct;
-use App\Models\Order;
 use App\Services\CalculationManager;
 use App\Services\DiscountManager;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class ProductTotals extends Component
 {
     public $page;
-    public $order;
+
     public $subtotal;
+
     public $product;
+
     public $discountAmount;
+
     public $amountDue;
+
     public $currencyCode;
+
     public $code;
 
     private DiscountManager $discountManager;
+
     private CalculationManager $calculationManager;
 
     public function boot(DiscountManager $discountManager, CalculationManager $calculationManager)
@@ -31,10 +37,9 @@ class ProductTotals extends Component
         $this->calculationManager = $calculationManager;
     }
 
-    public function mount(TotalsDto $totals, Order $order, OneTimeProduct $product, $page)
+    public function mount(TotalsDto $totals, OneTimeProduct $product, $page)
     {
         $this->page = $page;
-        $this->order = $order;
         $this->product = $product;
         $this->totals = $totals;
         $this->subtotal = $totals->subtotal;
@@ -59,13 +64,15 @@ class ProductTotals extends Component
 
         if ($code === null) {
             session()->flash('error', __('Please enter a discount code.'));
+
             return;
         }
 
         $isRedeemable = $this->discountManager->isCodeRedeemableForOneTimeProduct($code, auth()->user(), $this->product);
 
-        if (!$isRedeemable) {
+        if (! $isRedeemable) {
             session()->flash('error', __('This discount code is invalid.'));
+
             return;
         }
 
@@ -77,8 +84,6 @@ class ProductTotals extends Component
         $this->updateTotals();
 
         session()->flash('success', __('The discount code has been applied.'));
-
-        return redirect($this->page);  // we have to redirect to the same page as payment provider init has to be done again (which is done on checkout page load)
     }
 
     public function remove()
@@ -90,17 +95,14 @@ class ProductTotals extends Component
         session()->flash('success', __('The discount code has been removed.'));
 
         $this->updateTotals();
-
-        return redirect($this->page);  // we have to redirect to the same page as payment provider init has to be done again (which is done on checkout page load)
     }
 
-    protected function updateTotals()
+    #[On('calculations-updated')]
+    public function updateTotals()
     {
-        $cartDto = $this->getCartDto();
-        $totals = $this->calculationManager->calculateOrderTotals(
-            $this->order,
-            auth()->user(),
-            $cartDto->discountCode
+        $totals = $this->calculationManager->calculateCartTotals(
+            $this->getCartDto(),
+            auth()->user()
         );
 
         $this->subtotal = $totals->subtotal;

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\UserManager;
+use App\Validator\RegisterValidator;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
@@ -31,13 +33,10 @@ class RegisterController extends Controller
      */
     //    protected $redirectTo = '/email/verify';
 
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
+    public function __construct(
+        private RegisterValidator $registerValidator,
+        private UserManager $userManager,
+    ) {
         $this->middleware('guest');
     }
 
@@ -53,17 +52,7 @@ class RegisterController extends Controller
      */
     protected function validator(array $data)
     {
-        $rules = [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ];
-
-        if (config('app.recaptcha_enabled')) {
-            $rules[recaptchaFieldName()] = recaptchaRuleName();
-        }
-
-        return Validator::make($data, $rules);
+        return $this->registerValidator->validate($data);
     }
 
     /**
@@ -73,11 +62,7 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        return User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-        ]);
+        return $this->userManager->createUser($data);
     }
 
     /**

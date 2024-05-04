@@ -19,7 +19,6 @@ use Illuminate\Http\Request;
 
 class PaddleWebhookHandler
 {
-
     public function __construct(
         private SubscriptionManager $subscriptionManager,
         private TransactionManager $transactionManager,
@@ -30,9 +29,9 @@ class PaddleWebhookHandler
 
     public function handleWebhook(Request $request): JsonResponse
     {
-        if (!$this->validateSignature($request)) {
+        if (! $this->validateSignature($request)) {
             return response()->json([
-                'message' => 'Invalid signature'
+                'message' => 'Invalid signature',
             ], 400);
         }
 
@@ -53,9 +52,9 @@ class PaddleWebhookHandler
         ) {
             $subscriptionUuid = $eventData['custom_data']['subscriptionUuid'] ?? null;
 
-            if (!$subscriptionUuid) {
+            if (! $subscriptionUuid) {
                 return response()->json([
-                    'message' => 'Subscription uuid not found'
+                    'message' => 'Subscription uuid not found',
                 ], 400);
             }
 
@@ -74,7 +73,7 @@ class PaddleWebhookHandler
 
             if ($item === null) {
                 return response()->json([
-                    'message' => 'Subscription item not found'
+                    'message' => 'Subscription item not found',
                 ], 400);
             }
 
@@ -98,21 +97,21 @@ class PaddleWebhookHandler
                 'trial_ends_at' => $trialEndsAt,
                 'canceled_at' => $canceledAt,
             ]);
-        } else if ($eventType == 'transaction.created') {
+        } elseif ($eventType == 'transaction.created') {
             $subscriptionUuid = $eventData['custom_data']['subscriptionUuid'] ?? null;
             $orderUuid = $eventData['custom_data']['orderUuid'] ?? null;
 
-            if (!empty($subscriptionUuid)) {
+            if (! empty($subscriptionUuid)) {
                 $this->handleTransactionCreatedForSubscription($subscriptionUuid, $eventData, $paymentProvider);
-            } elseif (!empty($orderUuid)) {
+            } elseif (! empty($orderUuid)) {
                 $this->handleTransactionCreatedForOrder($orderUuid, $eventData, $paymentProvider);
             } else {
                 return response()->json([
-                    'message' => 'Subscription uuid or order uuid not found'
+                    'message' => 'Subscription uuid or order uuid not found',
                 ], 400);
             }
 
-        } else if (
+        } elseif (
             $eventType == 'transaction.billed' ||
             $eventType == 'transaction.canceled' ||
             $eventType == 'transaction.completed' ||
@@ -136,12 +135,12 @@ class PaddleWebhookHandler
             );
 
             $orderUuid = $eventData['custom_data']['orderUuid'] ?? null;
-            if (!empty($orderUuid)) {
+            if (! empty($orderUuid)) {
                 $order = $this->orderManager->findByUuidOrFail($orderUuid);
                 $currentStatus = OrderStatus::tryFrom($order->status);
                 $newStatus = $this->mapPaddleTransactionStatusToOrderStatus($paddleTransactionStatus);
 
-                if (!in_array($currentStatus, OrderStatusConstants::FINAL_STATUSES) ||
+                if (! in_array($currentStatus, OrderStatusConstants::FINAL_STATUSES) ||
                     (in_array($currentStatus, OrderStatusConstants::FINAL_STATUSES) && in_array($newStatus, OrderStatusConstants::FINAL_STATUSES))) {
                     // we only update the order status if it's not in a final state or if it's in a final state and the new status is also a final state
                     // this is to prevent updating the order status from a final state to a non-final state due to a webhook event coming in late
@@ -151,7 +150,7 @@ class PaddleWebhookHandler
                     ]);
                 }
             }
-        } else if (
+        } elseif (
             $eventType == 'transaction.past_due' ||
             $eventType == 'transaction.payment_failed'
         ) {
@@ -159,7 +158,7 @@ class PaddleWebhookHandler
             $paddleTransactionStatus = $eventData['status'];
             // update transaction
 
-            $errorReason = $eventData['payments'] ? ($eventData['payments'][0]['error_code'] ?? null ) : null;
+            $errorReason = $eventData['payments'] ? ($eventData['payments'][0]['error_code'] ?? null) : null;
 
             $this->transactionManager->updateTransactionByPaymentProviderTxId(
                 $paddleTransactionId,
@@ -171,17 +170,16 @@ class PaddleWebhookHandler
             $subscriptionUuid = $eventData['custom_data']['subscriptionUuid'] ?? null;
             $orderUuid = $eventData['custom_data']['orderUuid'] ?? null;
 
-            if (!empty($subscriptionUuid)) {
+            if (! empty($subscriptionUuid)) {
                 $this->handleTransactionFailedOrPastDueForSubscription($subscriptionUuid);
-            } elseif (!empty($orderUuid)) {
+            } elseif (! empty($orderUuid)) {
                 $this->handleTransactionFailedOrPastDueForOrder($orderUuid);
             } else {
                 return response()->json([
-                    'message' => 'Subscription uuid or order uuid not found'
+                    'message' => 'Subscription uuid or order uuid not found',
                 ], 400);
             }
-        }
-        else if (
+        } elseif (
             $eventType == 'adjustment.created' ||
             $eventType == 'adjustment.updated'
         ) {
@@ -221,8 +219,7 @@ class PaddleWebhookHandler
                     ]);
                 }
             }
-        }
-        else {
+        } else {
             return response()->json();
         }
 
@@ -376,7 +373,7 @@ class PaddleWebhookHandler
         $timestamp = explode('=', $timestampPart)[1] ?? '';
         $h1 = explode('=', $h1Part)[1] ?? '';
 
-        $data = $timestamp . ':' . $request->getContent();
+        $data = $timestamp.':'.$request->getContent();
 
         $contentSignature = hash_hmac('sha256', $data, $secret);
 

@@ -2,7 +2,7 @@
     @php $isDiscountCodeAdded = !empty($addedCode); @endphp
     <div x-data="{ discountFormVisible: @js($isDiscountCodeAdded) }">
         <div class="text-end">
-            <a href="#" class="text-primary-500 text-sm" x-on:click.prevent=" discountFormVisible = !discountFormVisible "
+            <a href="#" class="text-primary-500 text-sm mt-4 mb-2 inline-block" x-on:click.prevent=" discountFormVisible = !discountFormVisible "
                x-show="!discountFormVisible">{{ __('Have a coupon code?') }}</a>
         </div>
 
@@ -41,7 +41,7 @@
                                value="{{$addedCode ?? ''}}" disabled="{{$isDiscountCodeAdded}}"/>
 
                         <x-button-link.primary-outline elementType="button" type="submit"
-                                                       class="!text-primary-500 !border-primary-500 !text-xs !py-1">
+                                                       class="!text-primary-500 !border-primary-500 !text-xs !py-1 ">
                             {{ __('Add Discount') }}
                         </x-button-link.primary-outline>
                     </div>

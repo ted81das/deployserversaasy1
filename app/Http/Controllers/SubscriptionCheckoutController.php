@@ -11,21 +11,21 @@ use App\Services\DiscountManager;
 use App\Services\PaymentProviders\PaymentManager;
 use App\Services\PaymentProviders\PaymentProviderInterface;
 use App\Services\SubscriptionManager;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class SubscriptionCheckoutController extends Controller
 {
     public function __construct(
-        private CheckoutManager    $checkoutManager,
-        private PaymentManager     $paymentManager,
-        private DiscountManager    $discountManager,
+        private CheckoutManager $checkoutManager,
+        private PaymentManager $paymentManager,
+        private DiscountManager $discountManager,
         private CalculationManager $calculationManager,
         private SubscriptionManager $subscriptionManager,
     ) {
 
     }
+
     public function subscriptionCheckout(string $planSlug, Request $request)
     {
         $plan = Plan::where('slug', $planSlug)->where('is_active', true)->firstOrFail();

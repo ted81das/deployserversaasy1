@@ -1,7 +1,9 @@
 <?php
 
 namespace App\Services;
+
 use App\Constants\DiscountConstants;
+use App\Dto\CartDto;
 use App\Dto\TotalsDto;
 use App\Models\Currency;
 use App\Models\OneTimeProduct;
@@ -16,9 +18,11 @@ class CalculationManager
     public function __construct(
         private PlanManager $planManager,
         private DiscountManager $discountManager,
+        private OneTimeProductManager $oneTimeProductManager,
     ) {
 
     }
+
     /**
      * Subscription price equals to the plan price
      */
@@ -40,7 +44,7 @@ class CalculationManager
         return $oneTimeProduct->prices()->where('currency_id', $defaultCurrency->id)->firstOrFail();
     }
 
-    public function calculatePlanTotals(User $user, string $planSlug, string $discountCode = null, string $actionType = DiscountConstants::ACTION_TYPE_ANY): TotalsDto
+    public function calculatePlanTotals(User $user, string $planSlug, ?string $discountCode = null, string $actionType = DiscountConstants::ACTION_TYPE_ANY): TotalsDto
     {
         $plan = $this->planManager->getActivePlanBySlug($planSlug);
 
@@ -48,7 +52,7 @@ class CalculationManager
             throw new \Exception('Plan not found');
         }
 
-        if ($discountCode !== null && !$this->discountManager->isCodeRedeemableForPlan($discountCode, $user, $plan, $actionType)) {
+        if ($discountCode !== null && ! $this->discountManager->isCodeRedeemableForPlan($discountCode, $user, $plan, $actionType)) {
             throw new \Exception('Discount code is not redeemable');
         }
 
@@ -70,7 +74,7 @@ class CalculationManager
         return $totalsDto;
     }
 
-    public function calculateNewPlanTotals (User $user, string $planSlug, bool $withProration = false): TotalsDto
+    public function calculateNewPlanTotals(User $user, string $planSlug, bool $withProration = false): TotalsDto
     {
         $plan = $this->planManager->getActivePlanBySlug($planSlug);
 
@@ -88,18 +92,49 @@ class CalculationManager
 
         $totalsDto->discountAmount = 0;
 
-        if (!$withProration) {
+        if (! $withProration) {
             $totalsDto->amountDue = max(0, $totalsDto->subtotal - $totalsDto->discountAmount);
         }
 
         return $totalsDto;
     }
 
-    public function calculateOrderTotals (Order $order, User $user, string $discountCode = null): TotalsDto
+    public function calculateCartTotals(CartDto $cart, ?User $user): TotalsDto
     {
         $totalsDto = new TotalsDto();
         $totalsDto->currencyCode = config('app.default_currency');
         $currency = Currency::where('code', $totalsDto->currencyCode)->firstOrFail();
+
+        $totalAmount = 0;
+        $totalAmountAfterDiscount = 0;
+
+        foreach ($cart->items as $item) {
+
+            $product = $this->oneTimeProductManager->getOneTimeProductById($item->productId);
+            $productPrice = $product->prices()->where('currency_id', $currency->id)->firstOrFail();
+
+            $totalAmount += $productPrice->price * $item->quantity;
+
+            $itemDiscountedPrice = $productPrice->price;
+            $discountCode = $cart->discountCode;
+            if ($discountCode !== null && $this->discountManager->isCodeRedeemableForOneTimeProduct($discountCode, $user, $product)) {
+                $discountAmount = $this->discountManager->getDiscountAmount($discountCode, $productPrice->price);
+                $itemDiscountedPrice = max(0, $productPrice->price - $discountAmount);
+            }
+
+            $totalAmountAfterDiscount += $itemDiscountedPrice * $item->quantity;
+        }
+
+        $totalsDto->subtotal = $totalAmount;
+        $totalsDto->amountDue = $totalAmountAfterDiscount;
+        $totalsDto->discountAmount = max(0, $totalAmount - $totalAmountAfterDiscount);
+
+        return $totalsDto;
+    }
+
+    public function calculateOrderTotals(Order $order, User $user, ?string $discountCode = null)
+    {
+        $currency = Currency::where('code', config('app.default_currency'))->firstOrFail();
 
         $totalAmount = 0;
         $totalAmountAfterDiscount = 0;
@@ -136,11 +171,5 @@ class CalculationManager
         $order->currency_id = $currency->id;
 
         $order->save();
-
-        $totalsDto->subtotal = $totalAmount;
-        $totalsDto->amountDue = $totalAmountAfterDiscount;
-        $totalsDto->discountAmount = max(0, $totalAmount - $totalAmountAfterDiscount);
-
-        return $totalsDto;
     }
 }

@@ -92,7 +92,7 @@ class OrderResource extends Resource
                                             ->hidden(fn (Order $record): bool => $record->discounts()->count() === 0)
                                             ->formatStateUsing(function (string $state, $record) {
                                                 if ($record->discounts[0]->type === DiscountConstants::TYPE_PERCENTAGE) {
-                                                    return $state . '%';
+                                                    return $state.'%';
                                                 }
 
                                                 return money($state, $record->discounts[0]->code);
@@ -125,10 +125,10 @@ class OrderResource extends Resource
                 return $item->oneTimeProduct->name;
             })
                 ->schema([
-                    TextEntry::make('items.quantity_' . $i)->getStateUsing(fn () => $item->quantity)->label(__('Quantity')),
-                    TextEntry::make('items.price_per_unit_' . $i)->getStateUsing(fn () => money($item->price_per_unit, $order->currency->code))->label(__('Price Per Unit')),
-                    TextEntry::make('items.price_per_unit_after_discount_' . $i)->getStateUsing(fn () => money($item->price_per_unit_after_discount, $order->currency->code)) ->label(__('Price Per Unit After Discount')),
-                    TextEntry::make('items.discount_per_unit_' . $i)->getStateUsing(fn () => money($item->discount_per_unit, $order->currency->code))->label(__('Discount Per Unit')),
+                    TextEntry::make('items.quantity_'.$i)->getStateUsing(fn () => $item->quantity)->label(__('Quantity')),
+                    TextEntry::make('items.price_per_unit_'.$i)->getStateUsing(fn () => money($item->price_per_unit, $order->currency->code))->label(__('Price Per Unit')),
+                    TextEntry::make('items.price_per_unit_after_discount_'.$i)->getStateUsing(fn () => money($item->price_per_unit_after_discount, $order->currency->code))->label(__('Price Per Unit After Discount')),
+                    TextEntry::make('items.discount_per_unit_'.$i)->getStateUsing(fn () => money($item->discount_per_unit, $order->currency->code))->label(__('Discount Per Unit')),
                 ])
                 ->columns(4);
 

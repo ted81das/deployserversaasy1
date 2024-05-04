@@ -20,13 +20,13 @@ class DiscountManager
     {
         $discountCode = DiscountCode::where('code', $code)->first();
 
-        if (!$this->isCodeRedeemable($discountCode, $user, $actionType)) {
+        if (! $this->isCodeRedeemable($discountCode, $user, $actionType)) {
             return false;
         }
 
         // plans check
         if ($discountCode->discount->plans()->count() > 0) {
-            if (!$discountCode->discount->plans()->where('plan_id', $plan->id)->exists()) {
+            if (! $discountCode->discount->plans()->where('plan_id', $plan->id)->exists()) {
                 return false;
             }
         }
@@ -34,17 +34,17 @@ class DiscountManager
         return true;
     }
 
-    public function isCodeRedeemableForOneTimeProduct(string $code, User $user, OneTimeProduct $oneTimeProduct, string $actionType = DiscountConstants::ACTION_TYPE_ANY)
+    public function isCodeRedeemableForOneTimeProduct(string $code, ?User $user, OneTimeProduct $oneTimeProduct, string $actionType = DiscountConstants::ACTION_TYPE_ANY)
     {
         $discountCode = DiscountCode::where('code', $code)->first();
 
-        if (!$this->isCodeRedeemable($discountCode, $user, $actionType)) {
+        if (! $this->isCodeRedeemable($discountCode, $user, $actionType)) {
             return false;
         }
 
         // one-time products check
         if ($discountCode->discount->oneTimeProducts()->count() > 0) {
-            if (!$discountCode->discount->oneTimeProducts()->where('one_time_product_id', $oneTimeProduct->id)->exists()) {
+            if (! $discountCode->discount->oneTimeProducts()->where('one_time_product_id', $oneTimeProduct->id)->exists()) {
                 return false;
             }
         }
@@ -52,7 +52,7 @@ class DiscountManager
         return true;
     }
 
-    private function isCodeRedeemable(?DiscountCode $discountCode, User $user, string $actionType = DiscountConstants::ACTION_TYPE_ANY)
+    private function isCodeRedeemable(?DiscountCode $discountCode, ?User $user, string $actionType = DiscountConstants::ACTION_TYPE_ANY)
     {
         if ($discountCode === null) {
             return false;
@@ -60,7 +60,7 @@ class DiscountManager
 
         $discount = $discountCode->discount;
 
-        if (!$discount->is_active) {
+        if (! $discount->is_active) {
             return false;
         }
 
@@ -82,7 +82,7 @@ class DiscountManager
         }
 
         // redemptions for this user
-        if ($discount->max_redemptions_per_user !== null && $discount->max_redemptions_per_user != -1) {
+        if ($user && $discount->max_redemptions_per_user !== null && $discount->max_redemptions_per_user != -1) {
             $redemptions = $discountCode->redemptions()->where('user_id', $user->id)->count();
 
             if ($redemptions >= $discount->max_redemptions_per_user) {
@@ -93,7 +93,7 @@ class DiscountManager
         return true;
     }
 
-    public function redeemCodeForSubscription(string $code, User $user, string $subscriptionId = null): void
+    public function redeemCodeForSubscription(string $code, User $user, ?string $subscriptionId = null): void
     {
         $discountCode = DiscountCode::where('code', $code)->firstOrFail();
 
@@ -120,7 +120,7 @@ class DiscountManager
 
     }
 
-    public function redeemCodeForOrder(string $code, User $user, string $orderId = null): void
+    public function redeemCodeForOrder(string $code, User $user, ?string $orderId = null): void
     {
         $discountCode = DiscountCode::where('code', $code)->firstOrFail();
 
@@ -174,7 +174,7 @@ class DiscountManager
         return null;
     }
 
-    public function addPaymentProviderDiscountId (Discount $discount, PaymentProvider $paymentProvider, string $paymentProviderDiscountId): void
+    public function addPaymentProviderDiscountId(Discount $discount, PaymentProvider $paymentProvider, string $paymentProviderDiscountId): void
     {
         DiscountPaymentProviderData::create([
             'discount_id' => $discount->id,

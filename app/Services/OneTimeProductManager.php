@@ -11,6 +11,10 @@ use App\Models\PaymentProvider;
 
 class OneTimeProductManager
 {
+    public function getOneTimeProductById(?int $id): OneTimeProduct
+    {
+        return OneTimeProduct::findOrFail($id);
+    }
 
     public function findByPaymentProviderProductId(PaymentProvider $paymentProvider, string $paymentProviderProductId): ?OneTimeProduct
     {
@@ -31,7 +35,7 @@ class OneTimeProductManager
 
         $defaultCurrencyObject = Currency::where('code', $defaultCurrency)->first();
 
-        if (!$defaultCurrencyObject) {
+        if (! $defaultCurrencyObject) {
             return null;
         }
 
