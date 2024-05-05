@@ -12,5 +12,7 @@ class PaymentProvider extends Model
     protected $fillable = [
         'name',
         'is_active',
+        'type',
+        'slug',
     ];
 }

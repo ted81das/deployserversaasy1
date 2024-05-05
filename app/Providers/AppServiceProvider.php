@@ -3,10 +3,10 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Services\PaymentProviders\LemonSqueezy\LemonSqueezyProvider;
 use App\Services\PaymentProviders\Paddle\PaddleProvider;
 use App\Services\PaymentProviders\PaymentManager;
 use App\Services\PaymentProviders\Stripe\StripeProvider;
-use App\Services\PaymentProviders\LemonSqueezy\LemonSqueezyProvider;
 use App\Services\SubscriptionManager;
 use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
@@ -31,7 +31,7 @@ class AppServiceProvider extends ServiceProvider
             LemonSqueezyProvider::class,
         ], 'payment-providers');
 
-        $this->app->bind(PaymentManager::class, function() {
+        $this->app->bind(PaymentManager::class, function () {
             return new PaymentManager(...$this->app->tagged('payment-providers'));
         });
 
@@ -43,10 +43,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         FilamentAsset::register([
-            Js::make('components-script', __DIR__ . '/../../resources/js/components.js'),
+            Js::make('components-script', __DIR__.'/../../resources/js/components.js'),
         ]);
 
-        Blade::if('subscribed', function (string $productSlug = null) {
+        Blade::if('subscribed', function (?string $productSlug = null) {
             /** @var User $user */
             $user = auth()->user();
 
@@ -56,17 +56,17 @@ class AppServiceProvider extends ServiceProvider
             return $subscriptionManager->isUserSubscribed($user, $productSlug);
         });
 
-        Blade::if('notsubscribed', function (string $productSlug = null) {
+        Blade::if('notsubscribed', function (?string $productSlug = null) {
             /** @var User $user */
             $user = auth()->user();
 
             /** @var SubscriptionManager $subscriptionManager */
             $subscriptionManager = app(SubscriptionManager::class);
 
-            return !$subscriptionManager->isUserSubscribed($user, $productSlug);
+            return ! $subscriptionManager->isUserSubscribed($user, $productSlug);
         });
 
-        Blade::if('trialing', function (string $productSlug = null) {
+        Blade::if('trialing', function (?string $productSlug = null) {
             /** @var User $user */
             $user = auth()->user();
 
