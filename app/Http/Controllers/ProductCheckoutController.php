@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Constants\SessionConstants;
-use App\Dto\CartDto;
 use App\Dto\CartItemDto;
 use App\Services\CalculationManager;
 use App\Services\DiscountManager;
 use App\Services\OneTimeProductManager;
 use App\Services\PaymentProviders\PaymentManager;
-use Illuminate\Http\Request;
+use App\Services\SessionManager;
 
 class ProductCheckoutController extends Controller
 {
@@ -18,13 +16,14 @@ class ProductCheckoutController extends Controller
         private DiscountManager $discountManager,
         private OneTimeProductManager $productManager,
         private CalculationManager $calculationManager,
+        private SessionManager $sessionManager,
     ) {
 
     }
 
-    public function productCheckout(Request $request)
+    public function productCheckout()
     {
-        $cartDto = $this->getCartDto();
+        $cartDto = $this->sessionManager->getCartDto();
 
         if (empty($cartDto->items)) {
             return redirect()->route('home');
@@ -34,7 +33,7 @@ class ProductCheckoutController extends Controller
 
         $totals = $this->calculationManager->calculateCartTotals($cartDto, auth()->user());
 
-        $this->saveCartDto($cartDto);
+        $this->sessionManager->saveCartDto($cartDto);
 
         $paymentProviders = $this->paymentManager->getActivePaymentProviders();
 
@@ -49,7 +48,7 @@ class ProductCheckoutController extends Controller
 
     public function addToCart(string $productSlug, int $quantity = 1)
     {
-        $cartDto = $this->clearCartDto();  // use getCartDto() instead of clearCartDto() when allowing full cart checkout with multiple items
+        $cartDto = $this->sessionManager->clearCartDto();  // use getCartDto() instead of clearCartDto() when allowing full cart checkout with multiple items
 
         $product = $this->productManager->getProductWithPriceBySlug($productSlug);
 
@@ -74,7 +73,7 @@ class ProductCheckoutController extends Controller
             if ($item->productId == $product->id) {
                 $item->quantity += $quantity;
                 $item->quantity = min($item->quantity, $product->max_quantity);
-                $this->saveCartDto($cartDto);
+                $this->sessionManager->saveCartDto($cartDto);
 
                 return redirect()->route('checkout.product');
             }
@@ -86,14 +85,14 @@ class ProductCheckoutController extends Controller
 
         $cartDto->items[] = $cartItem;
 
-        $this->saveCartDto($cartDto);
+        $this->sessionManager->saveCartDto($cartDto);
 
         return redirect()->route('checkout.product');
     }
 
     public function productCheckoutSuccess()
     {
-        $cartDto = $this->getCartDto();
+        $cartDto = $this->sessionManager->getCartDto();
 
         if ($cartDto->orderId === null) {
             return redirect()->route('home');
@@ -103,32 +102,8 @@ class ProductCheckoutController extends Controller
             $this->discountManager->redeemCodeForOrder($cartDto->discountCode, auth()->user(), $cartDto->orderId);
         }
 
-        $this->clearCartDto();
+        $this->sessionManager->clearCartDto();
 
         return view('checkout.product-thank-you');
-    }
-
-    private function getCartDto(): CartDto
-    {
-        return session()->get(SessionConstants::CART_DTO) ?? new CartDto();
-    }
-
-    private function saveCartDto(CartDto $cartDto): void
-    {
-        session()->put(SessionConstants::CART_DTO, $cartDto);
-    }
-
-    private function clearCartDto(): CartDto
-    {
-        session()->forget(SessionConstants::CART_DTO);
-
-        return new CartDto();
-    }
-
-    public function clearCart()
-    {
-        $this->clearCartDto();
-
-        return redirect()->route('home');
     }
 }

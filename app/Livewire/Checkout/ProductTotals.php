@@ -41,7 +41,6 @@ class ProductTotals extends Component
     {
         $this->page = $page;
         $this->product = $product;
-        $this->totals = $totals;
         $this->subtotal = $totals->subtotal;
         $this->discountAmount = $totals->discountAmount;
         $this->amountDue = $totals->amountDue;

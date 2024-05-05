@@ -11,7 +11,7 @@
 
     <x-section.columns class="max-w-none md:max-w-6xl flex-wrap-reverse">
         <x-section.column>
-            <livewire:checkout.checkout-form />
+            <livewire:checkout.product-checkout-form />
         </x-section.column>
 
 

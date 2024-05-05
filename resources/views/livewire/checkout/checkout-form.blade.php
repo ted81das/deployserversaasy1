@@ -56,6 +56,16 @@
                     </span>
                 @enderror
 
+                @if($userExists)
+                    @if (Route::has('password.request'))
+                        <div class="text-end">
+                            <a class="text-primary-500 text-xs" href="{{ route('password.request') }}">
+                                {{ __('Forgot Your Password?') }}
+                            </a>
+                        </div>
+                    @endif
+                @endif
+
 
                 @if(!$userExists || empty($email))
                     <label class="form-control w-full" for="name">
@@ -120,7 +130,7 @@
                     <x-auth.social-login>
                         <x-slot name="before">
                             <div class="flex flex-col w-full">
-                                <div class="divider">{{ __('or continue with') }}</div>
+                                <div class="divider">{{ __('or') }}</div>
                             </div>
                         </x-slot>
                     </x-auth.social-login>

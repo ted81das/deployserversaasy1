@@ -44,7 +44,7 @@ class CalculationManager
         return $oneTimeProduct->prices()->where('currency_id', $defaultCurrency->id)->firstOrFail();
     }
 
-    public function calculatePlanTotals(User $user, string $planSlug, ?string $discountCode = null, string $actionType = DiscountConstants::ACTION_TYPE_ANY): TotalsDto
+    public function calculatePlanTotals(?User $user, string $planSlug, ?string $discountCode = null, string $actionType = DiscountConstants::ACTION_TYPE_ANY): TotalsDto
     {
         $plan = $this->planManager->getActivePlanBySlug($planSlug);
 

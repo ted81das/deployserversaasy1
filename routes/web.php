@@ -63,10 +63,9 @@ Route::get('/checkout/plan/{planSlug}', [
     'subscriptionCheckout',
 ])->name('checkout.subscription');
 
-Route::post('/checkout/plan/{planSlug}', [
-    App\Http\Controllers\SubscriptionCheckoutController::class,
-    'subscriptionCheckout',
-])->name('checkout.subscription.post');
+Route::get('/already-subscribed', function () {
+    return view('checkout.already-subscribed');
+})->name('checkout.subscription.already-subscribed');
 
 Route::get('/checkout/subscription/success', [
     App\Http\Controllers\SubscriptionCheckoutController::class,

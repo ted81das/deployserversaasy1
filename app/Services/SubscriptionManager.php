@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services;
+
 use App\Constants\PaymentProviderConstants;
 use App\Constants\SubscriptionStatus;
 use App\Events\Subscription\InvoicePaymentFailed;
@@ -25,14 +26,20 @@ class SubscriptionManager
     ) {
 
     }
+
+    public function canCreateSubscription(int $userId): bool
+    {
+        $notDeadSubscriptions = $this->findAllSubscriptionsThatAreNotDead($userId);
+
+        return count($notDeadSubscriptions) === 0;
+    }
+
     public function create(string $planSlug, int $userId, ?PaymentProvider $paymentProvider = null, ?string $paymentProviderSubscriptionId = null): Subscription
     {
         $plan = Plan::where('slug', $planSlug)->where('is_active', true)->firstOrFail();
 
-        $notDeadSubscriptions = $this->findAllSubscriptionsThatAreNotDead($userId);
-
-        if (count($notDeadSubscriptions) > 0) {
-            throw new SubscriptionCreationNotAllowedException('You already have subscription.');
+        if (! $this->canCreateSubscription($userId)) {
+            throw new SubscriptionCreationNotAllowedException(__('You already have subscription.'));
         }
 
         $newSubscription = null;
@@ -195,10 +202,9 @@ class SubscriptionManager
         InvoicePaymentFailed::dispatch($subscription);
     }
 
-
     public function calculateSubscriptionTrialDays(Plan $plan): int
     {
-        if (!$plan->has_trial) {
+        if (! $plan->has_trial) {
             return 0;
         }
 
@@ -218,7 +224,7 @@ class SubscriptionManager
 
         $newPlan = $this->planManager->getActivePlanBySlug($newPlanSlug);
 
-        if (!$newPlan) {
+        if (! $newPlan) {
             return false;
         }
 
@@ -277,9 +283,9 @@ class SubscriptionManager
         return $result;
     }
 
-    public function isUserSubscribed(?User $user, string $productSlug = null): bool
+    public function isUserSubscribed(?User $user, ?string $productSlug = null): bool
     {
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -297,9 +303,9 @@ class SubscriptionManager
         return $subscriptions->count() > 0;
     }
 
-    public function isUserTrialing(?User $user, string $productSlug = null): bool
+    public function isUserTrialing(?User $user, ?string $productSlug = null): bool
     {
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -319,7 +325,7 @@ class SubscriptionManager
 
     public function getUserSubscriptionProductMetadata(?User $user): array
     {
-        if (!$user) {
+        if (! $user) {
             return [];
         }
 
@@ -328,11 +334,11 @@ class SubscriptionManager
             ->where('ends_at', '>', Carbon::now())
             ->first();
 
-        if (!$subscription) {
+        if (! $subscription) {
             // if there is no active subscription, return metadata of default product
             $defaultProduct = Product::where('is_default', true)->first();
 
-            if (!$defaultProduct) {
+            if (! $defaultProduct) {
                 return [];
             }
 
@@ -350,13 +356,11 @@ class SubscriptionManager
 
     public function canCancelSubscription(Subscription $subscription)
     {
-        return !$subscription->is_canceled_at_end_of_cycle && $subscription->status === SubscriptionStatus::ACTIVE->value;
+        return ! $subscription->is_canceled_at_end_of_cycle && $subscription->status === SubscriptionStatus::ACTIVE->value;
     }
 
     public function canDiscardSubscriptionCancellation(Subscription $subscription)
     {
         return $subscription->is_canceled_at_end_of_cycle && $subscription->status === SubscriptionStatus::ACTIVE->value;
     }
-
-
 }

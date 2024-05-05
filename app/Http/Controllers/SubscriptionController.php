@@ -15,8 +15,7 @@ class SubscriptionController extends Controller
         private SubscriptionManager $subscriptionManager,
         private PaymentManager $paymentManager,
         private CalculationManager $calculationManager,
-    )
-    {
+    ) {
 
     }
 
@@ -26,7 +25,7 @@ class SubscriptionController extends Controller
 
         $userSubscription = $this->subscriptionManager->findActiveUserSubscription($user->id);
 
-        if (!$userSubscription) {
+        if (! $userSubscription) {
             return redirect()->back()->with('error', __('You do not have an active subscription.'));
         }
 
@@ -36,7 +35,7 @@ class SubscriptionController extends Controller
 
         $paymentProvider = $userSubscription->paymentProvider()->first();
 
-        if (!$paymentProvider) {
+        if (! $paymentProvider) {
             return redirect()->back()->with('error', __('Error finding payment provider.'));
         }
 

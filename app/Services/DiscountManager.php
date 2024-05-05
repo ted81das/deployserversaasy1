@@ -16,7 +16,7 @@ use Carbon\Carbon;
 
 class DiscountManager
 {
-    public function isCodeRedeemableForPlan(string $code, User $user, Plan $plan, string $actionType = DiscountConstants::ACTION_TYPE_ANY)
+    public function isCodeRedeemableForPlan(string $code, ?User $user, Plan $plan, string $actionType = DiscountConstants::ACTION_TYPE_ANY)
     {
         $discountCode = DiscountCode::where('code', $code)->first();
 

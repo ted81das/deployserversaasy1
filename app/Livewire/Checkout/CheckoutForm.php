@@ -2,12 +2,7 @@
 
 namespace App\Livewire\Checkout;
 
-use App\Constants\SessionConstants;
-use App\Dto\CartDto;
 use App\Models\User;
-use App\Services\CheckoutManager;
-use App\Services\DiscountManager;
-use App\Services\OneTimeProductManager;
 use App\Services\PaymentProviders\PaymentManager;
 use App\Services\UserManager;
 use App\Validator\LoginValidator;
@@ -44,14 +39,10 @@ class CheckoutForm extends Component
         ]);
     }
 
-    public function checkout(
+    public function handleLoginOrRegistration(
         LoginValidator $loginValidator,
         RegisterValidator $registerValidator,
-        CheckoutManager $checkoutManager,
-        PaymentManager $paymentManager,
-        DiscountManager $discountManager,
         UserManager $userManager,
-        OneTimeProductManager $oneTimeProductManager
     ) {
         if (! auth()->check()) {
             if ($this->userExists($this->email)) {
@@ -71,72 +62,11 @@ class CheckoutForm extends Component
             throw ValidationException::withMessages([
                 'email' => __('Your account is blocked, please contact support.'),
             ]);
-
-            return;
         }
-
-        $cartDto = $this->getCartDto();
-
-        $order = $checkoutManager->initProductCheckout($cartDto);
-
-        $cartDto->orderId = $order->id;
-
-        $paymentProvider = $paymentManager->getPaymentProviderBySlug(
-            $this->paymentProvider
-        );
-
-        $discount = null;
-        if ($cartDto->discountCode !== null) {
-            $discount = $discountManager->getActiveDiscountByCode($cartDto->discountCode);
-            $product = $oneTimeProductManager->getOneTimeProductById($cartDto->items[0]->productId);
-
-            if (! $discountManager->isCodeRedeemableForOneTimeProduct($cartDto->discountCode, auth()->user(), $product)) {
-                // this is to handle the case when user adds discount code that has max redemption limit per customer,
-                // then logs-in during the checkout process and the discount code is not valid anymore
-                $cartDto->discountCode = null;
-                $discount = null;
-                $this->dispatch('calculations-updated')->to(ProductTotals::class);
-            }
-        }
-
-        $initData = $paymentProvider->initProductCheckout($order, $discount);
-
-        $this->saveCartDto($cartDto);
-
-        $user = auth()->user();
-
-        if ($paymentProvider->isRedirectProvider()) {
-            $link = $paymentProvider->createProductCheckoutRedirectLink(
-                $order,
-                $discount,
-            );
-        } else {
-            $this->dispatch('start-overlay-checkout',
-                paymentProvider: $paymentProvider->getSlug(),
-                initData: $initData,
-                successUrl: route('checkout.product.success'),
-                email: $user->email,
-                orderUuid: $order->uuid,
-            );
-
-            return;
-        }
-
-        return redirect()->away($link);
 
     }
 
-    private function getCartDto(): ?CartDto
-    {
-        return session()->get(SessionConstants::CART_DTO);
-    }
-
-    private function saveCartDto(CartDto $cartDto): void
-    {
-        session()->put(SessionConstants::CART_DTO, $cartDto);
-    }
-
-    private function loginUser(LoginValidator $loginValidator)
+    protected function loginUser(LoginValidator $loginValidator)
     {
         $fields = [
             'email' => $this->email,
@@ -167,7 +97,7 @@ class CheckoutForm extends Component
         }
     }
 
-    private function registerUser(RegisterValidator $registerValidator, UserManager $userManager)
+    protected function registerUser(RegisterValidator $registerValidator, UserManager $userManager)
     {
         $fields = [
             'name' => $this->name,
@@ -197,7 +127,7 @@ class CheckoutForm extends Component
         return $user;
     }
 
-    private function userExists(?string $email): bool
+    protected function userExists(?string $email): bool
     {
         if ($email === null) {
             return false;
@@ -206,7 +136,7 @@ class CheckoutForm extends Component
         return User::where('email', $email)->exists();
     }
 
-    private function getPaymentProviders(PaymentManager $paymentManager)
+    protected function getPaymentProviders(PaymentManager $paymentManager)
     {
         if (count($this->paymentProviders) > 0) {
             return $this->paymentProviders;
@@ -221,7 +151,7 @@ class CheckoutForm extends Component
         return $this->paymentProviders;
     }
 
-    private function resetReCaptcha()
+    protected function resetReCaptcha()
     {
         $this->dispatch('reset-recaptcha');
     }
