@@ -38,23 +38,27 @@
                 @enderror
 
 
+                @if(!empty($email))
+                    <label class="form-control w-full" for="password">
+                        <div class="label">
+                            <span class="label-text">{{ __('Password') }}</span>
+                        </div>
+                        <input type="password" class="input input-bordered input-md w-full" name="password" required id="password" wire:model="password" >
+                    </label>
 
-                @if ($userExists)
-                    <div class="mt-2 ms-1 text-xs text-neutral-400">{{ __('You are registered already, enter your password.') }}</div>
+
+                    @error('password')
+                        <span class="text-xs text-red-500 ms-1" role="alert">
+                            {{ $message }}
+                        </span>
+                    @enderror
                 @endif
 
-                <label class="form-control w-full" for="password">
-                    <div class="label">
-                        <span class="label-text">{{ __('Password') }}</span>
-                    </div>
-                    <input type="password" class="input input-bordered input-md w-full" name="password" required id="password" wire:model="password" >
-                </label>
-
-                @error('password')
-                    <span class="text-xs text-red-500 ms-1" role="alert">
-                        {{ $message }}
-                    </span>
-                @enderror
+                    @if ($userExists)
+                        <div class="mt-2 ms-1 text-xs text-neutral-400">{{ __('You are already registered, enter your password.') }}</div>
+                    @elseif(!empty($email))
+                        <div class="mt-2 ms-1 text-xs text-neutral-400">{{ __('Enter a password for your new account.') }}</div>
+                    @endif
 
                 @if($userExists)
                     @if (Route::has('password.request'))
