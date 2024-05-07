@@ -16,13 +16,15 @@ class OAuthController extends RegisterController
     {
         $providerObj = OauthLoginProvider::where('provider_name', $provider)->firstOrFail();
 
-        if (!$providerObj->enabled) {
+        if (! $providerObj->enabled) {
             abort(404);
         }
 
         if (Auth::check()) {
             return redirect()->route('home');
         }
+
+        Redirect::setIntendedUrl(url()->previous());
 
         return Socialite::driver($provider)->redirect();
     }
@@ -31,7 +33,7 @@ class OAuthController extends RegisterController
     {
         $providerObj = OauthLoginProvider::where('provider_name', $provider)->firstOrFail();
 
-        if (!$providerObj->enabled) {
+        if (! $providerObj->enabled) {
             abort(404);
         }
 
@@ -57,49 +59,49 @@ class OAuthController extends RegisterController
                 $isRegistration = true;
             }
 
-             $user->userParameters()->updateOrCreate(
-                 ['name' => 'oauth_provider_' . $provider],
-                 ['value' => $provider]
-             );
+            $user->userParameters()->updateOrCreate(
+                ['name' => 'oauth_provider_'.$provider],
+                ['value' => $provider]
+            );
 
             if (property_exists($oauthUser, 'id') && $oauthUser->id) {
                 $user->userParameters()->updateOrCreate(
-                    ['name' => 'oauth_' . $provider . '_id'],
+                    ['name' => 'oauth_'.$provider.'_id'],
                     ['value' => $oauthUser->id]
                 );
             }
 
             if (property_exists($oauthUser, 'token') && $oauthUser->token) {
                 $user->userParameters()->updateOrCreate(
-                    ['name' => 'oauth_' . $provider . '_token'],
+                    ['name' => 'oauth_'.$provider.'_token'],
                     ['value' => $oauthUser->token]
                 );
             }
 
             if (property_exists($oauthUser, 'refreshToken') && $oauthUser->refreshToken) {
                 $user->userParameters()->updateOrCreate(
-                    ['name' => 'oauth_' . $provider . '_refresh_token'],
+                    ['name' => 'oauth_'.$provider.'_refresh_token'],
                     ['value' => $oauthUser->refreshToken]
                 );
             }
 
             if (property_exists($oauthUser, 'expiresIn') && $oauthUser->expiresIn) {
                 $user->userParameters()->updateOrCreate(
-                    ['name' => 'oauth_' . $provider . '_expires_in'],
+                    ['name' => 'oauth_'.$provider.'_expires_in'],
                     ['value' => $oauthUser->expiresIn]
                 );
             }
 
             if (property_exists($oauthUser, 'avatar') && $oauthUser->avatar) {
                 $user->userParameters()->updateOrCreate(
-                    ['name' => 'oauth_' . $provider . '_avatar'],
+                    ['name' => 'oauth_'.$provider.'_avatar'],
                     ['value' => $oauthUser->avatar]
                 );
             }
 
             if (property_exists($oauthUser, 'nickname') && $oauthUser->nickname) {
                 $user->userParameters()->updateOrCreate(
-                    ['name' => 'oauth_' . $provider . '_nickname'],
+                    ['name' => 'oauth_'.$provider.'_nickname'],
                     ['value' => $oauthUser->nickname]
                 );
             }

@@ -34,8 +34,8 @@ class OneTimeProduct extends Model
         static::updating(function (OneTimeProduct $oneTimeProduct) {
             // booleans are a bit tricky to compare, so we use boolval to compare them
             if ($oneTimeProduct->isDirty([
-                    'max_quantity',
-                ])) {
+                'max_quantity',
+            ])) {
                 $oneTimeProduct->paymentProviderData()->delete();
                 foreach ($oneTimeProduct->prices as $price) {
                     $price->pricePaymentProviderData()->delete();
@@ -55,6 +55,4 @@ class OneTimeProduct extends Model
     {
         return $this->hasMany(OneTimeProductPaymentProviderData::class);
     }
-
-
 }

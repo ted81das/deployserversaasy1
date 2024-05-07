@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
+use App\Validator\LoginValidator;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
@@ -30,13 +31,9 @@ class LoginController extends Controller
     //     */
     //    protected $redirectTo = RouteServiceProvider::HOME;
 
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
+    public function __construct(
+        private LoginValidator $loginValidator
+    ) {
         $this->middleware('guest')->except('logout');
     }
 
@@ -67,15 +64,6 @@ class LoginController extends Controller
 
     protected function validateLogin(Request $request)
     {
-        $rules = [
-            $this->username() => 'required|string',
-            'password' => 'required|string',
-        ];
-
-        if (config('app.recaptcha_enabled')) {
-            $rules[recaptchaFieldName()] = recaptchaRuleName();
-        }
-
-        $request->validate($rules);
+        $this->loginValidator->validateRequest($request);
     }
 }

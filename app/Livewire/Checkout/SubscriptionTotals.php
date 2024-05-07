@@ -8,20 +8,29 @@ use App\Dto\TotalsDto;
 use App\Models\Plan;
 use App\Services\CalculationManager;
 use App\Services\DiscountManager;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class SubscriptionTotals extends Component
 {
     public $page;
+
     public $planSlug;
+
     public $planHasTrial = false;
+
     public $subtotal;
+
     public $discountAmount;
+
     public $amountDue;
+
     public $currencyCode;
+
     public $code;
 
     private DiscountManager $discountManager;
+
     private CalculationManager $calculationManager;
 
     public function boot(DiscountManager $discountManager, CalculationManager $calculationManager)
@@ -35,7 +44,6 @@ class SubscriptionTotals extends Component
         $this->page = $page;
         $this->planSlug = $plan->slug;
         $this->planHasTrial = $plan->has_trial;
-        $this->totals = $totals;
         $this->subtotal = $totals->subtotal;
         $this->discountAmount = $totals->discountAmount;
         $this->amountDue = $totals->amountDue;
@@ -60,6 +68,7 @@ class SubscriptionTotals extends Component
 
         if ($code === null) {
             session()->flash('error', __('Please enter a discount code.'));
+
             return;
         }
 
@@ -67,8 +76,9 @@ class SubscriptionTotals extends Component
 
         $isRedeemable = $this->discountManager->isCodeRedeemableForPlan($code, auth()->user(), $plan);
 
-        if (!$isRedeemable) {
+        if (! $isRedeemable) {
             session()->flash('error', __('This discount code is invalid.'));
+
             return;
         }
 
@@ -86,8 +96,6 @@ class SubscriptionTotals extends Component
         $this->updateTotals();
 
         session()->flash('success', __('The discount code has been applied.'));
-
-        return redirect($this->page);  // we have to redirect to the same page as payment provider init has to be done again (which is done on checkout page load)
     }
 
     public function remove()
@@ -106,11 +114,10 @@ class SubscriptionTotals extends Component
         session()->flash('success', __('The discount code has been removed.'));
 
         $this->updateTotals();
-
-        return redirect($this->page);  // we have to redirect to the same page as payment provider init has to be done again (which is done on checkout page load)
     }
 
-    protected function updateTotals()
+    #[On('calculations-updated')]
+    public function updateTotals()
     {
         $totals = $this->calculationManager->calculatePlanTotals(
             auth()->user(),

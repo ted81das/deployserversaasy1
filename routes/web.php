@@ -61,12 +61,11 @@ Route::get('/auth/{provider}/callback', [OAuthController::class, 'callback'])
 Route::get('/checkout/plan/{planSlug}', [
     App\Http\Controllers\SubscriptionCheckoutController::class,
     'subscriptionCheckout',
-])->name('checkout.subscription')->middleware(\App\Http\Middleware\RedirectedAuth::class);
+])->name('checkout.subscription');
 
-Route::post('/checkout/plan/{planSlug}', [
-    App\Http\Controllers\SubscriptionCheckoutController::class,
-    'subscriptionCheckout',
-])->name('checkout.subscription.post')->middleware(\App\Http\Middleware\RedirectedAuth::class);
+Route::get('/already-subscribed', function () {
+    return view('checkout.already-subscribed');
+})->name('checkout.subscription.already-subscribed');
 
 Route::get('/checkout/subscription/success', [
     App\Http\Controllers\SubscriptionCheckoutController::class,
@@ -134,12 +133,7 @@ Route::get('/cart/clear', [
 Route::get('/checkout/product', [
     App\Http\Controllers\ProductCheckoutController::class,
     'productCheckout',
-])->name('checkout.product')->middleware(\App\Http\Middleware\RedirectedAuth::class);
-
-Route::post('/checkout/product', [
-    App\Http\Controllers\ProductCheckoutController::class,
-    'productCheckout',
-])->name('checkout.product.post')->middleware(\App\Http\Middleware\RedirectedAuth::class);
+])->name('checkout.product');
 
 Route::get('/checkout/product/success', [
     App\Http\Controllers\ProductCheckoutController::class,

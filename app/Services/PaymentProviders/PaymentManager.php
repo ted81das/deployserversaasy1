@@ -1,8 +1,8 @@
 <?php
 
 namespace App\Services\PaymentProviders;
+
 use App\Models\PaymentProvider;
-use App\Models\Transaction;
 
 class PaymentManager
 {
@@ -51,6 +51,6 @@ class PaymentManager
             }
         }
 
-        throw new \Exception('Payment provider not found: ' . $slug);
+        throw new \Exception('Payment provider not found: '.$slug);
     }
 }
