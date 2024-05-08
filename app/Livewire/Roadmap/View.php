@@ -20,7 +20,7 @@ class View extends Component
 
     public function upvote(int $id, RoadmapManager $roadmapManager)
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return redirect()->route('login');
         }
 
@@ -29,7 +29,7 @@ class View extends Component
 
     public function removeUpvote(int $id, RoadmapManager $roadmapManager)
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return redirect()->route('login');
         }
 

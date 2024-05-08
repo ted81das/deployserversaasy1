@@ -20,6 +20,7 @@ class CancelSubscriptionForm extends Component implements HasForms
     public ?array $data = [];
 
     private PaymentManager $paymentManager;
+
     private SubscriptionManager $subscriptionManager;
 
     public function boot(
@@ -55,7 +56,7 @@ class CancelSubscriptionForm extends Component implements HasForms
                 Textarea::make('additional_information')
                     ->rows(5)
                     ->label(__('Additional information'))
-                    ->helperText(__('Please tell us what we can do to improve our product.'))
+                    ->helperText(__('Please tell us what we can do to improve our product.')),
             ])
             ->statePath('data');
     }
@@ -68,7 +69,7 @@ class CancelSubscriptionForm extends Component implements HasForms
 
         $userSubscription = $this->subscriptionManager->findActiveUserSubscription($user->id);
 
-        if (!$userSubscription) {
+        if (! $userSubscription) {
             Notification::make()
                 ->title(__('Error canceling subscription'))
                 ->danger()
@@ -102,7 +103,7 @@ class CancelSubscriptionForm extends Component implements HasForms
 
     public function render()
     {
-        return view('livewire.cancel-subscription-form',[
+        return view('livewire.cancel-subscription-form', [
             'backUrl' => SubscriptionResource::getUrl(),
         ]);
     }

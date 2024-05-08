@@ -1,4 +1,4 @@
-<div class="border border-neutral-200 rounded-lg p-4 m-4 flex gap-3" wire:key="item-{{ $item->id }}">
+<div class="border border-neutral-200 rounded-lg p-4 my-4 flex gap-3" wire:key="item-{{ $item->id }}">
 
     <x-roadmap.upvote-box :item="$item"></x-roadmap.upvote-box>
 

@@ -31,13 +31,20 @@ class RoadmapManager
             ->firstOrFail();
     }
 
-    public function getAll(int $limit = 20)
+    public function getCompleted(int $limit = 30)
+    {
+        return RoadmapItem::where('status', RoadmapItemStatus::COMPLETED)
+            ->orderBy('upvotes', 'desc')
+            ->orderBy('title', 'asc')
+            ->paginate($limit);
+    }
+
+    public function getAll(int $limit = 30)
     {
         // all items that are completed should come at the end of the list then sort by upvotes
         return RoadmapItem::whereIn('status', [
             RoadmapItemStatus::APPROVED,
             RoadmapItemStatus::IN_PROGRESS,
-            RoadmapItemStatus::COMPLETED,
         ])->orWhere(function ($query) {
             if (! auth()->check()) {
                 return;

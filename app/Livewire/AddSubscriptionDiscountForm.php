@@ -2,9 +2,7 @@
 
 namespace App\Livewire;
 
-use App\Constants\DiscountConstants;
 use App\Filament\Dashboard\Resources\SubscriptionResource;
-use App\Models\Subscription;
 use App\Services\DiscountManager;
 use App\Services\SubscriptionDiscountManager;
 use App\Services\SubscriptionManager;
@@ -41,7 +39,7 @@ class AddSubscriptionDiscountForm extends Component implements HasForms
 
     public function render()
     {
-        return view('livewire.add-subscription-discount-form',[
+        return view('livewire.add-subscription-discount-form', [
             'backUrl' => SubscriptionResource::getUrl(),
         ]);
     }
@@ -57,7 +55,7 @@ class AddSubscriptionDiscountForm extends Component implements HasForms
             ->schema([
                 TextInput::make('code')
                     ->required()
-                    ->nullable(false)
+                    ->nullable(false),
             ])
             ->statePath('data');
     }
@@ -72,7 +70,7 @@ class AddSubscriptionDiscountForm extends Component implements HasForms
 
         $result = $this->subscriptionDiscountManager->applyDiscount($subscription, $code, $user);
 
-        if (!$result) {
+        if (! $result) {
 
             Notification::make()
                 ->title(__('Could not apply discount code.'))
