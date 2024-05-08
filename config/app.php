@@ -204,6 +204,7 @@ return [
          * Package Service Providers...
          */
         App\Providers\ConfigProvider::class,
+        App\Providers\BladeProvider::class,
 
         /*
          * Application Service Providers...
