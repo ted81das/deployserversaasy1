@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Mail\User\VerifyEmail;
 use App\Notifications\Auth\QueuedVerifyEmail;
+use App\Services\OrderManager;
 use App\Services\SubscriptionManager;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
@@ -17,7 +17,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -90,7 +90,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 
     public function canAccessPanel(Panel $panel): bool
     {
-        if ($panel->getId() == 'admin' && !$this->is_admin) {
+        if ($panel->getId() == 'admin' && ! $this->is_admin) {
             return false;
         }
 
@@ -112,7 +112,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return $this->is_admin;
     }
 
-    public function isSubscribed(string $productSlug = null): bool
+    public function isSubscribed(?string $productSlug = null): bool
     {
         /** @var SubscriptionManager $subscriptionManager */
         $subscriptionManager = app(SubscriptionManager::class);
@@ -120,12 +120,20 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return $subscriptionManager->isUserSubscribed($this, $productSlug);
     }
 
-    public function isTrialing(string $productSlug = null): bool
+    public function isTrialing(?string $productSlug = null): bool
     {
         /** @var SubscriptionManager $subscriptionManager */
         $subscriptionManager = app(SubscriptionManager::class);
 
         return $subscriptionManager->isUserTrialing($this, $productSlug);
+    }
+
+    public function hasPurchased(?string $productSlug = null): bool
+    {
+        /** @var OrderManager $orderManager */
+        $orderManager = app(OrderManager::class);
+
+        return $orderManager->hasUserOrdered($this, $productSlug);
     }
 
     public function productMetadata()
