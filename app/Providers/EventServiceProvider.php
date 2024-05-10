@@ -30,13 +30,13 @@ class EventServiceProvider extends ServiceProvider
             SendSubscribedNotification::class,
         ],
         SubscriptionCancelled::class => [
-            SendSubscriptionCancellationNotification::class
+            SendSubscriptionCancellationNotification::class,
         ],
         InvoicePaymentFailed::class => [
-            SendInvoicePaymentFailedNotification::class
+            SendInvoicePaymentFailedNotification::class,
         ],
         Ordered::class => [
-            SendOrderNotification::class
+            SendOrderNotification::class,
         ],
     ];
 
