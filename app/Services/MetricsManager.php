@@ -130,6 +130,12 @@ class MetricsManager
             ->whereDate('created_at', $date)
             ->sum('amount');
 
+        $yesterdaysTotalRefunds = Transaction::where('status', TransactionStatus::REFUNDED->value)
+            ->whereDate('created_at', $date)
+            ->sum('amount');
+
+        $yesterdaysTotalRevenue -= $yesterdaysTotalRefunds;
+
         return money(intval($yesterdaysTotalRevenue), $currency->code)->formatByDecimal();
     }
 
