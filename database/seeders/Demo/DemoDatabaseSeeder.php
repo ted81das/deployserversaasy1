@@ -30,26 +30,26 @@ class DemoDatabaseSeeder extends Seeder
     }
 
     private array $blogPostTitles = [
-        "The Art of Responsive Web Design: A Comprehensive Guide",
-        "Exploring the Power of Machine Learning in Everyday Life",
+        'The Art of Responsive Web Design: A Comprehensive Guide',
+        'Exploring the Power of Machine Learning in Everyday Life',
         "Mastering the Basics: A Beginner's Guide to Python Programming",
-        "The Future of Virtual Reality: Trends and Innovations",
-        "Sustainable Living: Eco-Friendly Practices for a Greener Planet",
-        "Unraveling the Mysteries of Quantum Computing",
-        "Crafting Engaging User Experiences: A UX Design Tutorial",
-        "Demystifying Blockchain Technology: Beyond Cryptocurrencies",
-        "Navigating the World of Cybersecurity: Tips for Online Safety",
-        "The Impact of Artificial Intelligence on Healthcare",
-        "DIY Home Improvement Projects for a Budget-Friendly Upgrade",
-        "Culinary Adventures: Exploring Global Cuisines at Home",
-        "Mindfulness in the Digital Age: Finding Balance in a Busy World",
-        "Capturing the Perfect Shot: Photography Tips for Beginners",
-        "Fitness for All: Tailoring Workouts to Your Lifestyle",
-        "Building a Personal Brand: Strategies for Professional Success",
-        "The Evolution of Social Media: Trends and Influencer Culture",
-        "Unlocking Creativity: A Guide to Overcoming Creative Blocks",
-        "The Power of Storytelling: Crafting Compelling Narratives",
-        "Remote Work Revolution: Maximizing Productivity in a Virtual World"
+        'The Future of Virtual Reality: Trends and Innovations',
+        'Sustainable Living: Eco-Friendly Practices for a Greener Planet',
+        'Unraveling the Mysteries of Quantum Computing',
+        'Crafting Engaging User Experiences: A UX Design Tutorial',
+        'Demystifying Blockchain Technology: Beyond Cryptocurrencies',
+        'Navigating the World of Cybersecurity: Tips for Online Safety',
+        'The Impact of Artificial Intelligence on Healthcare',
+        'DIY Home Improvement Projects for a Budget-Friendly Upgrade',
+        'Culinary Adventures: Exploring Global Cuisines at Home',
+        'Mindfulness in the Digital Age: Finding Balance in a Busy World',
+        'Capturing the Perfect Shot: Photography Tips for Beginners',
+        'Fitness for All: Tailoring Workouts to Your Lifestyle',
+        'Building a Personal Brand: Strategies for Professional Success',
+        'The Evolution of Social Media: Trends and Influencer Culture',
+        'Unlocking Creativity: A Guide to Overcoming Creative Blocks',
+        'The Power of Storytelling: Crafting Compelling Narratives',
+        'Remote Work Revolution: Maximizing Productivity in a Virtual World',
     ];
 
     private array $images = [
@@ -80,7 +80,7 @@ class DemoDatabaseSeeder extends Seeder
 
         // add admin user
         $adminUser = User::where('email', 'admin@admin.com')->first();
-        if (!$adminUser) {
+        if (! $adminUser) {
 
             $adminUser = User::factory()->create([
                 'email' => 'admin@admin.com',
@@ -111,7 +111,7 @@ class DemoDatabaseSeeder extends Seeder
             'name' => 'Basic',
             'slug' => 'basic',
             'description' => 'Basic plan',
-            'features' => [["feature"=> "Amazing Feature 1"], ["feature"=> "Amazing Feature 2"], ["feature"=> "Amazing Feature 3"], ["feature"=> "Amazing Feature 4"], ["feature"=> "Amazing Feature 5"]],
+            'features' => [['feature' => 'Amazing Feature 1'], ['feature' => 'Amazing Feature 2'], ['feature' => 'Amazing Feature 3'], ['feature' => 'Amazing Feature 4'], ['feature' => 'Amazing Feature 5']],
         ]);
 
         $proProduct = $this->findOrCreateProduct([
@@ -119,14 +119,14 @@ class DemoDatabaseSeeder extends Seeder
             'slug' => 'pro',
             'description' => 'Pro plan',
             'is_popular' => true,
-            'features' => [["feature"=> "Amazing Feature 1"], ["feature"=> "Amazing Feature 2"], ["feature"=> "Amazing Feature 3"], ["feature"=> "Amazing Feature 4"], ["feature"=> "Amazing Feature 5"]],
+            'features' => [['feature' => 'Amazing Feature 1'], ['feature' => 'Amazing Feature 2'], ['feature' => 'Amazing Feature 3'], ['feature' => 'Amazing Feature 4'], ['feature' => 'Amazing Feature 5']],
         ]);
 
         $ultimateProduct = $this->findOrCreateProduct([
             'name' => 'Ultimate',
             'slug' => 'ultimate',
             'description' => 'Ultimate plan',
-            'features' => [["feature"=> "Amazing Feature 1"], ["feature"=> "Amazing Feature 2"], ["feature"=> "Amazing Feature 3"], ["feature"=> "Amazing Feature 4"], ["feature"=> "Amazing Feature 5"]],
+            'features' => [['feature' => 'Amazing Feature 1'], ['feature' => 'Amazing Feature 2'], ['feature' => 'Amazing Feature 3'], ['feature' => 'Amazing Feature 4'], ['feature' => 'Amazing Feature 5']],
         ]);
 
         $this->createOneTimeProduct('Lemon', 'lemon', 1000);
@@ -144,7 +144,7 @@ class DemoDatabaseSeeder extends Seeder
             'name' => $name,
             'slug' => $slug,
             'description' => 'One time product',
-            'features' => [["feature"=> "Amazing Feature 1"], ["feature"=> "Amazing Feature 2"], ["feature"=> "Amazing Feature 3"], ["feature"=> "Amazing Feature 4"], ["feature"=> "Amazing Feature 5"]],
+            'features' => [['feature' => 'Amazing Feature 1'], ['feature' => 'Amazing Feature 2'], ['feature' => 'Amazing Feature 3'], ['feature' => 'Amazing Feature 4'], ['feature' => 'Amazing Feature 5']],
             'is_active' => true,
         ]);
 
@@ -210,8 +210,8 @@ class DemoDatabaseSeeder extends Seeder
     private function createPlans(Product $product, $priceMonthly, $priceYearly): void
     {
         $basicPlan = $this->findOrCreatePlan([
-            'name' => $product->name . ' Monthly',
-            'slug' => $product->slug . '-monthly',
+            'name' => $product->name.' Monthly',
+            'slug' => $product->slug.'-monthly',
             'interval_id' => Interval::where('slug', 'month')->first()->id,
             'interval_count' => 1,
             'trial_interval_id' => Interval::where('slug', 'week')->first()->id,
@@ -231,8 +231,8 @@ class DemoDatabaseSeeder extends Seeder
         // add yearly plan
 
         $basicPlan = $this->findOrCreatePlan([
-            'name' => $product->name . ' Yearly',
-            'slug' => $product->slug . '-yearly',
+            'name' => $product->name.' Yearly',
+            'slug' => $product->slug.'-yearly',
             'interval_id' => Interval::where('slug', 'year')->first()->id,
             'interval_count' => 1,
             'trial_interval_id' => Interval::where('slug', 'week')->first()->id,
@@ -286,7 +286,7 @@ class DemoDatabaseSeeder extends Seeder
             $subscription = $user->subscriptions()->create([
                 'plan_id' => $plan->id,
                 'trial_ends_at' => null,
-                'ends_at' => $status == SubscriptionStatus::ACTIVE ? Carbon::now()->add(1, $plan->interval->date_identifier): (new Carbon($createdDate))->add(1, $plan->interval->date_identifier),
+                'ends_at' => $status == SubscriptionStatus::ACTIVE ? Carbon::now()->add(1, $plan->interval->date_identifier) : (new Carbon($createdDate))->add(1, $plan->interval->date_identifier),
                 'price' => $plan->prices()->first()->price,
                 'currency_id' => $plan->prices()->first()->currency_id,
                 'user_id' => $user->id,
@@ -328,7 +328,7 @@ class DemoDatabaseSeeder extends Seeder
 
         for ($i = 1; $i <= $discountsToAdd; $i++) {
             $discount = Discount::create([
-                'name' => 'Discount ' . $i,
+                'name' => 'Discount '.$i,
                 'amount' => rand(10, 70),
                 'type' => 'percentage',
                 'valid_until' => null,
@@ -354,7 +354,7 @@ class DemoDatabaseSeeder extends Seeder
             $blog = BlogPost::create([
                 'title' => $title,
                 'slug' => Str::slug($title),
-                'body' => str_repeat('<p>' . $this->loremIpsum . '</p>', rand(10, 15)),
+                'body' => str_repeat('<p>'.$this->loremIpsum.'</p>', rand(10, 15)),
                 'is_published' => true,
                 'published_at' => now()->sub(rand(1, 10), 'days'),
                 'user_id' => $user->id,
@@ -406,8 +406,8 @@ class DemoDatabaseSeeder extends Seeder
             $user = User::inRandomOrder()->first();
 
             $item = $user->roadmapItems()->create([
-                'title' => 'Roadmap Item ' . $i,
-                'slug' => 'roadmap-item-' . $i,
+                'title' => 'Roadmap Item '.$i,
+                'slug' => 'roadmap-item-'.$i,
                 'type' => RoadmapItemType::FEATURE->value,
                 'description' => $this->loremIpsum,
                 'upvotes' => rand(1, 10),
@@ -416,10 +416,9 @@ class DemoDatabaseSeeder extends Seeder
             ]);
 
             $item->upvotes()->attach($user->id, [
-                'ip_address' =>
-                    rand(0, 255) . '.' .
-                    rand(0, 255) . '.' .
-                    rand(0, 255) . '.' .
+                'ip_address' => rand(0, 255).'.'.
+                    rand(0, 255).'.'.
+                    rand(0, 255).'.'.
                     rand(0, 255),
             ]);
         }

@@ -61,7 +61,7 @@ class All extends Component
 
         $viewData['groupedPlans'] = $groupedPlans;
 
-        if (!empty($this->preselectedInterval) && !array_key_exists($this->preselectedInterval, $groupedPlans)) {
+        if (! empty($this->preselectedInterval) && ! array_key_exists($this->preselectedInterval, $groupedPlans)) {
             $this->preselectedInterval = '';
         }
 
@@ -134,6 +134,6 @@ class All extends Component
         $currentIntervalInWeeks = $intervalConversion[$currentInterval];
         $imaginaryIntervalInWeeks = $intervalConversion[$imaginaryInterval];
 
-        return ceil($currentPrice * $imaginaryIntervalInWeeks / $currentIntervalInWeeks );
+        return ceil($currentPrice * $imaginaryIntervalInWeeks / $currentIntervalInWeeks);
     }
 }

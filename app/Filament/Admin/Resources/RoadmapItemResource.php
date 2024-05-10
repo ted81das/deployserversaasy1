@@ -13,8 +13,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Str;
 
 class RoadmapItemResource extends Resource
@@ -40,7 +38,7 @@ class RoadmapItemResource extends Resource
                                 // add a random string if there is a roadmap item with the same slug
                                 $state = Str::slug($get('title'));
                                 if (RoadmapItem::where('slug', $state)->exists()) {
-                                    $state .= '-' . Str::random(5);
+                                    $state .= '-'.Str::random(5);
                                 }
 
                                 return Str::slug($state);
@@ -81,7 +79,7 @@ class RoadmapItemResource extends Resource
                         ->options(fn () => \App\Models\User::pluck('name', 'id'))
                         ->default(fn () => auth()->user()->id)
                         ->required(),
-                    ]),
+                ]),
             ]);
     }
 
@@ -133,8 +131,7 @@ class RoadmapItemResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('upvotes', 'desc')
-            ;
+            ->defaultSort('upvotes', 'desc');
     }
 
     public static function getRelations(): array
