@@ -68,5 +68,6 @@ class ConfigConstants
         'app.recaptcha_enabled',
         'recaptcha.api_site_key',
         'recaptcha.api_secret_key',
+        'app.multiple_subscriptions_enabled',
     ];
 }

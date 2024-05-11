@@ -188,6 +188,8 @@ return [
 
     'recaptcha_enabled' => false,
 
+    'multiple_subscriptions_enabled' => false,
+
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers

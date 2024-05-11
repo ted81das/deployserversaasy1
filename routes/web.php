@@ -79,12 +79,12 @@ Route::get('/payment-provider/paddle/payment-link', [
 
 Route::get('/subscription/plans', [App\Http\Controllers\SubscriptionController::class, 'index'])->name('subscription.plans');
 
-Route::get('/subscription/change-plan/{planSlug}', [
+Route::get('/subscription/{subscriptionUuid}/change-plan/{planSlug}', [
     App\Http\Controllers\SubscriptionController::class,
     'changePlan',
 ])->name('subscription.change-plan')->middleware('auth');
 
-Route::post('/subscription/change-plan/{planSlug}', [
+Route::post('/subscription/{subscriptionUuid}/change-plan/{planSlug}', [
     App\Http\Controllers\SubscriptionController::class,
     'changePlan',
 ])->name('subscription.change-plan.post')->middleware('auth');
