@@ -136,7 +136,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return $orderManager->hasUserOrdered($this, $productSlug);
     }
 
-    public function productMetadata()
+    public function subscriptionProductMetadata()
     {
         /** @var SubscriptionManager $subscriptionManager */
         $subscriptionManager = app(SubscriptionManager::class);
