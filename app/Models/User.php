@@ -112,6 +112,11 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return $this->is_admin;
     }
 
+    public function canImpersonate()
+    {
+        return $this->hasPermissionTo('impersonate users') && $this->isAdmin();
+    }
+
     public function isSubscribed(?string $productSlug = null): bool
     {
         /** @var SubscriptionManager $subscriptionManager */

@@ -22,6 +22,8 @@ class RolesAndPermissionsSeeder extends Seeder
         Permission::findOrCreate('delete users');
         Permission::findOrCreate('view users');
 
+        Permission::findOrCreate('impersonate users');
+
         Permission::findOrCreate('create roles');
         Permission::findOrCreate('update roles');
         Permission::findOrCreate('delete roles');
