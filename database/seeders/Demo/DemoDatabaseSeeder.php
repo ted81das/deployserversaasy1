@@ -54,7 +54,6 @@ class DemoDatabaseSeeder extends Seeder
 
     private array $images = [
         'https://unsplash.com/photos/F1MaILUxscM/download?ixid=M3wxMjA3fDB8MXx0b3BpY3x8d0pMTzN0U0s1QU18fHx8fDJ8fDE3MDY2MTk4NTF8&force=true&w=1920',
-        'https://unsplash.com/photos/yGMw4KpX4CE/download?ixid=M3wxMjA3fDB8MXxhbGx8fHx8fHx8fHwxNzA2NjI2MDI1fA&force=true&w=1920',
         'https://unsplash.com/photos/DvopK4gNs8A/download?ixid=M3wxMjA3fDB8MXxhbGx8fHx8fHx8fHwxNzA2NjI2MDI5fA&force=true&w=1920',
         'https://unsplash.com/photos/c6miNI_WdZ4/download?ixid=M3wxMjA3fDB8MXxhbGx8fHx8fHx8fHwxNzA2NjI2MDMxfA&force=true&w=1920',
         'https://unsplash.com/photos/kF5nFbHBG5E/download?ixid=M3wxMjA3fDB8MXxhbGx8fHx8fHx8fHwxNzA2NjI2MDMyfA&force=true&w=1920',
@@ -363,8 +362,12 @@ class DemoDatabaseSeeder extends Seeder
 
             // assign an image to the blog post using spatie media library
 
-            $blog->addMediaFromUrl($this->images[rand(0, count($this->images) - 1)])
-                ->toMediaCollection('blog-images');
+            try {
+                $blog->addMediaFromUrl($this->images[rand(0, count($this->images) - 1)])
+                    ->toMediaCollection('blog-images');
+            } catch (\Exception $e) {
+                // do nothing
+            }
         }
     }
 
