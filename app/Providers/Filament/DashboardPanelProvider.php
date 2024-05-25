@@ -2,7 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use App\Livewire\Filament\MyProfilePersonalInfo;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -74,9 +73,6 @@ class DashboardPanelProvider extends PanelProvider
                         hasAvatars: false, // Enables the avatar upload form component (default = false)
                         slug: 'my-profile' // Sets the slug for the profile page (default = 'my-profile')
                     )
-                    ->myProfileComponents([
-                        'personal_info' => MyProfilePersonalInfo::class,
-                    ]),
             ]);
     }
 }
