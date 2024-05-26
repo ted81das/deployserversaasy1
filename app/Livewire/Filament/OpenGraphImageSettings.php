@@ -97,7 +97,9 @@ class OpenGraphImageSettings extends Component implements HasForms
                                 ->disabled(function ($get) {
                                     return !$get('open_graphy_logo_enabled');
                                 })
-                                ->required(),
+                                ->required(function ($get) {
+                                    return $get('open_graphy_logo_enabled');
+                                }),
                             Toggle::make('open_graphy_screenshot_enabled')
                                 ->label(__('Add Page Screenshot'))
                                 ->helperText(__('If enabled, a screenshot of the page will be added to the open graph image.'))
