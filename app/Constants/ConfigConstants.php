@@ -94,5 +94,14 @@ class ConfigConstants
         'open-graphy.template_settings.nodes.node_color',
         'open-graphy.template_settings.nodes.edge_color',
         'open-graphy.template_settings.nodes.text_color',
+
+        // Invoices
+        'invoices.enabled',
+        'invoices.serial_number.series',
+        'invoices.seller.attributes.name',
+        'invoices.seller.attributes.address',
+        'invoices.seller.attributes.code',
+        'invoices.seller.attributes.vat',
+        'invoices.seller.attributes.phone',
     ];
 }

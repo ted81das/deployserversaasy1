@@ -156,3 +156,15 @@ Route::get('/roadmap/i/{itemSlug}', [
     App\Http\Controllers\RoadmapController::class,
     'viewItem',
 ])->name('roadmap.viewItem');
+
+// Invoice
+
+Route::get('/invoice/generate/{transactionUuid}', [
+    App\Http\Controllers\InvoiceController::class,
+    'generate',
+])->name('invoice.generate');
+
+Route::get('/invoice/preview', [
+    App\Http\Controllers\InvoiceController::class,
+    'preview',
+])->name('invoice.preview');

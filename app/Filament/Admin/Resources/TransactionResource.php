@@ -10,6 +10,7 @@ use App\Filament\Admin\Resources\TransactionResource\Widgets\TransactionOverview
 use App\Filament\Admin\Resources\UserResource\Pages\EditUser;
 use App\Mapper\TransactionStatusMapper;
 use App\Models\Transaction;
+use App\Services\InvoiceManager;
 use Filament\Forms\Form;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
@@ -70,7 +71,28 @@ class TransactionResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\Action::make('see-invoice')
+                        ->label(__('See Invoice'))
+                        ->icon('heroicon-o-document')
+                        ->visible(fn (Transaction $record, InvoiceManager $invoiceManager): bool => $invoiceManager->canGenerateInvoices($record))
+                        ->url(
+                            fn (Transaction $record): string => route('invoice.generate', ['transactionUuid' => $record->uuid]),
+                            shouldOpenInNewTab: true
+                        ),
+                    Tables\Actions\Action::make('force-regenerate')
+                        ->label(__('Force Regenerate Invoice'))
+                        ->color('gray')
+                        ->icon('heroicon-o-arrow-path')
+                        ->visible(fn (Transaction $record, InvoiceManager $invoiceManager): bool => $invoiceManager->canGenerateInvoices($record))
+                        ->url(
+                            function (Transaction $record): string {
+                                return route('invoice.generate', ['transactionUuid' => $record->uuid, 'regenerate' => true]);
+                            },
+                            shouldOpenInNewTab: true
+                        ),
+                ]),
             ])
             ->bulkActions([
 
