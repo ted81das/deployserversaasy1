@@ -154,4 +154,9 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     {
         $this->notify(new QueuedVerifyEmail());
     }
+
+    public function address()
+    {
+        return $this->hasOne(Address::class);
+    }
 }
