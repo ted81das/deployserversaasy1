@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5cf2d8966170788a51506046d134c171",
+    "content-hash": "eb5527cbb7d8100bb7755ab3d3e38e3c",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -7392,16 +7392,16 @@
         },
         {
             "name": "saasykit/laravel-open-graphy",
-            "version": "1.1.0",
+            "version": "1.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/saasykit/laravel-open-graphy.git",
-                "reference": "9103cf48cde4a1f478136029238b8640cc8a9bc2"
+                "reference": "88e928fcf81ba21edcc136b980ae8870f8da8807"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/saasykit/laravel-open-graphy/zipball/9103cf48cde4a1f478136029238b8640cc8a9bc2",
-                "reference": "9103cf48cde4a1f478136029238b8640cc8a9bc2",
+                "url": "https://api.github.com/repos/saasykit/laravel-open-graphy/zipball/88e928fcf81ba21edcc136b980ae8870f8da8807",
+                "reference": "88e928fcf81ba21edcc136b980ae8870f8da8807",
                 "shasum": ""
             },
             "require": {
@@ -7459,7 +7459,7 @@
             ],
             "support": {
                 "issues": "https://github.com/saasykit/laravel-open-graphy/issues",
-                "source": "https://github.com/saasykit/laravel-open-graphy/tree/1.1.0"
+                "source": "https://github.com/saasykit/laravel-open-graphy/tree/1.2.0"
             },
             "funding": [
                 {
@@ -7467,7 +7467,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2024-05-26T13:57:23+00:00"
+            "time": "2024-06-16T15:12:56+00:00"
         },
         {
             "name": "sabberworm/php-css-parser",

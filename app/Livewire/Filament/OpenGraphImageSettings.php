@@ -142,41 +142,41 @@ class OpenGraphImageSettings extends Component implements HasForms
                                                     ->modalSubmitAction(false)
                                                     ->modalCancelAction(false)
                                                     ->modalContent(function ($get, ImageGenerator $imageGenerator) {
+                                                        try {
+                                                            $templateSettings = config('open-graphy.template_settings');
 
-                                                        if (!$imageGenerator->canRender()) {
+                                                            $currentTemplate = $get('open_graphy_template'); // this is to get the current template from form state
+
+                                                            $currentTemplateSettings = $templateSettings[$currentTemplate];
+
+                                                            $keys = array_keys($currentTemplateSettings);
+
+                                                            $settings = [];
+
+                                                            foreach ($keys as $key) {
+                                                                $settings[$key] = $get('open-graphy_template_settings_' . $currentTemplate . '_' . $key);
+                                                            }
+
+                                                            $imageType = config('open-graphy.open_graph_image.type');
+
+                                                            $imagePath = $imageGenerator->generate(
+                                                                $get('open_graphy_preview_title'),
+                                                                $get('open_graphy_preview_url'),
+                                                                $get('open_graphy_logo_enabled'),
+                                                                $get('open_graphy_screenshot_enabled'),
+                                                                $get('open_graphy_preview_image'),
+                                                                $currentTemplate,
+                                                                $settings,
+                                                                $get('open_graphy_logo_path'),
+                                                                true
+                                                            );
+
+                                                            $encodedImage = $imageGenerator->base64FromPath($imagePath);
+
+                                                            return new HtmlString("<img src=\"data:image/$imageType;base64,$encodedImage\" alt=\"Open Graph Image Preview\" class=\"w-full h-auto\" />");
+                                                        } catch (\Throwable $e) {
                                                             return new HtmlString('<p class="text-red-500">' . __('Cannot render image, make sure the chrome binary is set correctly in the config file "open-graphy.php".') . '</p>');
                                                         }
-
-                                                        $templateSettings = config('open-graphy.template_settings');
-
-                                                        $currentTemplate = $get('open_graphy_template'); // this is to get the current template from form state
-
-                                                        $currentTemplateSettings = $templateSettings[$currentTemplate];
-
-                                                        $keys = array_keys($currentTemplateSettings);
-
-                                                        $settings = [];
-
-                                                        foreach ($keys as $key) {
-                                                            $settings[$key] = $get('open-graphy_template_settings_'.$currentTemplate.'_'.$key);
-                                                        }
-
-                                                        $imageType = config('open-graphy.open_graph_image.type');
-
-                                                        $image = $imageGenerator->render(
-                                                            $get('open_graphy_preview_title'),
-                                                            $get('open_graphy_preview_url'),
-                                                            $get('open_graphy_logo_enabled'),
-                                                            $get('open_graphy_screenshot_enabled'),
-                                                            $get('open_graphy_preview_image'),
-                                                            $currentTemplate,
-                                                            $settings,
-                                                            $get('open_graphy_logo_path')
-                                                        );
-
-                                                        $encodedImage = base64_encode($image);
-
-                                                        return new HtmlString("<img src=\"data:image/$imageType;base64,$encodedImage\" alt=\"Open Graph Image Preview\" class=\"w-full h-auto\" />");
                                                     })
 
                                             ]),

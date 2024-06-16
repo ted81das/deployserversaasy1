@@ -10,6 +10,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class OneTimeProductResource extends Resource
@@ -110,5 +111,10 @@ class OneTimeProductResource extends Resource
             RelationManagers\PricesRelationManager::class,
             RelationManagers\PaymentProviderDataRelationManager::class,
         ];
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return $record->isDeletable();
     }
 }
