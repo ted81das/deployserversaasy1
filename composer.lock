@@ -7392,16 +7392,16 @@
         },
         {
             "name": "saasykit/laravel-open-graphy",
-            "version": "1.2.0",
+            "version": "1.2.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/saasykit/laravel-open-graphy.git",
-                "reference": "88e928fcf81ba21edcc136b980ae8870f8da8807"
+                "reference": "0fac643d463b8f3c7efd217adadb6410407de832"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/saasykit/laravel-open-graphy/zipball/88e928fcf81ba21edcc136b980ae8870f8da8807",
-                "reference": "88e928fcf81ba21edcc136b980ae8870f8da8807",
+                "url": "https://api.github.com/repos/saasykit/laravel-open-graphy/zipball/0fac643d463b8f3c7efd217adadb6410407de832",
+                "reference": "0fac643d463b8f3c7efd217adadb6410407de832",
                 "shasum": ""
             },
             "require": {
@@ -7459,7 +7459,7 @@
             ],
             "support": {
                 "issues": "https://github.com/saasykit/laravel-open-graphy/issues",
-                "source": "https://github.com/saasykit/laravel-open-graphy/tree/1.2.0"
+                "source": "https://github.com/saasykit/laravel-open-graphy/tree/1.2.1"
             },
             "funding": [
                 {
@@ -7467,7 +7467,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2024-06-16T15:12:56+00:00"
+            "time": "2024-06-17T12:57:50+00:00"
         },
         {
             "name": "sabberworm/php-css-parser",
