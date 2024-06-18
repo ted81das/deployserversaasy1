@@ -50,6 +50,7 @@ class ConfigConstants
         'services.lemon-squeezy.signing_secret',
         'services.lemon-squeezy.is_test_mode',
         'services.postmark.token',
+        'services.resend.key',
         'app.customer_dashboard.show_subscriptions',
         'app.customer_dashboard.show_orders',
         'app.customer_dashboard.show_transactions',
