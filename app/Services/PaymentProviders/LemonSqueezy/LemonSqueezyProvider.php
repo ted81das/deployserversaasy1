@@ -6,7 +6,6 @@ use App\Client\LemonSqueezyClient;
 use App\Constants\DiscountConstants;
 use App\Constants\PaymentProviderConstants;
 use App\Models\Discount;
-use App\Models\OneTimeProduct;
 use App\Models\Order;
 use App\Models\PaymentProvider;
 use App\Models\Plan;
@@ -21,8 +20,6 @@ use App\Services\SubscriptionManager;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Stripe\Exception\ApiErrorException;
-use Stripe\StripeClient;
 
 class LemonSqueezyProvider implements PaymentProviderInterface
 {
@@ -206,7 +203,7 @@ class LemonSqueezyProvider implements PaymentProviderInterface
                 'interval_count' => $newPlan->interval_count,
             ]);
 
-        } catch (ApiErrorException $e) {
+        } catch (\Exception $e) {
             Log::error($e->getMessage());
 
             throw $e;
@@ -226,7 +223,7 @@ class LemonSqueezyProvider implements PaymentProviderInterface
                 throw new \Exception('Failed to cancel lemon-squeezy subscription');
             }
 
-        } catch (ApiErrorException $e) {
+        } catch (\Exception $e) {
             Log::error($e->getMessage());
 
             return false;
@@ -246,7 +243,7 @@ class LemonSqueezyProvider implements PaymentProviderInterface
                 throw new \Exception('Failed to discard lemon-squeezy subscription cancellation');
             }
 
-        } catch (ApiErrorException $e) {
+        } catch (\Exception $e) {
             Log::error($e->getMessage());
 
             return false;
@@ -289,7 +286,7 @@ class LemonSqueezyProvider implements PaymentProviderInterface
 
     public function initSubscriptionCheckout(Plan $plan, Subscription $subscription, ?Discount $discount = null): array
     {
-        // stripe does not need any initialization
+        // lemon squeezy does not need any initialization
 
         return [];
     }
@@ -302,87 +299,6 @@ class LemonSqueezyProvider implements PaymentProviderInterface
     public function isOverlayProvider(): bool
     {
         return false;
-    }
-
-    private function getClient(): StripeClient
-    {
-        return new StripeClient(config('services.stripe.secret_key'));
-    }
-
-    private function findOrCreateStripeSubscriptionProduct(Plan $plan, PaymentProvider $paymentProvider): string
-    {
-        $stripeProductId = $this->planManager->getPaymentProviderProductId($plan, $paymentProvider);
-
-        if ($stripeProductId !== null) {
-            return $stripeProductId;
-        }
-
-        $stripe = $this->getClient();
-
-        $stripeProductId = $stripe->products->create([
-            'id' => $plan->slug.'-'.Str::random(),
-            'name' => $plan->name,
-            'description' => ! empty($plan->description) ? strip_tags($plan->description) : $plan->name,
-        ])->id;
-
-        $this->planManager->addPaymentProviderProductId($plan, $paymentProvider, $stripeProductId);
-
-        return $stripeProductId;
-    }
-
-    private function findOrCreateStripeOneTimeProduct(OneTimeProduct $product, PaymentProvider $paymentProvider): string
-    {
-        $stripeProductId = $this->oneTimeProductManager->getPaymentProviderProductId($product, $paymentProvider);
-
-        if ($stripeProductId !== null) {
-            return $stripeProductId;
-        }
-
-        $stripe = $this->getClient();
-
-        $stripeProductId = $stripe->products->create([
-            'id' => $product->slug.'-'.Str::random(),
-            'name' => $product->name,
-            'description' => ! empty($product->description) ? strip_tags($product->description) : $product->name,
-        ])->id;
-
-        $this->oneTimeProductManager->addPaymentProviderProductId($product, $paymentProvider, $stripeProductId);
-
-        return $stripeProductId;
-    }
-
-    private function findOrCreateStripeCustomer(User $user): string
-    {
-        $stripe = $this->getClient();
-
-        $stripeCustomerId = null;
-        $stripeData = $user->stripeData();
-        if ($stripeData->count() > 0) {
-            $stripeData = $stripeData->first();
-            $stripeCustomerId = $stripeData->stripe_customer_id;
-        }
-
-        if ($stripeCustomerId === null) {
-            $customer = $stripe->customers->create(
-                [
-                    'email' => $user->email,
-                    'name' => $user->name,
-                ]
-            );
-            $stripeCustomerId = $customer->id;
-
-            if ($stripeData->count() > 0) {
-                $stripeData = $stripeData->first();
-                $stripeData->stripe_customer_id = $stripeCustomerId;
-                $stripeData->save();
-            } else {
-                $user->stripeData()->create([
-                    'stripe_customer_id' => $stripeCustomerId,
-                ]);
-            }
-        }
-
-        return $stripeCustomerId;
     }
 
     private function findOrCreateLemonSqueezyDiscount(Discount $discount, PaymentProvider $paymentProvider): string
@@ -431,56 +347,6 @@ class LemonSqueezyProvider implements PaymentProviderInterface
         $this->discountManager->addPaymentProviderDiscountId($discount, $paymentProvider, $code);
 
         return $code;
-    }
-
-    private function findOrCreateStripeSubscriptionProductPrice(Plan $plan, PaymentProvider $paymentProvider, string $stripeProductId): string
-    {
-        $planPrice = $this->calculationManager->getPlanPrice($plan);
-
-        $stripeProductPriceId = $this->planManager->getPaymentProviderPriceId($planPrice, $paymentProvider);
-
-        if ($stripeProductPriceId !== null) {
-            return $stripeProductPriceId;
-        }
-
-        $stripe = $this->getClient();
-
-        $stripeProductPriceId = $stripe->prices->create([
-            'product' => $stripeProductId,
-            'unit_amount' => $planPrice->price,
-            'currency' => $planPrice->currency()->firstOrFail()->code,
-            'recurring' => [
-                'interval' => $plan->interval()->firstOrFail()->date_identifier,
-                'interval_count' => $plan->interval_count,
-            ],
-        ])->id;
-
-        $this->planManager->addPaymentProviderPriceId($planPrice, $paymentProvider, $stripeProductPriceId);
-
-        return $stripeProductPriceId;
-    }
-
-    private function findOrCreateStripeOneTimeProductPrice(OneTimeProduct $oneTimeProduct, PaymentProvider $paymentProvider, string $stripeProductId): string
-    {
-        $productPrice = $this->calculationManager->getOneTimeProductPrice($oneTimeProduct);
-
-        $stripeProductPriceId = $this->oneTimeProductManager->getPaymentProviderPriceId($productPrice, $paymentProvider);
-
-        if ($stripeProductPriceId !== null) {
-            return $stripeProductPriceId;
-        }
-
-        $stripe = $this->getClient();
-
-        $stripeProductPriceId = $stripe->prices->create([
-            'product' => $stripeProductId,
-            'unit_amount' => $productPrice->price,
-            'currency' => $productPrice->currency()->firstOrFail()->code,
-        ])->id;
-
-        $this->oneTimeProductManager->addPaymentProviderPriceId($productPrice, $paymentProvider, $stripeProductPriceId);
-
-        return $stripeProductPriceId;
     }
 
     public function getName(): string
