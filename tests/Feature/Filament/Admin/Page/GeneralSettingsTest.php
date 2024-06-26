@@ -1,6 +1,6 @@
 <?php
 
-namespace Feature\Filament\Admin\Page;
+namespace Tests\Feature\Filament\Admin\Page;
 
 use App\Filament\Admin\Pages\GeneralSettings;
 use Tests\Feature\FeatureTest;

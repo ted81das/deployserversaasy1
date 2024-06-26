@@ -1,6 +1,6 @@
 <?php
 
-namespace Feature\Http\Controllers\PaymentProviders;
+namespace Tests\Feature\Http\Controllers\PaymentProviders;
 
 use App\Constants\OrderStatus;
 use App\Constants\SubscriptionStatus;
