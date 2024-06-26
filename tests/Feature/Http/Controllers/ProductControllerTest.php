@@ -1,6 +1,6 @@
 <?php
 
-namespace Feature\Http\Controllers;
+namespace Tests\Feature\Http\Controllers;
 
 use App\Constants\SubscriptionStatus;
 use App\Models\Currency;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Feature\Filament\Admin\Resources;
+namespace Tests\Feature\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\BlogPostCategoryResource;
 use Tests\Feature\FeatureTest;
