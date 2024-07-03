@@ -77,8 +77,6 @@ Route::get('/payment-provider/paddle/payment-link', [
     'paymentLink',
 ])->name('payment-link.paddle');
 
-Route::get('/subscription/plans', [App\Http\Controllers\SubscriptionController::class, 'index'])->name('subscription.plans');
-
 Route::get('/subscription/{subscriptionUuid}/change-plan/{planSlug}', [
     App\Http\Controllers\SubscriptionController::class,
     'changePlan',
