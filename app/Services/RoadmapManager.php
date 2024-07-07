@@ -91,8 +91,12 @@ class RoadmapManager
         return $description;
     }
 
-    public function prepareForDisplay(string $string)
+    public function prepareForDisplay(?string $string)
     {
+        if (! $string) {
+            return '';
+        }
+
         // turn urls into <a> tags with rel="noopener noreferrer nofollow ugc" for SEO
         $string = preg_replace(
             '/(https?:\/\/[^\s]+)/',

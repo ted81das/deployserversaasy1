@@ -44,6 +44,11 @@ class RolesAndPermissionsSeeder extends Seeder
         Permission::findOrCreate('delete subscriptions');
         Permission::findOrCreate('view subscriptions');
 
+        Permission::findOrCreate('create orders');
+        Permission::findOrCreate('update orders');
+        Permission::findOrCreate('delete orders');
+        Permission::findOrCreate('view orders');
+
         Permission::findOrCreate('create one time products');
         Permission::findOrCreate('update one time products');
         Permission::findOrCreate('delete one time products');
