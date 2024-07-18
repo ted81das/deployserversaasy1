@@ -123,4 +123,9 @@ class BlogPostResource extends Resource
             'edit' => Pages\EditBlogPost::route('/{record}/edit'),
         ];
     }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Blog Posts');
+    }
 }

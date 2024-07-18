@@ -90,4 +90,9 @@ class OauthLoginProviderResource extends Resource
     {
         return false;
     }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Oauth Login Providers');
+    }
 }

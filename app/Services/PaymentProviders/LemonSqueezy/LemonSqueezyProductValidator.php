@@ -42,11 +42,11 @@ class LemonSqueezyProductValidator
             throw new \Exception(sprintf('Has trial mismatch. Plan has trial: %s, Lemon Squeezy has trial: %s', $plan->has_trial, $response['data']['attributes']['has_free_trial']));
         }
 
-        if ($plan->trialInterval->slug != $response['data']['attributes']['trial_interval']) {
+        if ($plan->has_trial && $plan->trialInterval->slug != $response['data']['attributes']['trial_interval']) {
             throw new \Exception(sprintf('Trial interval mismatch. Plan trial interval: %s, Lemon Squeezy trial interval: %s', $plan->trialInterval->slug, $response['data']['attributes']['trial_interval']));
         }
 
-        if ($plan->trial_interval_count != $response['data']['attributes']['trial_interval_count']) {
+        if ($plan->has_trial && $plan->trial_interval_count != $response['data']['attributes']['trial_interval_count']) {
             throw new \Exception(sprintf('Trial interval count mismatch. Plan trial interval count: %s, Lemon Squeezy trial interval count: %s', $plan->trial_interval_count, $response['data']['attributes']['trial_interval_count']));
         }
 

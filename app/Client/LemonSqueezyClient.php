@@ -48,7 +48,9 @@ class LemonSqueezyClient
             'variant_id' => $newVariantId,
         ];
 
-        if (! $withProration) {
+        if ($withProration) {
+            $attributes['invoice_immediately'] = true;
+        } else {
             $attributes['disable_prorations'] = true;
         }
 

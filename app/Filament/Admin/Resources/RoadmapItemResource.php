@@ -154,4 +154,9 @@ class RoadmapItemResource extends Resource
     {
         return static::getModel()::count();
     }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Roadmap Items');
+    }
 }

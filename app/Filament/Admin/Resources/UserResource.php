@@ -115,4 +115,9 @@ class UserResource extends Resource
     {
         return false;
     }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Users');
+    }
 }

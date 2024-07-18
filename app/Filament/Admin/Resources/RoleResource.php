@@ -85,4 +85,9 @@ class RoleResource extends Resource
     {
         return false;
     }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Roles');
+    }
 }
