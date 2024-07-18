@@ -134,4 +134,9 @@ class DiscountResource extends Resource
             'edit' => \App\Filament\Admin\Resources\DiscountResource\Pages\EditDiscount::route('/{record}/edit'),
         ];
     }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Discounts');
+    }
 }

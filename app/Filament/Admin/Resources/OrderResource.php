@@ -193,4 +193,9 @@ class OrderResource extends Resource
     {
         return false;
     }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Orders');
+    }
 }

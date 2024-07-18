@@ -105,6 +105,11 @@ class OneTimeProductResource extends Resource
         return __('One-time Purchase Product');
     }
 
+    public static function getNavigationLabel(): string
+    {
+        return __('One-time Purchase Products');
+    }
+
     public static function getRelations(): array
     {
         return [

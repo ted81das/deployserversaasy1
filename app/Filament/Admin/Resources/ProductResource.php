@@ -114,4 +114,9 @@ class ProductResource extends Resource
     {
         return __('Subscription Product');
     }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Subscription Products');
+    }
 }

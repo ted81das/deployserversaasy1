@@ -233,4 +233,9 @@ class TransactionResource extends Resource
 
         return static::$cachedTransactionHistoryComponents;
     }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Transactions');
+    }
 }

@@ -285,4 +285,9 @@ class SubscriptionResource extends Resource
             ]);
 
     }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Subscriptions');
+    }
 }

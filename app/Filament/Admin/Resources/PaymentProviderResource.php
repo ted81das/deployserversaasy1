@@ -89,4 +89,9 @@ class PaymentProviderResource extends Resource
     {
         return false;
     }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Payment Providers');
+    }
 }

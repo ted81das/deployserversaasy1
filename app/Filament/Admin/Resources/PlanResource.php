@@ -171,4 +171,9 @@ class PlanResource extends Resource
             'edit' => \App\Filament\Admin\Resources\PlanResource\Pages\EditPlan::route('/{record}/edit'),
         ];
     }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Plans');
+    }
 }

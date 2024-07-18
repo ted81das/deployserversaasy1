@@ -82,4 +82,9 @@ class BlogPostCategoryResource extends Resource
             'edit' => Pages\EditBlogPostCategory::route('/{record}/edit'),
         ];
     }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Blog Post Categories');
+    }
 }

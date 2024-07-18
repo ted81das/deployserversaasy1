@@ -199,7 +199,9 @@ class StripeProvider implements PaymentProviderInterface
                 ]),
             ];
 
-            if (! $withProration) {
+            if ($withProration) {
+                $subscriptionUpdateObject['proration_behavior'] = 'always_invoice';
+            } else {
                 $subscriptionUpdateObject['proration_behavior'] = 'none';
             }
 
