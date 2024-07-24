@@ -36,7 +36,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // set the clicked element as active
             planSwitcher.classList.add('tab-active');
-            planSwitcher.addAttribute('aria-selected');
 
             // hide all .plans-container elements
             document.querySelectorAll('.plans-container').forEach((plansContainer) => {
@@ -50,6 +49,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    // if .plan-switcher has only 1 element, click it
+    if (planSwitchers.length === 1) {
+        planSwitchers[0].click();
+    }
 
     syncDaisyThemeWithFilament();
 
