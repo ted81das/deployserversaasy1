@@ -27,6 +27,15 @@ class ConfigManager
         config([$key => $value]);
     }
 
+    public function exportAllConfigs(): void
+    {
+        $configs = Config::all();
+
+        $configs->each(function ($config) {
+            cache()->forever($config->key, $config->value);
+        });
+    }
+
     public function get(string $key, ?string $default = null): string|array|null
     {
         try {
