@@ -15,6 +15,7 @@ class MetricsOverview extends BaseWidget
 
     protected function getStats(): array
     {
+        /** @var MetricsManager $metricsManager */
         $metricsManager = resolve(MetricsManager::class);
 
         $currentMrr = $metricsManager->calculateMRR(now());
