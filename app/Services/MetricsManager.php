@@ -368,7 +368,7 @@ class MetricsManager
 
     public function getTotalTransactions()
     {
-        return Transaction::all()->count();
+        return Transaction::count();
     }
 
     public function getTotalRevenue()
@@ -391,7 +391,7 @@ class MetricsManager
     public function getTotalCustomerConversion()
     {
         $totalSubscriptions = $this->getActiveSubscriptions();
-        $totalUsers = User::all()->count();
+        $totalUsers = User::count();
 
         return number_format(($totalUsers > 0 ? $totalSubscriptions / $totalUsers * 100 : 0), 2).'%';
     }
