@@ -46,9 +46,10 @@ class SubscriptionResource extends Resource
                     ->formatStateUsing(fn (string $state, SubscriptionStatusMapper $mapper): string => $mapper->mapForDisplay($state)),
                 Tables\Columns\IconColumn::make('is_canceled_at_end_of_cycle')
                     ->label(__('Renews automatically'))
-                    ->icon(fn (string $state): string => match ($state) {
-                        '0' => 'heroicon-o-check-circle',
-                        '1' => 'heroicon-o-x-circle',
+                    ->icon(function ($state) {
+                        $state = boolval($state);
+
+                        return $state ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle';
                     }),
             ])
             ->filters([
@@ -161,13 +162,16 @@ class SubscriptionResource extends Resource
                             ->formatStateUsing(fn (string $state, SubscriptionStatusMapper $mapper): string => $mapper->mapForDisplay($state)),
                         TextEntry::make('is_canceled_at_end_of_cycle')
                             ->label(__('Renews automatically'))
-                            ->icon(fn (string $state): string => match ($state) {
-                                '0' => 'heroicon-o-check-circle',
-                                '1' => 'heroicon-o-x-circle',
-                            })->formatStateUsing(fn (string $state): string => match ($state) {
-                                '0' => __('Yes'),
-                                '1' => __('No'),
-                            }),
+                            ->icon(
+                                function ($state) {
+                                    $state = boolval($state);
+
+                                    return $state ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle';
+                                })
+                            ->formatStateUsing(
+                                function ($state) {
+                                    return boolval($state) ? __('Yes') : __('No');
+                                }),
                     ]),
                 Section::make(__('Discount Details'))
                     ->hidden(fn (Subscription $record): bool => $record->discounts->isEmpty() ||

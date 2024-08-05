@@ -4,18 +4,9 @@ namespace App\Policies;
 
 use App\Models\Subscription;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class SubscriptionPolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
-    public function viewAny(User $user): bool
-    {
-        return $user->hasPermissionTo('view subscriptions');
-    }
-
     /**
      * Determine whether the user can view the model.
      */
