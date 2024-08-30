@@ -19,9 +19,11 @@ class ForgotPasswordController extends Controller
     |
     */
 
-    use SendsPasswordResetEmails;
+    use SendsPasswordResetEmails {
+        sendResetLinkEmail as public sendResetLinkEmailFromTrait;
+    }
 
-    public function sendEmailWithResetLink(Request $request)
+    public function sendResetLinkEmail(Request $request) 
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|exists:users,email',
@@ -31,9 +33,8 @@ class ForgotPasswordController extends Controller
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
-        
-        $this->sendEmailWithResetLink($request);
 
-        return back()->with('status', __('A password reset link has been sent to your email address.'));
+        return $this->sendResetLinkEmailFromTrait($request); 
+
     }
 }
