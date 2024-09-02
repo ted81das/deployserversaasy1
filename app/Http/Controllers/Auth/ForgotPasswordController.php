@@ -26,8 +26,7 @@ class ForgotPasswordController extends Controller
     public function sendResetLinkEmail(Request $request) 
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email|exists:users,email',
-            'g-recaptcha-response' => 'required|recaptcha',
+            'g-recaptcha-response' => 'required|recaptcha'
         ]);
 
         if ($validator->fails()) {
