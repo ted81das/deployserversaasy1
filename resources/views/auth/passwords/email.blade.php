@@ -56,8 +56,10 @@
         </div>
     </x-slot>
 
-    @push('tail')
-        {!! htmlScriptTagJsApi() !!} <!-- Include reCAPTCHA script -->
-    @endpush
+    @if (config('app.recaptcha_enabled'))
+        @push('tail')
+            {!! htmlScriptTagJsApi() !!} <!-- Include reCAPTCHA script -->
+        @endpush
+    @endif
 
 </x-layouts.focus>
