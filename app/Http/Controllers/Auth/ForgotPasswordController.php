@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Foundation\Auth\SendsPasswordResetEmails;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Foundation\Auth\SendsPasswordResetEmails;
+
 class ForgotPasswordController extends Controller
 {
     /*
@@ -23,17 +24,21 @@ class ForgotPasswordController extends Controller
         sendResetLinkEmail as public sendResetLinkEmailFromTrait;
     }
 
-    public function sendResetLinkEmail(Request $request) 
+    public function sendResetLinkEmail(Request $request)
     {
+        if (! config('app.recaptcha_enabled')) {
+            return $this->sendResetLinkEmailFromTrait($request);
+        }
+
         $validator = Validator::make($request->all(), [
-            'g-recaptcha-response' => 'required|recaptcha'
+            'g-recaptcha-response' => 'required|recaptcha',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
 
-        return $this->sendResetLinkEmailFromTrait($request); 
+        return $this->sendResetLinkEmailFromTrait($request);
 
     }
 }
