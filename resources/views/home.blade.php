@@ -752,6 +752,4 @@
         </x-accordion>
     </div>
 
-    <x-products.all />
-
 </x-layouts.app>
