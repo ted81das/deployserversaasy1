@@ -11,7 +11,7 @@
         <div class="text-lg font-semibold">{{ __($plan->product->name) }}</div>
         <div class="flex items-center justify-center mt-2">
             <div class="mr-1 text-4xl font-bold">@money($plan->prices[0]->price, $plan->prices[0]->currency->code)</div>
-            <div class="text-sm">/ {{$plan->interval_count > 1 ? $plan->interval_coun : '' }} {{ $plan->interval->name }}</div>
+            <div class="text-sm">/ {{$plan->interval_count > 1 ? $plan->interval_count : '' }} {{ __($plan->interval->name) }}</div>
         </div>
         <div class="mt-3 space-y-3">
             <ul>
