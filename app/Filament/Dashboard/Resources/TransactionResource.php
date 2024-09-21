@@ -58,7 +58,7 @@ class TransactionResource extends Resource
                     ->icon('heroicon-o-document')
                     ->visible(fn (Transaction $record, InvoiceManager $invoiceManager): bool => $invoiceManager->canGenerateInvoices($record))
                     ->modalDescription(function (AddressManager $addressManager) {
-                        if (!$addressManager->userHasAddressInfo(auth()->user())) {
+                        if (! $addressManager->userHasAddressInfo(auth()->user())) {
                             return __('Your address information is not complete. It is recommended to complete your address information before generating an invoice. Are you sure you want to proceed?');
                         }
 
@@ -67,12 +67,12 @@ class TransactionResource extends Resource
                     ->modalCancelAction(
                         Action::make('complete-address-information')
                             ->label(__('Complete Address Info'))
-                        ->url(route('filament.dashboard.pages.my-profile'))
+                            ->url(route('filament.dashboard.pages.my-profile'))
                     )
                     ->modalSubmitActionLabel(__('Proceed anyway'))
                     ->action(function (Transaction $record) {
                         return redirect()->route('invoice.generate', ['transactionUuid' => $record->uuid]);
-                    })
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

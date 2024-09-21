@@ -39,7 +39,12 @@ class SubscriptionResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('plan.name')->label(__('Plan')),
                 Tables\Columns\TextColumn::make('price')->formatStateUsing(function (string $state, $record) {
-                    return money($state, $record->currency->code).' / '.$record->interval->name;
+                    $interval = $record->interval->name;
+                    if ($record->interval_count > 1) {
+                        $interval = $record->interval_count.' '.__(str()->of($record->interval->name)->plural()->toString());
+                    }
+
+                    return money($state, $record->currency->code).' / '.$interval;
                 }),
                 Tables\Columns\TextColumn::make('ends_at')->dateTime(config('app.datetime_format'))->label(__('Next Renewal')),
                 Tables\Columns\TextColumn::make('status')
@@ -155,7 +160,12 @@ class SubscriptionResource extends Resource
                             ]),
                         TextEntry::make('plan.name'),
                         TextEntry::make('price')->formatStateUsing(function (string $state, $record) {
-                            return money($state, $record->currency->code).' / '.$record->interval->name;
+                            $interval = $record->interval->name;
+                            if ($record->interval_count > 1) {
+                                $interval = __('every ').$record->interval_count.' '.__(str()->of($record->interval->name)->plural()->toString());
+                            }
+
+                            return money($state, $record->currency->code).' / '.$interval;
                         }),
                         TextEntry::make('ends_at')->dateTime(config('app.datetime_format'))->label(__('Next Renewal'))->visible(fn (Subscription $record): bool => ! $record->is_canceled_at_end_of_cycle),
                         TextEntry::make('status')

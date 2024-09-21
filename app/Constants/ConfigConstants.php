@@ -12,7 +12,7 @@ class ConfigConstants
         'app.datetime_format',
         'app.default_currency',
         'app.google_tracking_id',
-        'app.posthog_html_snippet',
+        'app.tracking_scripts',
         'app.payment.proration_enabled',
         'mail.default',
         'mail.from.name',
@@ -104,5 +104,8 @@ class ConfigConstants
         'invoices.seller.attributes.code',
         'invoices.seller.attributes.vat',
         'invoices.seller.attributes.phone',
+
+        // Cookie Consent
+        'cookie-consent.enabled',
     ];
 }

@@ -77,7 +77,12 @@ class SubscriptionResource extends Resource
                 Tables\Columns\TextColumn::make('user.name')->label(__('User'))->searchable(),
                 Tables\Columns\TextColumn::make('plan.name')->label(__('Plan'))->searchable(),
                 Tables\Columns\TextColumn::make('price')->formatStateUsing(function (string $state, $record) {
-                    return money($state, $record->currency->code).' / '.$record->interval->name;
+                    $interval = $record->interval->name;
+                    if ($record->interval_count > 1) {
+                        $interval = $record->interval_count.' '.__(str()->of($record->interval->name)->plural()->toString());
+                    }
+
+                    return money($state, $record->currency->code).' / '.$interval;
                 }),
                 Tables\Columns\TextColumn::make('payment_provider_id')
                     ->formatStateUsing(function (string $state, $record) {
@@ -217,7 +222,12 @@ class SubscriptionResource extends Resource
                                             ]),
                                         TextEntry::make('plan.name'),
                                         TextEntry::make('price')->formatStateUsing(function (string $state, $record) {
-                                            return money($state, $record->currency->code).' / '.$record->interval->name;
+                                            $interval = $record->interval->name;
+                                            if ($record->interval_count > 1) {
+                                                $interval = __('every ').$record->interval_count.' '.__(str()->of($record->interval->name)->plural()->toString());
+                                            }
+
+                                            return money($state, $record->currency->code).' / '.$interval;
                                         }),
                                         TextEntry::make('payment_provider_id')
                                             ->formatStateUsing(function (string $state, $record) {
