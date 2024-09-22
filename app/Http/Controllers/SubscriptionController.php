@@ -45,8 +45,6 @@ class SubscriptionController extends Controller
 
         $newPlan = $this->planManager->getActivePlanBySlug($newPlanSlug);
 
-        $user = auth()->user();
-
         $isProrated = config('app.payment.proration_enabled', true);
 
         $totals = $this->calculationManager->calculateNewPlanTotals(
