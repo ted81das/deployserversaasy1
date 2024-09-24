@@ -176,6 +176,9 @@ class PaddleProvider implements PaymentProviderInterface
         $results = [
             'productDetails' => [],
         ];
+
+        $currency = $order->currency()->firstOrFail();
+
         foreach ($order->items()->get() as $item) {
             $product = $item->oneTimeProduct()->firstOrFail();
             $paddleProductId = $this->oneTimeProductManager->getPaymentProviderProductId($product, $paymentProvider);
@@ -183,8 +186,6 @@ class PaddleProvider implements PaymentProviderInterface
             if ($paddleProductId === null) {
                 $paddleProductId = $this->createPaddleProductForOneTimeProduct($product, $paymentProvider);
             }
-
-            $currency = $order->currency()->firstOrFail();
 
             $oneTimeProductPrice = $this->calculationManager->getOneTimeProductPrice($product);
 
