@@ -114,6 +114,8 @@ class LemonSqueezyProvider implements PaymentProviderInterface
         /** @var User $user */
         $user = auth()->user();
 
+        $variantId = null;
+
         foreach ($order->items()->get() as $item) {
             $product = $item->oneTimeProduct()->firstOrFail();
             $variantId = $this->oneTimeProductManager->getPaymentProviderProductId($product, $paymentProvider);
@@ -152,6 +154,11 @@ class LemonSqueezyProvider implements PaymentProviderInterface
 
         if ($discount) {
             $object['checkout_data']['discount_code'] = $this->findOrCreateLemonSqueezyDiscount($discount, $paymentProvider);
+        }
+
+        if ($variantId === null) {
+            Log::error('Failed to find variant ID for product: (did you forget to add it to the product?) '.$product->id);
+            throw new \Exception('Failed to find variant ID for product');
         }
 
         $response = $this->client->createCheckout($object, $variantId);
