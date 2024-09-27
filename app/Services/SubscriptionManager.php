@@ -7,6 +7,7 @@ use App\Constants\SubscriptionStatus;
 use App\Events\Subscription\InvoicePaymentFailed;
 use App\Events\Subscription\Subscribed;
 use App\Events\Subscription\SubscriptionCancelled;
+use App\Events\Subscription\SubscriptionRenewed;
 use App\Exceptions\SubscriptionCreationNotAllowedException;
 use App\Models\PaymentProvider;
 use App\Models\Plan;
@@ -197,7 +198,7 @@ class SubscriptionManager
 
         // if $newEndsAt > $oldEndsAt, then subscription is renewed
         if ($newEndsAt && $oldEndsAt && $newEndsAt->greaterThan($oldEndsAt)) {
-            Subscribed::dispatch($subscription);
+            SubscriptionRenewed::dispatch($subscription, $oldEndsAt, $newEndsAt);
         }
     }
 
