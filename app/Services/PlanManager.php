@@ -8,6 +8,7 @@ use App\Models\Plan;
 use App\Models\PlanPaymentProviderData;
 use App\Models\PlanPrice;
 use App\Models\PlanPricePaymentProviderData;
+use App\Models\Product;
 use Illuminate\Support\Collection;
 
 class PlanManager
@@ -82,6 +83,11 @@ class PlanManager
     public function getAllActivePlans()
     {
         return Plan::where('is_active', true)->get();
+    }
+
+    public function getDefaultProduct(): ?Product
+    {
+        return Product::where('is_default', true)->first();
     }
 
     public function getAllPlansWithPrices(array $productSlugs = [])
