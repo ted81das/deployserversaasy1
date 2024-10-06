@@ -19,6 +19,7 @@ class All extends Component
         public string $preselectedInterval = '',
         public bool $calculateSavingRates = false,
         public ?string $currentSubscriptionUuid = null,
+        public bool $showDefaultProduct = false,
     ) {
 
     }
@@ -42,6 +43,14 @@ class All extends Component
         $viewData = [
             'plans' => $plans,
         ];
+
+        if ($this->showDefaultProduct) {
+            $defaultProduct = $this->planManager->getDefaultProduct();
+
+            if ($defaultProduct) {
+                $viewData['defaultProduct'] = $defaultProduct;
+            }
+        }
 
         $subscription = null;
         if ($user !== null && $this->currentSubscriptionUuid !== null) {
