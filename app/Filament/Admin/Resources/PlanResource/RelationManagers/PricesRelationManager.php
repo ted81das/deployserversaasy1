@@ -2,12 +2,16 @@
 
 namespace App\Filament\Admin\Resources\PlanResource\RelationManagers;
 
+use App\Constants\PlanPriceType;
+use App\Constants\PlanType;
+use App\Mapper\PlanPriceMapper;
 use App\Models\Currency;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
 use Illuminate\Validation\Rules\Unique;
 
 class PricesRelationManager extends RelationManager
@@ -23,13 +27,20 @@ class PricesRelationManager extends RelationManager
         return $form
             ->schema([
                 Forms\Components\Section::make([
-                    Forms\Components\TextInput::make('price')
-                        ->required()
-                        ->type('number')
-                        ->gte(0)
-                        ->helperText(__('Enter price in lowest denomination for a currency (cents). E.g. 1000 = 10.00')),
+                    Forms\Components\Radio::make('type')
+                        ->helperText(__('Pick the price type for this plan.'))
+                        ->options(function () {
+                            return PlanPriceMapper::getPlanPriceTypes($this->ownerRecord->type);
+                        })
+                        ->default(array_keys(PlanPriceMapper::getPlanPriceTypes($this->ownerRecord->type))[0])
+                        ->visible(function () {
+                            return $this->ownerRecord->type === PlanType::USAGE_BASED->value;
+                        })
+                        ->live()
+                        ->required(),
                     Forms\Components\Select::make('currency_id')
                         ->label('Currency')
+                        ->live()
                         ->options(
                             \App\Models\Currency::all()->sortBy('name')
                                 ->mapWithKeys(function ($currency) {
@@ -43,7 +54,113 @@ class PricesRelationManager extends RelationManager
                             return $rule->where('plan_id', $livewire->ownerRecord->id)->ignore($get('id'));
                         })
                         ->preload(),
+                    Forms\Components\TextInput::make('price')
+                        ->required()
+                        ->type('number')
+                        ->gte(0)
+                        ->live()
+                        ->label(function (Forms\Get $get) {
+                            return $get('type') === PlanPriceType::FLAT_RATE->value ? __('Price') : __('Fixed Fee');
+                        })
+                        ->helperText(
+                            function (Forms\Get $get) {
+                                if ($get('type') === PlanPriceType::FLAT_RATE->value) {
+                                    return new HtmlString(
+                                        __('Enter price in lowest denomination for a currency (cents). E.g. 1000 = $10.00')
+                                    );
+                                } else {
+                                    return new HtmlString(
+                                        '<strong>'.__('Important: Fixed fee is available only for Stripe.').'</strong>'
+                                        .'<br/><br/>'.__('A fixed fee is an amount that your customer will be charged every billing cycle in addition to any usage-based amount. Enter fixed fee in lowest denomination for a currency (cents). E.g. 1000 = $10.00')
+                                        .'<br/><br/>'.__('It is highlighy recommended that you set up a fixed fee for your usage-based billing plans if you are dealing with low-trust customers, as customers can keep using your service and then disable their credit card to avoid being charged for usage.')
+                                    );
+                                }
+                            }
+                        ),
+                    Forms\Components\TextInput::make('price_per_unit')
+                        ->required()
+                        ->type('number')
+                        ->gte(0)
+                        ->visible(function ($get) {
+                            return $get('type') === PlanPriceType::USAGE_BASED_PER_UNIT->value;
+                        })
+                        ->helperText(__('Enter price per unit in lowest denomination for a currency (cents). E.g. 1000 = $10.00')),
+                    Forms\Components\Repeater::make('tiers')
+                        ->helperText(__('Enter tier prices in lowest denomination for a currency (cents). E.g. 1000 = $10.00'))
+                        ->schema([
+                            Forms\Components\TextInput::make('until_unit')->label(__('Up until (x) units'))->required()
+                                ->readOnly(function ($state) {
+                                    return $state === '∞';
+                                }),
+                            Forms\Components\TextInput::make('per_unit')->label(__('Price per unit'))->numeric()->minValue(0)->default(0)->required(),
+                            Forms\Components\TextInput::make('flat_fee')->label(__('Flat fee'))->numeric()->minValue(0)->default(0)->required(),
+                        ])
+                        ->live()
+                        ->default([
+                            [
+                                'until_unit' => 5,
+                                'per_unit' => 0,
+                                'flat_fee' => 0,
+                            ],
+                            [
+                                'until_unit' => '∞',
+                                'per_unit' => 0,
+                                'flat_fee' => 0,
+                            ],
+                        ])
+                        ->rules([
+                            fn (Forms\Get $get): \Closure => function (string $attribute, $value, \Closure $fail) {
+                                if (last($value)['until_unit'] !== '∞') {
+                                    $fail(__('The last tier must have "∞" as the value for "Up until (x) units"'));
+                                }
 
+                                // Up until (x) units values should be in ascending order
+
+                                $current = 0;
+                                foreach ($value as $tier) {
+                                    if ($tier['until_unit'] === '∞') {
+                                        break;
+                                    }
+
+                                    if ($tier['until_unit'] <= $current) {
+                                        $fail(__('The "Up until (x) units" values should be in ascending order'));
+                                    }
+
+                                    $current = $tier['until_unit'];
+                                }
+
+                                foreach ($value as $tier) {
+                                    if (! is_numeric($tier['until_unit']) && $tier['until_unit'] !== '∞') {
+                                        $fail(__('The "Up until (x) units" values should be an integer or "∞"'));
+                                    }
+                                }
+                            },
+                        ])
+                        ->visible(function ($get) {
+                            return $get('type') === PlanPriceType::USAGE_BASED_TIERED_VOLUME->value ||
+                                $get('type') === PlanPriceType::USAGE_BASED_TIERED_GRADUATED->value;
+                        })
+                        ->columns(3),
+                    Forms\Components\Section::make([
+                        Forms\Components\TextInput::make('example_unit_quantity')
+                            ->integer()
+                            ->label(__('Unit Quantity'))
+                            ->helperText(__('Enter an example unit quantity to see how the price is calculated.'))
+                            ->live(),
+                        Forms\Components\Placeholder::make('price_preview')
+                            ->label(__('Price Preview Calculation'))
+                            ->content(function (Forms\Get $get) {
+                                return $this->calculatePricePreview($get);
+                            })
+                            ->visible(function ($get) {
+                                return $get('type') === PlanPriceType::USAGE_BASED_TIERED_VOLUME->value ||
+                                    $get('type') === PlanPriceType::USAGE_BASED_TIERED_GRADUATED->value;
+                            }),
+                    ])->visible(function ($get) {
+                        return $get('type') === PlanPriceType::USAGE_BASED_TIERED_VOLUME->value ||
+                            $get('type') === PlanPriceType::USAGE_BASED_TIERED_GRADUATED->value;
+                    })->heading(__('Price Preview'))
+                        ->columns(2),
                 ]),
             ]);
     }
@@ -73,5 +190,112 @@ class PricesRelationManager extends RelationManager
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
             ]);
+    }
+
+    private function calculatePricePreview(Forms\Get $get): HtmlString
+    {
+        try {
+
+            $type = $get('type');
+            $currency = Currency::find($get('currency_id'));
+
+            if ($type === PlanPriceType::USAGE_BASED_TIERED_VOLUME->value) {
+                $explanation = '';
+
+                if (! empty($get('example_unit_quantity'))) {
+                    // get the tier where the example_unit_quantity falls
+                    $tier = collect($get('tiers'))->first(function ($tier) use ($get) {
+                        return $tier['until_unit'] === '∞' || $tier['until_unit'] >= $get('example_unit_quantity');
+                    });
+
+                    $price = $tier['flat_fee'] + ($tier['per_unit'] * $get('example_unit_quantity'));
+
+                    $priceFormatted = money($price, $currency->code);
+
+                    $explanation = '('.$get('example_unit_quantity').' * '.money($tier['per_unit'], $currency->code).') + '.money($tier['flat_fee'], $currency->code).' = '.$priceFormatted;
+
+                    if ($get('price') > 0) {
+                        $fixedFee = $get('price');
+                        $priceFormatted = money($fixedFee, $currency->code);
+
+                        if (! empty($explanation)) {
+                            $explanation .= '<br/> + ';
+                        }
+
+                        $explanation .= $priceFormatted.__(' (Fixed fee)');
+
+                        $explanation .= ' = '.money($price + $fixedFee, $currency->code);
+                    }
+                }
+
+                return new HtmlString(
+                    __('Tiered (Volume) pricing model is calculated as follows: <br/> (volume of usage * price per unit) + Flat fee of that tier + Fixed fee (if any).')
+                    .'<br/><br/>'
+                    .$explanation
+                );
+            }
+
+            if ($type === PlanPriceType::USAGE_BASED_TIERED_GRADUATED->value) {
+                $explanation = '';
+
+                if (! empty($get('example_unit_quantity'))) {
+                    $tiers = collect($get('tiers'));
+
+                    $price = 0;
+                    $priceFormatted = money($price, $currency->code);
+                    $remaining = $get('example_unit_quantity');
+                    $explanation = '';
+                    $lastTier = null;
+
+                    foreach ($tiers as $tier) {
+                        if ($remaining <= 0) {
+                            break;
+                        }
+
+                        $maxUnitsInCurrentTier = ($tier['until_unit'] === '∞' ? 100000000000 : $tier['until_unit']) - ($lastTier ? $lastTier['until_unit'] : 0);
+                        $unitsCalculatedAtThisTier = min($remaining, $maxUnitsInCurrentTier);
+
+                        $tierPrice = $tier['flat_fee'] + ($tier['per_unit'] * $unitsCalculatedAtThisTier);
+
+                        $price += $tierPrice;
+                        $priceFormatted = money($price, $currency->code);
+
+                        if (! empty($explanation)) {
+                            $explanation .= '<br/> + ';
+                        }
+
+                        $explanation .= '(('.$unitsCalculatedAtThisTier.' * '.money($tier['per_unit'], $currency->code).') + '.money($tier['flat_fee'], $currency->code).')';
+
+                        $remaining -= $unitsCalculatedAtThisTier;
+                        $lastTier = $tier;
+                    }
+
+                    $explanation .= ' = '.$priceFormatted;
+
+                    if ($get('price') > 0) {
+                        $fixedFee = $get('price');
+                        $priceFormatted = money($fixedFee, $currency->code);
+
+                        if (! empty($explanation)) {
+                            $explanation .= '<br/> + ';
+                        }
+
+                        $explanation .= $priceFormatted.__(' (Fixed fee)');
+
+                        $explanation .= ' = '.money($price + $fixedFee, $currency->code);
+                    }
+                }
+
+                return new HtmlString(
+                    __('Tiered (Graduated) pricing model is calculated as follows: <br/> Sum of ((volume of usage * price per unit) + Flat fee) at each tier + Fixed fee (if any).')
+                    .'<br/><br/>'
+                    .$explanation
+                );
+            }
+        } catch (\Throwable $exception) {
+
+        }
+
+        return new HtmlString('');
     }
 }

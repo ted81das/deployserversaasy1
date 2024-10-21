@@ -5,6 +5,7 @@ namespace App\Services\PaymentProviders\LemonSqueezy;
 use App\Client\LemonSqueezyClient;
 use App\Constants\DiscountConstants;
 use App\Constants\PaymentProviderConstants;
+use App\Constants\PlanType;
 use App\Models\Discount;
 use App\Models\Order;
 use App\Models\PaymentProvider;
@@ -370,5 +371,18 @@ class LemonSqueezyProvider implements PaymentProviderInterface
         }
 
         return $paymentProvider;
+    }
+
+    public function getSupportedPlanTypes(): array
+    {
+        return [
+            PlanType::FLAT_RATE->value,
+            PlanType::USAGE_BASED->value,
+        ];
+    }
+
+    public function reportUsage(Subscription $subscription, int $unitCount): bool
+    {
+        // todo: implement me
     }
 }

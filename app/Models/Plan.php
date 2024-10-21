@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Plan extends Model
 {
@@ -22,6 +23,7 @@ class Plan extends Model
         'trial_interval_id',
         'trial_interval_count',
         'is_active',
+        'type',
     ];
 
     public function product(): BelongsTo
@@ -52,6 +54,11 @@ class Plan extends Model
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class);
+    }
+
+    public function meter(): BelongsTo
+    {
+        return $this->belongsTo(PlanMeter::class);
     }
 
     protected static function booted(): void

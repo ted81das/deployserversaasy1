@@ -62,6 +62,41 @@
         </div>
     </div>
 
+    @if ($planPriceType === \App\Constants\PlanPriceType::USAGE_BASED_PER_UNIT->value)
+        <div class="flex flex-row justify-between mt-2">
+            <div class="text-primary-900">
+                {{ __('Price / ') }} {{ __($unitMeterName) }}
+            </div>
+            <div class="text-primary-900">
+                @money($pricePerUnit, $currencyCode)
+            </div>
+        </div>
+    @elseif($planPriceType === \App\Constants\PlanPriceType::USAGE_BASED_TIERED_VOLUME->value || $planPriceType === \App\Constants\PlanPriceType::USAGE_BASED_TIERED_GRADUATED->value)
+        <div class="text-primary-900 font-medium mt-3">
+            {{ $planPriceType === \App\Constants\PlanPriceType::USAGE_BASED_TIERED_VOLUME->value ? __('Volume Tiered pricing:') : __('Graduated Tiered pricing:')}}
+        </div>
+        <div class="flex flex-row justify-between mt-2">
+            <div class="text-primary-900">
+                @php $start = 0; @endphp
+                @foreach($tiers as $tier)
+                    <div class="">
+                        {{__('From')}} {{ $start }} - {{ $tier[\App\Constants\PlanPriceTierConstants::UNTIL_UNIT] }} {{ __(str()->plural($unitMeterName)) }}
+                         → @money($tier[\App\Constants\PlanPriceTierConstants::PER_UNIT], $currencyCode) / {{ __($unitMeterName) }}
+                        @if ($tier[\App\Constants\PlanPriceTierConstants::FLAT_FEE] > 0)
+                            + @money($tier['flat_fee'], $currencyCode)
+                        @endif
+                    </div>
+                    @php $start = intval($tier[\App\Constants\PlanPriceTierConstants::UNTIL_UNIT]) + 1; @endphp
+                @endforeach
+            </div>
+        </div>
+        @if ($planPriceType === \App\Constants\PlanPriceType::USAGE_BASED_TIERED_GRADUATED->value)
+            <p class="text-xs text-neutral-600 pt-4">
+                {{ __('Graduated pricing mimics the way income taxes are calculated, where you pay different rates on portions of your usage. The first tier is applied to the first units, the second tier to the next units, and so on.') }}
+            </p>
+        @endif
+    @endif
+
     @if($discountAmount > 0)
         <div class="flex flex-row justify-between">
             <div class="text-primary-900">
