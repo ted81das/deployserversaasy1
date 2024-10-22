@@ -6,7 +6,7 @@
     /* Blog Post Styles */
     article.blog-post {
         @apply font-light;
-        @apply text-lg	;
+        @apply text-lg;
     }
 
     article.blog-post p {
@@ -56,6 +56,14 @@
         @apply mt-6;
     }
 
+    article.blog-post li {
+        @apply my-2;
+    }
+
+    article.blog-post code{
+        @apply mt-4;
+    }
+
     article.blog-post ol {
         @apply list-decimal;
         @apply pl-6;
@@ -102,6 +110,7 @@
 
     a {
         @apply text-primary-500;
+        @apply font-semibold;
     }
 
     .copy-button {
