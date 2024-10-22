@@ -64,6 +64,10 @@
         @apply mt-4;
     }
 
+    article.blog-post a {
+        @apply font-semibold;
+    }
+
     article.blog-post ol {
         @apply list-decimal;
         @apply pl-6;
@@ -110,7 +114,6 @@
 
     a {
         @apply text-primary-500;
-        @apply font-semibold;
     }
 
     .copy-button {
