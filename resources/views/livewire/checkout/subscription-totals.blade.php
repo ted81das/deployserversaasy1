@@ -53,14 +53,17 @@
 
 
     <hr class="mb-6 mt-2">
-    <div class="flex flex-row justify-between">
-        <div class="text-primary-900">
-            {{ __('Subscription price') }}
+
+    @if ($subtotal > 0)
+        <div class="flex flex-row justify-between">
+            <div class="text-primary-900">
+                {{ __('Subscription price') }}
+            </div>
+            <div class="text-primary-900">
+                @money($subtotal, $currencyCode)
+            </div>
         </div>
-        <div class="text-primary-900">
-            @money($subtotal, $currencyCode)
-        </div>
-    </div>
+    @endif
 
     @if ($planPriceType === \App\Constants\PlanPriceType::USAGE_BASED_PER_UNIT->value)
         <div class="flex flex-row justify-between mt-2">
@@ -73,20 +76,25 @@
         </div>
     @elseif($planPriceType === \App\Constants\PlanPriceType::USAGE_BASED_TIERED_VOLUME->value || $planPriceType === \App\Constants\PlanPriceType::USAGE_BASED_TIERED_GRADUATED->value)
         <div class="text-primary-900 font-medium mt-3">
-            {{ $planPriceType === \App\Constants\PlanPriceType::USAGE_BASED_TIERED_VOLUME->value ? __('Volume Tiered pricing:') : __('Graduated Tiered pricing:')}}
+            {{ __('Tiered pricing') }}
         </div>
         <div class="flex flex-row justify-between mt-2">
             <div class="text-primary-900">
-                @php $start = 0; @endphp
+                @php $start = 0; $startingPhrase = __('From'); @endphp
                 @foreach($tiers as $tier)
                     <div class="">
-                        {{__('From')}} {{ $start }} - {{ $tier[\App\Constants\PlanPriceTierConstants::UNTIL_UNIT] }} {{ __(str()->plural($unitMeterName)) }}
-                         → @money($tier[\App\Constants\PlanPriceTierConstants::PER_UNIT], $currencyCode) / {{ __($unitMeterName) }}
+                         {{$startingPhrase}} {{ $start }} - {{ $tier[\App\Constants\PlanPriceTierConstants::UNTIL_UNIT] }} {{ __(str()->plural($unitMeterName)) }}
+                         → <span class="text-primary-500"> @money($tier[\App\Constants\PlanPriceTierConstants::PER_UNIT], $currencyCode) / {{ __($unitMeterName) }}
                         @if ($tier[\App\Constants\PlanPriceTierConstants::FLAT_FEE] > 0)
                             + @money($tier['flat_fee'], $currencyCode)
                         @endif
+                        </span>
                     </div>
                     @php $start = intval($tier[\App\Constants\PlanPriceTierConstants::UNTIL_UNIT]) + 1; @endphp
+
+                    @if($planPriceType === \App\Constants\PlanPriceType::USAGE_BASED_TIERED_GRADUATED->value)
+                        @php $startingPhrase = __('Next'); @endphp
+                    @endif
                 @endforeach
             </div>
         </div>

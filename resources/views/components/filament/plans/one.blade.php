@@ -23,16 +23,20 @@
             @elseif($plan->prices[0]->type === \App\Constants\PlanPriceType::USAGE_BASED_TIERED_GRADUATED->value
                     || $plan->prices[0]->type === \App\Constants\PlanPriceType::USAGE_BASED_TIERED_VOLUME->value)
                 <div class="text-xs mt-2">
-                    @php $start = 0; @endphp
+                    @php $start = 0; $startingPhrase = __('From'); @endphp
                     @foreach($plan->prices[0]->tiers as $tier)
-                        <div class="">
-                            {{__('From')}} {{ $start }} - {{ $tier[\App\Constants\PlanPriceTierConstants::UNTIL_UNIT] }} {{ __(str()->plural($plan->meter->name)) }}
-                            → @money($tier[\App\Constants\PlanPriceTierConstants::PER_UNIT], $plan->prices[0]->currency->code) / {{ __($plan->meter->name) }}
+                        <div class="mt-2 text-sm">
+                            <span class="font-semibold"> {{$startingPhrase}} {{ $start }} - {{ $tier[\App\Constants\PlanPriceTierConstants::UNTIL_UNIT] }} {{ __(strtolower(str()->plural($plan->meter->name))) }} </span>
+                            → <span class="">@money($tier[\App\Constants\PlanPriceTierConstants::PER_UNIT], $plan->prices[0]->currency->code) / {{ __($plan->meter->name) }} </span>
                             @if ($tier[\App\Constants\PlanPriceTierConstants::FLAT_FEE] > 0)
                                 + @money($tier['flat_fee'], $plan->prices[0]->currency->code)
                             @endif
                         </div>
                         @php $start = intval($tier[\App\Constants\PlanPriceTierConstants::UNTIL_UNIT]) + 1; @endphp
+
+                        @if($plan->prices[0]->type === \App\Constants\PlanPriceType::USAGE_BASED_TIERED_GRADUATED->value)
+                            @php $startingPhrase = __('Next'); @endphp
+                        @endif
                     @endforeach
                 </div>
             @endif

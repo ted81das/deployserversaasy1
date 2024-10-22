@@ -174,7 +174,7 @@ class SubscriptionResource extends Resource
                         TextEntry::make('price_per_unit')
                             ->visible(fn (Subscription $record): bool => $record->price_type === PlanPriceType::USAGE_BASED_PER_UNIT->value && $record->price_per_unit !== null)
                             ->formatStateUsing(function (string $state, $record) {
-                                return money($state, $record->currency->code) . ' / ' . __($record->plan->meter->name);
+                                return money($state, $record->currency->code).' / '.__($record->plan->meter->name);
                             }),
                         TextEntry::make('price_tiers')
                             ->visible(fn (Subscription $record): bool => in_array($record->price_type, [PlanPriceType::USAGE_BASED_TIERED_VOLUME->value, PlanPriceType::USAGE_BASED_TIERED_GRADUATED->value]) && $record->price_tiers !== null)
@@ -183,14 +183,20 @@ class SubscriptionResource extends Resource
                                 $unitMeterName = $record->plan->meter->name;
                                 $currencyCode = $record->currency->code;
                                 $output = '';
-                                foreach($record->price_tiers as $tier) {
-                                    $output .= __('From') . ' ' . $start . ' - ' . $tier[PlanPriceTierConstants::UNTIL_UNIT] . ' ' . __(str()->plural($unitMeterName)) . ' → ' . money($tier[PlanPriceTierConstants::PER_UNIT], $currencyCode) . ' / ' . __($unitMeterName);
+                                $startingPhrase = __('From');
+                                foreach ($record->price_tiers as $tier) {
+                                    $output .= $startingPhrase.' '.$start.' - '.$tier[PlanPriceTierConstants::UNTIL_UNIT].' '.__(str()->plural($unitMeterName)).' → '.money($tier[PlanPriceTierConstants::PER_UNIT], $currencyCode).' / '.__($unitMeterName);
                                     if ($tier[PlanPriceTierConstants::FLAT_FEE] > 0) {
-                                        $output .= ' + ' . money($tier['flat_fee'], $currencyCode);
+                                        $output .= ' + '.money($tier['flat_fee'], $currencyCode);
                                     }
                                     $start = intval($tier[PlanPriceTierConstants::UNTIL_UNIT]) + 1;
                                     $output .= '<br>';
+
+                                    if ($record->price_type === PlanPriceType::USAGE_BASED_TIERED_GRADUATED->value) {
+                                        $startingPhrase = __('Next');
+                                    }
                                 }
+
                                 return new HtmlString($output);
                             }),
                         TextEntry::make('ends_at')->dateTime(config('app.datetime_format'))->label(__('Next Renewal'))->visible(fn (Subscription $record): bool => ! $record->is_canceled_at_end_of_cycle),
@@ -218,12 +224,12 @@ class SubscriptionResource extends Resource
                         TextEntry::make('discounts.amount')
                             ->label(__('Discount Amount'))
                             ->formatStateUsing(function (string $state, $record) {
-                            if ($record->discounts[0]->type === DiscountConstants::TYPE_PERCENTAGE) {
-                                return $state.'%';
-                            }
+                                if ($record->discounts[0]->type === DiscountConstants::TYPE_PERCENTAGE) {
+                                    return $state.'%';
+                                }
 
-                            return money($state, $record->discounts[0]->code);
-                        }),
+                                return money($state, $record->discounts[0]->code);
+                            }),
 
                         TextEntry::make('discounts.valid_until')
                             ->dateTime(config('app.datetime_format'))

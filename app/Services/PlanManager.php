@@ -146,7 +146,7 @@ class PlanManager
         $defaultCurrencyObject = Currency::where('code', $defaultCurrency)->first();
 
         if (! $defaultCurrencyObject) {
-            return new Collection();
+            return new Collection;
         }
 
         if (count($productSlugs) > 0) {

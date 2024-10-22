@@ -37,9 +37,7 @@ class StripeProvider implements PaymentProviderInterface
         private PlanManager $planManager,
         private DiscountManager $discountManager,
         private OneTimeProductManager $oneTimeProductManager,
-    ) {
-
-    }
+    ) {}
 
     public function createSubscriptionCheckoutRedirectLink(Plan $plan, Subscription $subscription, ?Discount $discount = null): string
     {
@@ -629,11 +627,6 @@ class StripeProvider implements PaymentProviderInterface
             'display_name' => $meter->name,
             'event_name' => $eventName,
             'default_aggregation' => ['formula' => 'sum'],
-            //            'customer_mapping' => [
-            //                'event_payload_key' => 'stripe_customer_id',
-            //                'type' => 'by_id',
-            //            ],
-            //            'value_settings' => ['event_payload_key' => 'value'],
         ]);
 
         $this->planManager->addPaymentProviderMeterId($meter, $paymentProvider, $stripeMeter->id, [
@@ -692,6 +685,8 @@ class StripeProvider implements PaymentProviderInterface
 
     public function reportUsage(Subscription $subscription, int $unitCount): bool
     {
+        $this->assertProviderIsActive();
+
         $stripe = $this->getClient();
 
         $stripeCustomerId = $subscription->user->stripeData()->firstOrFail()->stripe_customer_id;
@@ -702,6 +697,7 @@ class StripeProvider implements PaymentProviderInterface
 
         if (! $paymentProviderMeter) {
             Log::error('Payment provider meter not found for meter: '.$plan->meter->name);
+
             return false;
         }
 
@@ -709,6 +705,7 @@ class StripeProvider implements PaymentProviderInterface
 
         if (! $stripeEventName) {
             Log::error('Stripe event name not found for meter: '.$plan->meter->name);
+
             return false;
         }
 

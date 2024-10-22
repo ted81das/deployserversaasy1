@@ -34,10 +34,12 @@ class Subscription extends Model
         'price_type',
         'price_tiers',
         'price_per_unit',
+        'extra_payment_provider_data',
     ];
 
     protected $casts = [
         'price_tiers' => 'array',
+        'extra_payment_provider_data' => 'array',
     ];
 
     public function user(): BelongsTo
