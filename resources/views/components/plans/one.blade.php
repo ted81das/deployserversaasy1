@@ -30,12 +30,19 @@
             <div class="mt-2">
                 @php $start = 0; $startingPhrase = __('From'); @endphp
                 @foreach($plan->prices[0]->tiers as $tier)
-                    <div class="mt-2 text-sm">
-                        <span class="font-semibold"> {{$startingPhrase}} {{ $start }} - {{ $tier[\App\Constants\PlanPriceTierConstants::UNTIL_UNIT] }} {{ __(strtolower(str()->plural($plan->meter->name))) }} </span>
-                        → <span class="">@money($tier[\App\Constants\PlanPriceTierConstants::PER_UNIT], $plan->prices[0]->currency->code) / {{ __($plan->meter->name) }} </span>
-                        @if ($tier[\App\Constants\PlanPriceTierConstants::FLAT_FEE] > 0)
-                            + @money($tier['flat_fee'], $plan->prices[0]->currency->code)
-                        @endif
+                    <div class="flex justify-center items-center gap-4 mt-3">
+                        <span class="font-medium text-xs ">{{$startingPhrase}}</span>
+                        <span class="flex flex-col">
+                            <span class="text-xl">{{ $start }} - {{ $tier[\App\Constants\PlanPriceTierConstants::UNTIL_UNIT] }}</span>
+                            <span class="text-neutral-400 text-xs">{{ __(strtolower(str()->plural($plan->meter->name))) }}</span>
+                        </span>
+                        →
+                        <span class="flex flex-col">
+                            <span class=" text-sm">@money($tier[\App\Constants\PlanPriceTierConstants::PER_UNIT], $plan->prices[0]->currency->code) / {{ __($plan->meter->name) }}</span>
+                            @if ($tier[\App\Constants\PlanPriceTierConstants::FLAT_FEE] > 0)
+                            <span class="text-neutral-400 text-xs">+ @money($tier['flat_fee'], $plan->prices[0]->currency->code)</span>
+                            @endif
+                        </span>
                     </div>
                     @php $start = intval($tier[\App\Constants\PlanPriceTierConstants::UNTIL_UNIT]) + 1; @endphp
 
