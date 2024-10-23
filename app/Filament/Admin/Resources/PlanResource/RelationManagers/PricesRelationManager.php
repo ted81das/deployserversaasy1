@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources\PlanResource\RelationManagers;
 
+use App\Constants\PlanPriceTierConstants;
 use App\Constants\PlanPriceType;
 use App\Constants\PlanType;
 use App\Mapper\PlanPriceMapper;
@@ -98,19 +99,19 @@ class PricesRelationManager extends RelationManager
                         ->live()
                         ->default([
                             [
-                                'until_unit' => 5,
-                                'per_unit' => 0,
-                                'flat_fee' => 0,
+                                PlanPriceTierConstants::UNTIL_UNIT => 5,
+                                PlanPriceTierConstants::PER_UNIT => 0,
+                                PlanPriceTierConstants::FLAT_FEE => 0,
                             ],
                             [
-                                'until_unit' => '∞',
-                                'per_unit' => 0,
-                                'flat_fee' => 0,
+                                PlanPriceTierConstants::UNTIL_UNIT => '∞',
+                                PlanPriceTierConstants::PER_UNIT => 0,
+                                PlanPriceTierConstants::FLAT_FEE => 0,
                             ],
                         ])
                         ->rules([
                             fn (Forms\Get $get): \Closure => function (string $attribute, $value, \Closure $fail) {
-                                if (last($value)['until_unit'] !== '∞') {
+                                if (last($value)[PlanPriceTierConstants::UNTIL_UNIT] !== '∞') {
                                     $fail(__('The last tier must have "∞" as the value for "Up until (x) units"'));
                                 }
 
@@ -118,19 +119,19 @@ class PricesRelationManager extends RelationManager
 
                                 $current = 0;
                                 foreach ($value as $tier) {
-                                    if ($tier['until_unit'] === '∞') {
+                                    if ($tier[PlanPriceTierConstants::UNTIL_UNIT] === '∞') {
                                         break;
                                     }
 
-                                    if ($tier['until_unit'] <= $current) {
+                                    if ($tier[PlanPriceTierConstants::UNTIL_UNIT] <= $current) {
                                         $fail(__('The "Up until (x) units" values should be in ascending order'));
                                     }
 
-                                    $current = $tier['until_unit'];
+                                    $current = $tier[PlanPriceTierConstants::UNTIL_UNIT];
                                 }
 
                                 foreach ($value as $tier) {
-                                    if (! is_numeric($tier['until_unit']) && $tier['until_unit'] !== '∞') {
+                                    if (! is_numeric($tier[PlanPriceTierConstants::UNTIL_UNIT]) && $tier[PlanPriceTierConstants::UNTIL_UNIT] !== '∞') {
                                         $fail(__('The "Up until (x) units" values should be an integer or "∞"'));
                                     }
                                 }
@@ -205,14 +206,14 @@ class PricesRelationManager extends RelationManager
                 if (! empty($get('example_unit_quantity'))) {
                     // get the tier where the example_unit_quantity falls
                     $tier = collect($get('tiers'))->first(function ($tier) use ($get) {
-                        return $tier['until_unit'] === '∞' || $tier['until_unit'] >= $get('example_unit_quantity');
+                        return $tier[PlanPriceTierConstants::UNTIL_UNIT] === '∞' || $tier[PlanPriceTierConstants::UNTIL_UNIT] >= $get('example_unit_quantity');
                     });
 
-                    $price = $tier['flat_fee'] + ($tier['per_unit'] * $get('example_unit_quantity'));
+                    $price = $tier[PlanPriceTierConstants::FLAT_FEE] + ($tier[PlanPriceTierConstants::PER_UNIT] * $get('example_unit_quantity'));
 
                     $priceFormatted = money($price, $currency->code);
 
-                    $explanation = '('.$get('example_unit_quantity').' * '.money($tier['per_unit'], $currency->code).') + '.money($tier['flat_fee'], $currency->code).' = '.$priceFormatted;
+                    $explanation = '('.$get('example_unit_quantity').' * '.money($tier[PlanPriceTierConstants::PER_UNIT], $currency->code).') + '.money($tier[PlanPriceTierConstants::FLAT_FEE], $currency->code).' = '.$priceFormatted;
 
                     if ($get('price') > 0) {
                         $fixedFee = $get('price');
@@ -252,10 +253,10 @@ class PricesRelationManager extends RelationManager
                             break;
                         }
 
-                        $maxUnitsInCurrentTier = ($tier['until_unit'] === '∞' ? 100000000000 : $tier['until_unit']) - ($lastTier ? $lastTier['until_unit'] : 0);
+                        $maxUnitsInCurrentTier = ($tier[PlanPriceTierConstants::UNTIL_UNIT] === '∞' ? 100000000000 : $tier[PlanPriceTierConstants::UNTIL_UNIT]) - ($lastTier ? $lastTier[PlanPriceTierConstants::UNTIL_UNIT] : 0);
                         $unitsCalculatedAtThisTier = min($remaining, $maxUnitsInCurrentTier);
 
-                        $tierPrice = $tier['flat_fee'] + ($tier['per_unit'] * $unitsCalculatedAtThisTier);
+                        $tierPrice = $tier[PlanPriceTierConstants::FLAT_FEE] + ($tier[PlanPriceTierConstants::PER_UNIT] * $unitsCalculatedAtThisTier);
 
                         $price += $tierPrice;
                         $priceFormatted = money($price, $currency->code);
@@ -264,7 +265,7 @@ class PricesRelationManager extends RelationManager
                             $explanation .= '<br/> + ';
                         }
 
-                        $explanation .= '(('.$unitsCalculatedAtThisTier.' * '.money($tier['per_unit'], $currency->code).') + '.money($tier['flat_fee'], $currency->code).')';
+                        $explanation .= '(('.$unitsCalculatedAtThisTier.' * '.money($tier[PlanPriceTierConstants::PER_UNIT], $currency->code).') + '.money($tier[PlanPriceTierConstants::FLAT_FEE], $currency->code).')';
 
                         $remaining -= $unitsCalculatedAtThisTier;
                         $lastTier = $tier;

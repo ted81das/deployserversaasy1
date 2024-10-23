@@ -187,7 +187,7 @@ class SubscriptionResource extends Resource
                                 foreach ($record->price_tiers as $tier) {
                                     $output .= $startingPhrase.' '.$start.' - '.$tier[PlanPriceTierConstants::UNTIL_UNIT].' '.__(str()->plural($unitMeterName)).' → '.money($tier[PlanPriceTierConstants::PER_UNIT], $currencyCode).' / '.__($unitMeterName);
                                     if ($tier[PlanPriceTierConstants::FLAT_FEE] > 0) {
-                                        $output .= ' + '.money($tier['flat_fee'], $currencyCode);
+                                        $output .= ' + '.money($tier[PlanPriceTierConstants::FLAT_FEE], $currencyCode);
                                     }
                                     $start = intval($tier[PlanPriceTierConstants::UNTIL_UNIT]) + 1;
                                     $output .= '<br>';

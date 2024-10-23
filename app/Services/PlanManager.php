@@ -59,7 +59,6 @@ class PlanManager
             ->get();
     }
 
-    // todo: remove this function
     public function getPaymentProviderPriceId(PlanPrice $planPrice, PaymentProvider $paymentProvider): ?string
     {
         $result = PlanPricePaymentProviderData::where('plan_price_id', $planPrice->id)

@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class PlanResource extends Resource
@@ -57,10 +58,14 @@ class PlanResource extends Resource
                         ->unique(ignoreRecord: true)
                         ->disabledOn('edit'),
                     Forms\Components\Radio::make('type')
-                        ->helperText(__('Flat Rate: Fixed price per interval. Usage Based: Price per unit with optional tiers.'))
+                        ->helperText(
+                            new HtmlString(
+                                __('Flat Rate: Fixed price per interval. Usage Based: Price per unit with optional tiers.').'<br><strong>'.__('Important').'</strong>: '.__('Usage-based pricing is not supported for Paddle.')
+                            )
+                        )
                         ->options([
                             PlanType::FLAT_RATE->value => __('Flat Rate'),
-                            PlanType::USAGE_BASED->value => __('Usage Based'),
+                            PlanType::USAGE_BASED->value => __('Usage-based'),
                         ])
                         ->default(PlanType::FLAT_RATE->value)
                         ->disabledOn('edit')

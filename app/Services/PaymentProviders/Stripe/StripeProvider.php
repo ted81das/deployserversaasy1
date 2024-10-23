@@ -6,6 +6,7 @@ use App\Constants\DiscountConstants;
 use App\Constants\PaymentProviderConstants;
 use App\Constants\PaymentProviderPlanPriceType;
 use App\Constants\PlanMeterConstants;
+use App\Constants\PlanPriceTierConstants;
 use App\Constants\PlanPriceType;
 use App\Constants\PlanType;
 use App\Filament\Dashboard\Resources\SubscriptionResource;
@@ -551,9 +552,9 @@ class StripeProvider implements PaymentProviderInterface
                 $tiers = [];
                 foreach ($planPrice->tiers as $tier) {
                     $tiers[] = [
-                        'up_to' => $tier['until_unit'] === '∞' ? 'inf' : $tier['until_unit'],
-                        'unit_amount_decimal' => $tier['per_unit'],  // todo: check the _decimal thing
-                        'flat_amount_decimal' => $tier['flat_fee'],
+                        'up_to' => $tier[PlanPriceTierConstants::UNTIL_UNIT] === '∞' ? 'inf' : $tier[PlanPriceTierConstants::UNTIL_UNIT],
+                        'unit_amount_decimal' => $tier[PlanPriceTierConstants::PER_UNIT],
+                        'flat_amount_decimal' => $tier[PlanPriceTierConstants::FLAT_FEE],
                     ];
                 }
 
