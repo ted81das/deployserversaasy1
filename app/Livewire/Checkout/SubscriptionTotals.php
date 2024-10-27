@@ -29,7 +29,7 @@ class SubscriptionTotals extends Component
 
     public $code;
 
-    public $unitMeterName;
+    public ?string $unitMeterName;
     public ?string $planPriceType = null;
     public ?string $pricePerUnit = null;
     public ?array $tiers = null;

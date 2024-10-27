@@ -31,6 +31,7 @@ class PaymentManager
     {
         $activePaymentProvidersMap = $this->getActivePaymentProvidersMap();
 
+        $paymentProviders = [];
         foreach ($this->paymentProviders as $paymentProvider) {
             if (isset($activePaymentProvidersMap[$paymentProvider->getSlug()]) &&
                 in_array($plan->type, $paymentProvider->getSupportedPlanTypes())

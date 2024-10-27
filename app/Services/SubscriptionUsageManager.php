@@ -12,9 +12,7 @@ class SubscriptionUsageManager
     public function __construct(
         private PaymentManager $paymentManager,
         private SubscriptionManager $subscriptionManager,
-    ) {
-
-    }
+    ) {}
 
     public function reportUsage(int $unitCount, ?Subscription $subscription = null): bool
     {

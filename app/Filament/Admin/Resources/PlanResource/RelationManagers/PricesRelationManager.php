@@ -73,7 +73,7 @@ class PricesRelationManager extends RelationManager
                                     return new HtmlString(
                                         '<strong>'.__('Important: Fixed fee is available only for Stripe.').'</strong>'
                                         .'<br/><br/>'.__('A fixed fee is an amount that your customer will be charged every billing cycle in addition to any usage-based amount. Enter fixed fee in lowest denomination for a currency (cents). E.g. 1000 = $10.00')
-                                        .'<br/><br/>'.__('It is highlighy recommended that you set up a fixed fee for your usage-based billing plans if you are dealing with low-trust customers, as customers can keep using your service and then disable their credit card to avoid being charged for usage.')
+                                        .'<br/><br/>'.__('It is highly recommended that you set up a fixed fee for your usage-based billing plans if you are dealing with low-trust customers, as customers can keep using your service and then disable their credit card to avoid being charged for usage.')
                                     );
                                 }
                             }
@@ -90,9 +90,9 @@ class PricesRelationManager extends RelationManager
                         ->helperText(__('Enter tier prices in lowest denomination for a currency (cents). E.g. 1000 = $10.00'))
                         ->schema([
                             Forms\Components\TextInput::make('until_unit')->label(__('Up until (x) units'))->required()
-                                ->readOnly(function ($state) {
-                                    return $state === '∞';
-                                }),
+                                ->suffixAction(\Filament\Forms\Components\Actions\Action::make('infinity')->icon('icon-infinity')->action(function (Forms\Get $get, Forms\Set $set) {
+                                    $set('until_unit', '∞');
+                                })),
                             Forms\Components\TextInput::make('per_unit')->label(__('Price per unit'))->numeric()->minValue(0)->default(0)->required(),
                             Forms\Components\TextInput::make('flat_fee')->label(__('Flat fee'))->numeric()->minValue(0)->default(0)->required(),
                         ])
@@ -111,6 +111,12 @@ class PricesRelationManager extends RelationManager
                         ])
                         ->rules([
                             fn (Forms\Get $get): \Closure => function (string $attribute, $value, \Closure $fail) {
+                                if (! is_array($value) || empty($value)) {
+                                    $fail(__('At least one tier is required'));
+
+                                    return;
+                                }
+
                                 if (last($value)[PlanPriceTierConstants::UNTIL_UNIT] !== '∞') {
                                     $fail(__('The last tier must have "∞" as the value for "Up until (x) units"'));
                                 }
@@ -134,6 +140,15 @@ class PricesRelationManager extends RelationManager
                                     if (! is_numeric($tier[PlanPriceTierConstants::UNTIL_UNIT]) && $tier[PlanPriceTierConstants::UNTIL_UNIT] !== '∞') {
                                         $fail(__('The "Up until (x) units" values should be an integer or "∞"'));
                                     }
+                                }
+
+                                // only one infinite tier is allowed
+                                $infiniteTiers = collect($value)->filter(function ($tier) {
+                                    return $tier[PlanPriceTierConstants::UNTIL_UNIT] === '∞';
+                                });
+
+                                if ($infiniteTiers->count() > 1) {
+                                    $fail(__('Only one tier can have "∞" as the value for "Up until (x) units"'));
                                 }
                             },
                         ])

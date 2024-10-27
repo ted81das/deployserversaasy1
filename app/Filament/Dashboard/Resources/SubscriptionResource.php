@@ -8,6 +8,7 @@ use App\Constants\PlanPriceType;
 use App\Constants\SubscriptionStatus;
 use App\Filament\Dashboard\Resources\SubscriptionResource\ActionHandlers\DiscardSubscriptionCancellationActionHandler;
 use App\Filament\Dashboard\Resources\SubscriptionResource\Pages;
+use App\Filament\Dashboard\Resources\SubscriptionResource\RelationManagers\UsagesRelationManager;
 use App\Mapper\SubscriptionStatusMapper;
 use App\Models\Subscription;
 use App\Services\ConfigManager;
@@ -93,7 +94,7 @@ class SubscriptionResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            'usages' => UsagesRelationManager::class,
         ];
     }
 
