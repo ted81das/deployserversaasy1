@@ -12,8 +12,8 @@ use Illuminate\View\Component;
 class All extends Component
 {
     public function __construct(
-        private PlanManager $planManager,
-        private SubscriptionManager $subscriptionManager,
+        protected PlanManager $planManager,
+        protected SubscriptionManager $subscriptionManager,
         public array $products = [],
         public bool $isGrouped = true,
         public string $preselectedInterval = '',
@@ -34,15 +34,16 @@ class All extends Component
 
     protected function calculateViewData()
     {
-        $user = auth()->user();
-
         $plans = $this->planManager->getAllPlansWithPrices(
-            $this->products
+            $this->products,
         );
 
-        $viewData = [
-            'plans' => $plans,
-        ];
+        return $this->enrichViewData([], $plans);
+    }
+
+    protected function enrichViewData(array $viewData, Collection $plans)
+    {
+        $viewData['plans'] = $plans;
 
         if ($this->showDefaultProduct) {
             $defaultProduct = $this->planManager->getDefaultProduct();
@@ -52,12 +53,6 @@ class All extends Component
             }
         }
 
-        $subscription = null;
-        if ($user !== null && $this->currentSubscriptionUuid !== null) {
-            $subscription = $this->subscriptionManager->findActiveByUserAndSubscriptionUuid(auth()->id(), $this->currentSubscriptionUuid);
-        }
-
-        $viewData['subscription'] = $subscription;
         $viewData['isGrouped'] = $this->isGrouped;
 
         $groupedPlans = [];
@@ -124,7 +119,7 @@ class All extends Component
 
             $imaginaryPrice = $this->calculatePriceForImaginaryInterval($firstPrice, $firstInterval, $currentInterval);
 
-            $intervalSavingPercentage[$currentInterval] = (($imaginaryPrice - $currentPrice) / ($imaginaryPrice)) * 100;
+            $intervalSavingPercentage[$currentInterval] = $imaginaryPrice == 0 ? 0 : (($imaginaryPrice - $currentPrice) / ($imaginaryPrice)) * 100;
         }
 
         return array_map(function ($saving) {

@@ -31,6 +31,15 @@ class Subscription extends Model
         'is_canceled_at_end_of_cycle',
         'cancellation_reason',
         'cancellation_additional_info',
+        'price_type',
+        'price_tiers',
+        'price_per_unit',
+        'extra_payment_provider_data',
+    ];
+
+    protected $casts = [
+        'price_tiers' => 'array',
+        'extra_payment_provider_data' => 'array',
     ];
 
     public function user(): BelongsTo
@@ -66,6 +75,11 @@ class Subscription extends Model
     public function discounts(): HasMany
     {
         return $this->hasMany(SubscriptionDiscount::class);
+    }
+
+    public function usages(): HasMany
+    {
+        return $this->hasMany(SubscriptionUsage::class);
     }
 
     public function getRouteKeyName(): string
