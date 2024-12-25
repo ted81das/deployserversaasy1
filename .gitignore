@@ -1,9 +1,13 @@
 /.phpunit.cache
 /node_modules
+/public
+/public/vendor
+/public/images
 /public/build
 /public/hot
 /public/storage
 /public/sitemap.xml
+/public/js
 /storage/*.key
 /vendor
 .env
@@ -20,3 +24,5 @@ yarn-error.log
 .idea
 /.vscode
 .DS_Store
+/storage/keys/id_rsa
+/storage/keys/id_rsa.pub
