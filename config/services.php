@@ -77,6 +77,14 @@ return [
         'redirect' => '/auth/gitlab/callback',
     ],
 
+// config/services.php
+'serveravatar' => [
+        'url' => env('SERVERAVATAR_API_URL'),
+        'token' => env('SERVERAVATAR_API_TOKEN'),
+        'organization_id' => env('SERVERAVATAR_ORGANIZATION_ID'),
+    ],
+
+
     'stripe' => [
         'secret_key' => env('STRIPE_SECRET_KEY'),
         'publishable_key' => env('STRIPE_PUBLISHABLE_KEY'),
