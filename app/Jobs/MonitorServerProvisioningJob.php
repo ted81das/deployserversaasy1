@@ -42,7 +42,7 @@ class MonitorServerProvisioningJob implements ShouldQueue
 
 //dd($status,$status['server']['ip']);
 $countx = 0;
-        if (($status['server']['ssh_status'] !== 'failed')|| ($status['server']['ip']==='8.8.8.8')) {
+        if (($status['server']['ssh_status'] !== '1')|| ($status['server']['ip']==='8.8.8.8')) {
                Notification::make()
                     ->title('Server Provisioning Status')
                     ->body("Server {$this->server->server_name} is still being provisioned. Current status: {$status['server']['ssh_status']}")
@@ -59,14 +59,16 @@ $countx = $countx +1;
           return;
         }
 
-  dd($status,$countx,$status['ip']);
+//  dd($status,$countx,$status['ip']);
 
       // Server is ready, proceed with database creation
         $dbName = $this->server->generateUniqueDatabaseName();
-        $dbPassword = $this->server->generateUniqueDatabasePassword();
+  $dbUser = $this->server->generateUniqueDatabaseName();
+      $dbPassword = $this->server->generateUniqueDatabasePassword();
 
         $dbResponse = $serverAvatarService->createDatabase($this->server->serveravatar_id, [
             'name' => $dbName,
+            'username' => $dbUser,
             'password' => $dbPassword,
         ]);
 
